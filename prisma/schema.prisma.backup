@@ -1,0 +1,675 @@
+// Lộc Xanh V4 - Prisma Schema
+// Plant Rental CRM Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================
+// AUTH.JS MODELS
+// =====================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  role          UserRole  @default(STAFF)
+
+  accounts      Account[]
+  sessions      Session[]
+
+  // Relations
+  createdCustomers Customer[] @relation("CreatedByUser")
+  assignedCare     CareSchedule[]
+  createdNotes     StickyNote[]
+  activityLogs     ActivityLog[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Account {
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+enum CustomerTier {
+  VIP
+  PREMIUM
+  STANDARD
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  RENEWED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+enum CareStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  SKIPPED
+}
+
+enum ExchangeRequestStatus {
+  PENDING
+  APPROVED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ExchangeUrgency {
+  ROUTINE
+  NORMAL
+  URGENT
+  EMERGENCY
+}
+
+enum NoteStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum NotePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NoteCategory {
+  GENERAL
+  COMPLAINT
+  REQUEST
+  PAYMENT
+  CARE
+  OTHER
+}
+
+enum PlantStatus {
+  ACTIVE
+  REPLACED
+  RETURNED
+  DAMAGED
+}
+
+// =====================================================
+// CORE BUSINESS MODELS
+// =====================================================
+
+model Customer {
+  id              String         @id @default(cuid())
+  code            String         @unique
+  companyName     String         @map("company_name")
+  companyNameNorm String         @map("company_name_norm")
+  address         String
+  addressNorm     String?        @map("address_normalized")
+  district        String?
+  city            String?        @default("TP.HCM")
+
+  // Contact
+  contactName     String?        @map("contact_name")
+  contactPhone    String?        @map("contact_phone")
+  contactEmail    String?        @map("contact_email")
+  taxCode         String?        @map("tax_code")
+
+  // Location (PostGIS)
+  latitude        Float?
+  longitude       Float?
+
+  // Status
+  status          CustomerStatus @default(ACTIVE)
+  tier            CustomerTier   @default(STANDARD)
+
+  // AI Fields
+  aiNotes         String?        @map("ai_notes")
+
+  // Metadata
+  createdById     String?        @map("created_by_id")
+  createdBy       User?          @relation("CreatedByUser", fields: [createdById], references: [id])
+
+  // Relations
+  contracts       Contract[]
+  invoices        Invoice[]
+  customerPlants  CustomerPlant[]
+  careSchedules   CareSchedule[]
+  exchangeRequests ExchangeRequest[]
+  stickyNotes     StickyNote[]
+  quotations      Quotation[]
+
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([status, district])
+  @@map("customers")
+}
+
+model PlantType {
+  id              String    @id @default(cuid())
+  code            String    @unique
+  name            String
+  nameNorm        String    @map("name_normalized")
+  category        String?
+  description     String?
+
+  // Pricing
+  rentalPrice     Float     @default(0) @map("rental_price")
+  purchasePrice   Float?    @map("purchase_price")
+
+  // Care
+  careInstructions String?  @map("care_instructions")
+  careFrequency   Int?      @default(14) @map("care_frequency_days")
+
+  isActive        Boolean   @default(true) @map("is_active")
+
+  // Relations
+  inventory       Inventory?
+  customerPlants  CustomerPlant[]
+  contractItems   ContractItem[]
+  quotationItems  QuotationItem[]
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("plant_types")
+}
+
+model Inventory {
+  id              String    @id @default(cuid())
+  plantTypeId     String    @unique @map("plant_type_id")
+  plantType       PlantType @relation(fields: [plantTypeId], references: [id])
+
+  totalStock      Int       @default(0) @map("total_stock")
+  availableStock  Int       @default(0) @map("available_stock")
+  rentedStock     Int       @default(0) @map("rented_stock")
+  damagedStock    Int       @default(0) @map("damaged_stock")
+  reservedStock   Int       @default(0) @map("reserved_stock")
+
+  reorderLevel    Int       @default(10) @map("reorder_level")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("inventory")
+}
+
+model CustomerPlant {
+  id              String      @id @default(cuid())
+  customerId      String      @map("customer_id")
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plantTypeId     String      @map("plant_type_id")
+  plantType       PlantType   @relation(fields: [plantTypeId], references: [id])
+
+  quantity        Int         @default(1)
+  location        String?
+  notes           String?
+  status          PlantStatus @default(ACTIVE)
+
+  placedDate      DateTime?   @map("placed_date")
+  lastCareDate    DateTime?   @map("last_care_date")
+
+  contractId      String?     @map("contract_id")
+  contract        Contract?   @relation(fields: [contractId], references: [id])
+
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  @@index([customerId, status])
+  @@map("customer_plants")
+}
+
+// =====================================================
+// CONTRACT & BILLING
+// =====================================================
+
+model Contract {
+  id              String         @id @default(cuid())
+  contractNumber  String         @unique @map("contract_number")
+  customerId      String         @map("customer_id")
+  customer        Customer       @relation(fields: [customerId], references: [id])
+
+  status          ContractStatus @default(DRAFT)
+
+  startDate       DateTime       @map("start_date")
+  endDate         DateTime       @map("end_date")
+
+  // Pricing
+  monthlyAmount   Float          @map("monthly_amount")
+  totalAmount     Float          @map("total_amount")
+  depositAmount   Float?         @default(0) @map("deposit_amount")
+
+  // Terms
+  paymentTerms    String?        @map("payment_terms")
+  notes           String?
+
+  // Renewal
+  renewedFromId   String?        @unique @map("renewed_from_id")
+  renewedFrom     Contract?      @relation("ContractRenewal", fields: [renewedFromId], references: [id])
+  renewedTo       Contract?      @relation("ContractRenewal")
+
+  // Relations
+  items           ContractItem[]
+  invoices        Invoice[]
+  customerPlants  CustomerPlant[]
+
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([customerId, status])
+  @@map("contracts")
+}
+
+model ContractItem {
+  id              String    @id @default(cuid())
+  contractId      String    @map("contract_id")
+  contract        Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  plantTypeId     String    @map("plant_type_id")
+  plantType       PlantType @relation(fields: [plantTypeId], references: [id])
+
+  quantity        Int
+  unitPrice       Float     @map("unit_price")
+  totalPrice      Float     @map("total_price")
+  notes           String?
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("contract_items")
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  invoiceNumber    String        @unique @map("invoice_number")
+  customerId       String        @map("customer_id")
+  customer         Customer      @relation(fields: [customerId], references: [id])
+  contractId       String?       @map("contract_id")
+  contract         Contract?     @relation(fields: [contractId], references: [id])
+
+  status           InvoiceStatus @default(DRAFT)
+
+  issueDate        DateTime      @map("issue_date")
+  dueDate          DateTime      @map("due_date")
+
+  // Amounts
+  subtotal         Float         @default(0)
+  taxAmount        Float         @default(0) @map("tax_amount")
+  totalAmount      Float         @map("total_amount")
+  paidAmount       Float         @default(0) @map("paid_amount")
+  outstandingAmount Float        @default(0) @map("outstanding_amount")
+
+  notes            String?
+
+  // Relations
+  items            InvoiceItem[]
+  payments         Payment[]
+
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  @@index([status, dueDate])
+  @@index([customerId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id              String   @id @default(cuid())
+  invoiceId       String   @map("invoice_id")
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description     String
+  quantity        Int
+  unitPrice       Float    @map("unit_price")
+  totalPrice      Float    @map("total_price")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  invoiceId       String        @map("invoice_id")
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id])
+
+  amount          Float
+  paymentDate     DateTime      @map("payment_date")
+  method          PaymentMethod @default(BANK_TRANSFER)
+  reference       String?
+  notes           String?
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@map("payments")
+}
+
+// =====================================================
+// OPERATIONS
+// =====================================================
+
+model CareSchedule {
+  id              String     @id @default(cuid())
+  customerId      String     @map("customer_id")
+  customer        Customer   @relation(fields: [customerId], references: [id])
+
+  scheduledDate   DateTime   @map("scheduled_date")
+  scheduledTime   String?    @map("scheduled_time")
+
+  staffId         String?    @map("staff_id")
+  staff           User?      @relation(fields: [staffId], references: [id])
+
+  status          CareStatus @default(SCHEDULED)
+
+  estimatedEndDate DateTime?  @map("estimated_end_date")
+
+  // Check-in/out
+  checkInTime     DateTime?  @map("check_in_time")
+  checkOutTime    DateTime?  @map("check_out_time")
+  checkInLat      Float?     @map("check_in_lat")
+  checkInLng      Float?     @map("check_in_lng")
+
+  // Report
+  notes           String?
+  workReport      String?    @map("work_report")
+  photos          String[]   @default([])
+
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@index([scheduledDate, status, staffId])
+  @@map("care_schedules")
+}
+
+model ExchangeRequest {
+  id              String               @id @default(cuid())
+  customerId      String               @map("customer_id")
+  customer        Customer             @relation(fields: [customerId], references: [id])
+
+  status          ExchangeRequestStatus @default(PENDING)
+  urgency         ExchangeUrgency      @default(NORMAL)
+  priorityScore   Float                @default(0) @map("priority_score")
+
+  reason          String?
+  requestedDate   DateTime?            @map("requested_date")
+
+  // Plant details
+  plantsToReplace Json?                @map("plants_to_replace")
+
+  // Scheduling
+  scheduledExchangeId String?          @map("scheduled_exchange_id")
+
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([status, priorityScore])
+  @@map("exchange_requests")
+}
+
+model DailySchedule {
+  id              String             @id @default(cuid())
+  scheduleDate    DateTime           @unique @map("schedule_date")
+
+  status          String             @default("DRAFT")
+  notes           String?
+
+  // Route optimization data
+  routeData       Json?              @map("route_data")
+
+  exchanges       ScheduledExchange[]
+
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  @@index([scheduleDate])
+  @@map("daily_schedules")
+}
+
+model ScheduledExchange {
+  id              String        @id @default(cuid())
+  dailyScheduleId String        @map("daily_schedule_id")
+  dailySchedule   DailySchedule @relation(fields: [dailyScheduleId], references: [id], onDelete: Cascade)
+
+  customerId      String        @map("customer_id")
+  orderIndex      Int           @default(0) @map("order_index")
+
+  // Exchange details
+  exchangeData    Json          @map("exchange_data")
+  status          String        @default("PENDING")
+
+  completedAt     DateTime?     @map("completed_at")
+  notes           String?
+
+  // Result
+  history         ExchangeHistory?
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("scheduled_exchanges")
+}
+
+model ExchangeHistory {
+  id                  String           @id @default(cuid())
+  scheduledExchangeId String           @unique @map("scheduled_exchange_id")
+  scheduledExchange   ScheduledExchange @relation(fields: [scheduledExchangeId], references: [id])
+
+  customerId          String           @map("customer_id")
+  exchangeDate        DateTime         @map("exchange_date")
+
+  // Plants exchanged
+  plantsRemoved       Json             @map("plants_removed")
+  plantsDelivered     Json             @map("plants_delivered")
+
+  // Feedback
+  satisfactionRating  Int?             @map("satisfaction_rating")
+  customerNotes       String?          @map("customer_notes")
+
+  photos              String[]         @default([])
+
+  createdAt           DateTime         @default(now()) @map("created_at")
+
+  @@map("exchange_history")
+}
+
+// =====================================================
+// STICKY NOTES (AI-POWERED)
+// =====================================================
+
+model StickyNote {
+  id              String       @id @default(cuid())
+  customerId      String       @map("customer_id")
+  customer        Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  content         String
+  status          NoteStatus   @default(OPEN)
+  priority        NotePriority @default(MEDIUM)
+  category        NoteCategory @default(GENERAL)
+
+  // AI Analysis
+  aiAnalysis      Json?        @map("ai_analysis")
+  aiSuggestions   Json?        @map("ai_suggestions")
+
+  // Metadata
+  createdById     String       @map("created_by_id")
+  createdBy       User         @relation(fields: [createdById], references: [id])
+
+  resolvedAt      DateTime?    @map("resolved_at")
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([customerId, status])
+  @@map("sticky_notes")
+}
+
+// =====================================================
+// QUOTATIONS
+// =====================================================
+
+model Quotation {
+  id              String    @id @default(cuid())
+  quotationNumber String    @unique @map("quotation_number")
+  customerId      String    @map("customer_id")
+  customer        Customer  @relation(fields: [customerId], references: [id])
+
+  status          String    @default("DRAFT")
+  validUntil      DateTime? @map("valid_until")
+
+  // Amounts
+  subtotal        Float     @default(0)
+  discount        Float     @default(0)
+  totalAmount     Float     @map("total_amount")
+
+  notes           String?
+
+  // Conversion
+  convertedToContractId String? @map("converted_to_contract_id")
+
+  items           QuotationItem[]
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id              String    @id @default(cuid())
+  quotationId     String    @map("quotation_id")
+  quotation       Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  plantTypeId     String    @map("plant_type_id")
+  plantType       PlantType @relation(fields: [plantTypeId], references: [id])
+
+  quantity        Int
+  unitPrice       Float     @map("unit_price")
+  totalPrice      Float     @map("total_price")
+  notes           String?
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("quotation_items")
+}
+
+// =====================================================
+// SYSTEM
+// =====================================================
+
+model ActivityLog {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id])
+
+  action          String
+  entityType      String   @map("entity_type")
+  entityId        String   @map("entity_id")
+
+  oldData         Json?    @map("old_data")
+  newData         Json?    @map("new_data")
+
+  ipAddress       String?  @map("ip_address")
+  userAgent       String?  @map("user_agent")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@map("activity_logs")
+}
+
+model Setting {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  value           Json
+  description     String?
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}

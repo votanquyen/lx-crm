@@ -4,9 +4,10 @@ Hệ thống Quản lý Khách hàng & Cho thuê Cây xanh
 
 ## Tech Stack
 
-- **Frontend:** Next.js 15, React 19, TailwindCSS, shadcn/ui
+- **Frontend:** Next.js 16, React 19, TailwindCSS 3, shadcn/ui
 - **Backend:** Next.js Server Actions, Prisma ORM
 - **Database:** PostgreSQL 17 + PostGIS
+- **Authentication:** NextAuth.js 5 (Google OAuth)
 - **AI:** Google Gemini, Groq (fallback)
 
 ## Getting Started

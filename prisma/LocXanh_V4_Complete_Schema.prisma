@@ -1,0 +1,1443 @@
+// ============================================================
+// LỘC XANH V4.0 - COMPLETE PRISMA SCHEMA
+// Compatible with doi_Cay database structure
+// PostgreSQL 17 + PostGIS 3.5 + pg_trgm + unaccent
+// Last Updated: December 17, 2025
+// ============================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "fullTextSearch", "views"]
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis(version: "3.5.0"), pg_trgm, unaccent]
+}
+
+// ============================================================
+// ENUMS - Đồng bộ với doi_Cay
+// ============================================================
+
+enum UserRole {
+  ADMIN      // Quản trị viên toàn quyền
+  MANAGER    // Quản lý - xem tất cả, sửa hạn chế
+  ACCOUNTANT // Kế toán - quản lý hóa đơn, thanh toán
+  STAFF      // Nhân viên chăm sóc
+  VIEWER     // Chỉ xem
+}
+
+enum CustomerStatus {
+  LEAD       // Khách hàng tiềm năng
+  ACTIVE     // Đang thuê cây
+  INACTIVE   // Tạm ngưng dịch vụ
+  TERMINATED // Đã kết thúc hợp đồng
+}
+
+enum CustomerTier {
+  STANDARD // Khách hàng thông thường
+  PREMIUM  // Khách hàng cao cấp
+  VIP      // Khách hàng VIP
+}
+
+enum ContractStatus {
+  DRAFT       // Bản nháp
+  SENT        // Đã gửi khách
+  NEGOTIATING // Đang đàm phán
+  SIGNED      // Đã ký
+  ACTIVE      // Đang hiệu lực
+  EXPIRED     // Hết hạn
+  TERMINATED  // Chấm dứt sớm
+  CANCELLED   // Đã hủy
+}
+
+enum InvoiceStatus {
+  DRAFT     // Bản nháp
+  SENT      // Đã gửi
+  PARTIAL   // Thanh toán một phần
+  PAID      // Đã thanh toán đủ
+  OVERDUE   // Quá hạn
+  CANCELLED // Đã hủy
+  REFUNDED  // Đã hoàn tiền
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER // Chuyển khoản ngân hàng
+  CASH          // Tiền mặt
+  CARD          // Thẻ
+  MOMO          // Ví MoMo
+  ZALOPAY       // ZaloPay
+  VNPAY         // VNPay
+}
+
+enum QuotationStatus {
+  DRAFT     // Bản nháp
+  SENT      // Đã gửi khách
+  ACCEPTED  // Khách đồng ý
+  REJECTED  // Khách từ chối
+  EXPIRED   // Hết hạn
+  CONVERTED // Đã chuyển thành hợp đồng
+}
+
+enum CareStatus {
+  SCHEDULED    // Đã lên lịch
+  IN_PROGRESS  // Đang thực hiện
+  COMPLETED    // Hoàn thành
+  CANCELLED    // Đã hủy
+  RESCHEDULED  // Đã dời lịch
+  SKIPPED      // Bỏ qua (khách không có mặt)
+}
+
+enum ExchangeStatus {
+  PENDING     // Chờ xử lý
+  SCHEDULED   // Đã lên lịch
+  IN_PROGRESS // Đang thực hiện
+  COMPLETED   // Hoàn thành
+  CANCELLED   // Đã hủy
+}
+
+enum ExchangePriority {
+  LOW    // Thấp (1-3)
+  MEDIUM // Trung bình (4-6)
+  HIGH   // Cao (7-8)
+  URGENT // Khẩn cấp (9-10)
+}
+
+enum NoteCategory {
+  GENERAL   // Ghi chú chung
+  URGENT    // Khẩn cấp
+  COMPLAINT // Khiếu nại
+  REQUEST   // Yêu cầu
+  FEEDBACK  // Phản hồi
+  EXCHANGE  // Đổi cây
+  CARE      // Chăm sóc
+  PAYMENT   // Thanh toán
+}
+
+enum NoteStatus {
+  OPEN        // Mới tạo
+  IN_PROGRESS // Đang xử lý
+  RESOLVED    // Đã giải quyết
+  CANCELLED   // Đã hủy
+}
+
+enum ScheduleStatus {
+  DRAFT       // Bản nháp
+  APPROVED    // Đã duyệt
+  IN_PROGRESS // Đang thực hiện
+  COMPLETED   // Hoàn thành
+  CANCELLED   // Đã hủy
+}
+
+enum StorageType {
+  LOCAL  // Lưu trữ local
+  MINIO  // MinIO S3-compatible
+  GDRIVE // Google Drive
+}
+
+enum PlantStatus {
+  ACTIVE   // Đang hoạt động
+  REMOVED  // Đã gỡ bỏ
+  REPLACED // Đã thay thế
+}
+
+enum PlantCondition {
+  EXCELLENT // Rất tốt
+  GOOD      // Tốt
+  FAIR      // Trung bình
+  POOR      // Kém
+  DEAD      // Chết
+}
+
+// ============================================================
+// AUTHENTICATION MODELS (Auth.js v5 / NextAuth.js)
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String
+  image         String?
+  passwordHash  String?
+  role          UserRole  @default(STAFF)
+  phone         String?
+  isActive      Boolean   @default(true)
+
+  // OAuth Integration
+  googleId String? @unique
+
+  // Staff specific fields
+  staffCode   String? @unique // NV-001
+  department  String?
+  hireDate    DateTime?
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  accounts              Account[]
+  sessions              Session[]
+  careSchedules         CareSchedule[]      @relation("StaffSchedules")
+  exchangeHistory       ExchangeHistory[]   @relation("StaffExchanges")
+  activityLogs          ActivityLog[]
+  approvedSchedules     DailySchedule[]     @relation("ApprovedBy")
+  createdSchedules      DailySchedule[]     @relation("CreatedBy")
+  createdNotes          StickyNote[]        @relation("NoteCreatedBy")
+  resolvedNotes         StickyNote[]        @relation("NoteResolvedBy")
+  assignedNotes         StickyNote[]        @relation("NoteAssignedTo")
+  uploadedFiles         FileUpload[]
+  createdContracts      Contract[]          @relation("ContractCreatedBy")
+  createdInvoices       Invoice[]           @relation("InvoiceCreatedBy")
+  createdQuotations     Quotation[]         @relation("QuotationCreatedBy")
+  recordedPayments      Payment[]           @relation("PaymentRecordedBy")
+  preferredByCustomers  Customer[]          @relation("PreferredStaff")
+
+  @@index([email])
+  @@index([role])
+  @@index([staffCode])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================
+// PLANT MANAGEMENT (Compatible with doi_Cay: plant_catalog)
+// ============================================================
+
+model PlantType {
+  id             String  @id @default(cuid())
+  code           String  @unique // KT, PT, LH, TT, KC...
+  name           String // Cây Kim Tiền
+  nameNormalized String? // cay kim tien (for trigram search)
+  description    String? @db.Text
+  category       String? // Indoor, Outdoor, Succulent, Bonsai
+
+  // Specifications
+  sizeSpec    String? // "Cao 1.2m, Chậu 30cm"
+  heightMin   Int?    // cm
+  heightMax   Int?    // cm
+  potSize     String? // "25cm", "30cm", "40cm"
+  potDiameter Int?    // cm
+
+  // Pricing (VND)
+  rentalPrice      Decimal  @default(50000) @db.Decimal(12, 0)
+  depositPrice     Decimal? @db.Decimal(12, 0)
+  salePrice        Decimal? @db.Decimal(12, 0)
+  replacementPrice Decimal? @db.Decimal(12, 0) // Chi phí thay thế nếu hư
+
+  // Care Information
+  avgLifespanDays     Int     @default(30) // Tuổi thọ trung bình khi thuê
+  wateringFrequency   String? // "2 lần/tuần", "1 lần/ngày"
+  lightRequirement    String? // "Ánh sáng gián tiếp", "Nắng trực tiếp"
+  temperatureRange    String? // "20-30°C"
+  careInstructions    String? @db.Text
+  careLevel           String? // Easy, Medium, Hard
+
+  // Media
+  imageUrl    String?
+  images      Json?    // ["url1", "url2", "url3"]
+  thumbnailUrl String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  inventory      Inventory?
+  contractItems  ContractItem[]
+  quotationItems QuotationItem[]
+  customerPlants CustomerPlant[]
+
+  @@index([code])
+  @@index([category])
+  @@index([isActive])
+  @@index([rentalPrice])
+  @@map("plant_types")
+}
+
+// Inventory (Compatible with doi_Cay: depot_inventory)
+model Inventory {
+  id          String @id @default(cuid())
+  plantTypeId String @unique
+
+  // Stock Levels
+  totalStock     Int @default(0)
+  availableStock Int @default(0) // Có sẵn để giao
+  rentedStock    Int @default(0) // Đang cho thuê
+  reservedStock  Int @default(0) // Đã book cho schedule
+  damagedStock   Int @default(0) // Hư hỏng
+  maintenanceStock Int @default(0) // Đang bảo dưỡng
+
+  // Alerts
+  lowStockThreshold  Int @default(10)
+  reorderPoint       Int @default(20)
+  reorderQuantity    Int @default(50)
+
+  // Location
+  warehouseLocation String?
+  shelfNumber       String?
+
+  // Tracking
+  lastRestockDate DateTime?
+  lastAuditDate   DateTime?
+
+  // Notes
+  notes String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  plantType PlantType @relation(fields: [plantTypeId], references: [id])
+
+  @@index([plantTypeId])
+  @@index([availableStock])
+  @@map("inventory")
+}
+
+// ============================================================
+// CUSTOMER MANAGEMENT (Enhanced from doi_Cay: customers)
+// ============================================================
+
+model Customer {
+  id   String @id @default(cuid())
+  code String @unique // KH-001, KH-002...
+
+  // Company Information
+  companyName     String
+  companyNameNorm String? // Normalized for search (lowercase, no accents)
+  shortName       String? // Tên viết tắt
+  taxCode         String? @unique // Mã số thuế
+  businessType    String? // Công ty TNHH, Công ty CP, Hộ kinh doanh
+
+  // Address
+  address           String
+  addressNormalized String? // AI-normalized address
+  ward              String? // Phường/Xã
+  district          String? // Quận/Huyện
+  city              String  @default("Hồ Chí Minh")
+  country           String  @default("Việt Nam")
+  postalCode        String?
+
+  // Geolocation (PostGIS compatible)
+  latitude  Float?
+  longitude Float?
+
+  // Primary Contact
+  contactName     String?
+  contactPhone    String?
+  contactEmail    String?
+  contactPosition String?
+
+  // Secondary Contact (Backup)
+  contact2Name     String?
+  contact2Phone    String?
+  contact2Email    String?
+  contact2Position String?
+
+  // Accounting Contact (for invoices)
+  accountingName  String?
+  accountingPhone String?
+  accountingEmail String?
+
+  // Business Information
+  status   CustomerStatus @default(LEAD)
+  tier     CustomerTier   @default(STANDARD)
+  source   String? // Referral, Website, Cold call, Exhibition
+  industry String? // IT, Finance, Healthcare, Retail, F&B, Education
+
+  // Care Schedule Preferences
+  careWeekday        Int?    @default(1) // 0=Sunday, 1=Monday...6=Saturday
+  careTimeSlot       String? // "08:00-10:00", "14:00-16:00"
+  preferredStaffId   String?
+  careFrequency      String? @default("weekly") // weekly, biweekly, monthly
+  requiresAppointment Boolean @default(false)
+
+  // Building/Location Details
+  buildingName   String?
+  floorCount     Int?
+  hasElevator    Boolean @default(true)
+  parkingNote    String?
+  securityNote   String?
+  accessInstructions String? @db.Text
+
+  // Billing Preferences
+  billingCycle     String? @default("monthly") // monthly, quarterly
+  paymentTermDays  Int     @default(30)
+  preferredPayment PaymentMethod @default(BANK_TRANSFER)
+
+  // Notes
+  notes         String? @db.Text
+  internalNotes String? @db.Text // Ghi chú nội bộ, khách không thấy
+
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  firstContractDate DateTime? // Ngày ký hợp đồng đầu tiên
+  lastCareDate      DateTime? // Ngày chăm sóc gần nhất
+  lastContactDate   DateTime? // Ngày liên hệ gần nhất
+
+  // Relations
+  contracts          Contract[]
+  invoices           Invoice[]
+  quotations         Quotation[]
+  careSchedules      CareSchedule[]
+  stickyNotes        StickyNote[]
+  customerPlants     CustomerPlant[]
+  exchangeRequests   ExchangeRequest[]
+  scheduledExchanges ScheduledExchange[]
+  exchangeHistory    ExchangeHistory[]
+  preferredStaff     User?               @relation("PreferredStaff", fields: [preferredStaffId], references: [id])
+
+  @@index([code])
+  @@index([status])
+  @@index([district])
+  @@index([tier])
+  @@index([careWeekday])
+  @@index([taxCode])
+  @@map("customers")
+}
+
+// Current plants at customer location
+model CustomerPlant {
+  id          String @id @default(cuid())
+  customerId  String
+  plantTypeId String
+
+  quantity Int @default(1)
+
+  // Location Details
+  location    String? // "Sảnh chính", "Phòng họp A", "Tầng 5 - Reception"
+  floor       String? // "Tầng 1", "Tầng 5", "Basement"
+  room        String? // "Phòng Giám đốc", "Lễ tân"
+  position    String? // "Góc trái", "Cạnh cửa sổ"
+  
+  // Pot/Container Info
+  potType     String? // "Chậu sứ", "Chậu composite", "Chậu nhựa"
+  potColor    String?
+  hasSaucer   Boolean @default(true)
+
+  // Condition Tracking
+  condition      PlantCondition @default(GOOD)
+  conditionNotes String?
+  healthScore    Int? // 1-10
+
+  // Status
+  status PlantStatus @default(ACTIVE)
+
+  // Dates
+  installedAt     DateTime  @default(now())
+  lastExchanged   DateTime?
+  nextExchange    DateTime?
+  lastInspected   DateTime?
+
+  // Notes
+  notes           String?
+  specialCareNote String? // Yêu cầu chăm sóc đặc biệt
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer  Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  plantType PlantType @relation(fields: [plantTypeId], references: [id])
+
+  @@unique([customerId, plantTypeId, location])
+  @@index([customerId])
+  @@index([plantTypeId])
+  @@index([status])
+  @@index([condition])
+  @@index([nextExchange])
+  @@map("customer_plants")
+}
+
+// ============================================================
+// CONTRACT MANAGEMENT
+// ============================================================
+
+model Contract {
+  id             String @id @default(cuid())
+  contractNumber String @unique // HĐ-2025-001
+
+  customerId  String
+  createdById String?
+
+  // Contract Type
+  contractType String @default("rental") // rental, sale, maintenance
+
+  // Contract Period
+  startDate       DateTime
+  endDate         DateTime
+  signedDate      DateTime?
+  terminatedDate  DateTime?
+  terminationReason String?
+
+  // Renewal
+  autoRenew       Boolean @default(true)
+  renewalTerms    String? // Điều khoản gia hạn
+  renewalPeriod   Int     @default(12) // months
+  renewalReminder Int     @default(30) // days before expiry
+
+  // Pricing (VND)
+  monthlyFee       Decimal @db.Decimal(12, 0)
+  depositAmount    Decimal @default(0) @db.Decimal(12, 0)
+  setupFee         Decimal @default(0) @db.Decimal(12, 0)
+  vatRate          Decimal @default(10) @db.Decimal(4, 2) // 10%
+  discountPercent  Decimal @default(0) @db.Decimal(4, 2)
+  discountAmount   Decimal @default(0) @db.Decimal(12, 0)
+
+  // Calculated (stored for query performance)
+  totalMonthlyAmount Decimal? @db.Decimal(12, 0) // after discount + VAT
+  totalContractValue Decimal? @db.Decimal(14, 0) // full contract value
+
+  // Status
+  status ContractStatus @default(DRAFT)
+
+  // Signing
+  signingMethod   String?   // HYBRID, E_CONTRACT, PHYSICAL
+  signedBy        String?   // Người ký phía khách hàng
+  signerPosition  String?   // Chức vụ người ký
+  witnessName     String?
+
+  // Files
+  draftFileUrl  String?
+  signedFileUrl String?
+  appendixUrls  Json? // ["url1", "url2"]
+
+  // Google Drive Integration
+  gdriveFolderId  String?
+  gdriveFileId    String?
+
+  // Terms
+  termsNotes      String? @db.Text
+  specialTerms    String? @db.Text
+  paymentTerms    String? @db.Text
+  deliveryTerms   String? @db.Text
+  warrantyTerms   String? @db.Text
+
+  // Reference
+  previousContractId String? // For renewals
+  quotationId        String? // If converted from quotation
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer  Customer       @relation(fields: [customerId], references: [id])
+  createdBy User?          @relation("ContractCreatedBy", fields: [createdById], references: [id])
+  items     ContractItem[]
+  invoices  Invoice[]
+
+  @@index([contractNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([endDate])
+  @@index([startDate])
+  @@map("contracts")
+}
+
+model ContractItem {
+  id          String @id @default(cuid())
+  contractId  String
+  plantTypeId String
+
+  // Quantities
+  quantity   Int
+  
+  // Pricing
+  unitPrice     Decimal @db.Decimal(12, 0)
+  discountRate  Decimal @default(0) @db.Decimal(4, 2)
+  totalPrice    Decimal @db.Decimal(12, 0)
+
+  // Location
+  locationNote String? // "Sảnh: 5 cây, Phòng họp: 3 cây"
+  
+  // Service Details
+  careIncluded       Boolean @default(true)
+  exchangeIncluded   Boolean @default(true)
+  exchangeFrequency  String? // "monthly", "as-needed"
+
+  // Notes
+  notes        String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  contract  Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  plantType PlantType @relation(fields: [plantTypeId], references: [id])
+
+  @@index([contractId])
+  @@index([plantTypeId])
+  @@map("contract_items")
+}
+
+// ============================================================
+// INVOICE & PAYMENT MANAGEMENT
+// ============================================================
+
+model Invoice {
+  id            String @id @default(cuid())
+  invoiceNumber String @unique // INV-2025-001
+
+  customerId  String
+  contractId  String?
+  createdById String?
+
+  // Invoice Type
+  invoiceType String @default("service") // service, deposit, setup, penalty
+
+  // Billing Period
+  periodStart DateTime?
+  periodEnd   DateTime?
+  periodLabel String?   // "Tháng 01/2025", "Quý 1/2025"
+
+  // Amounts (VND)
+  subtotal          Decimal @db.Decimal(12, 0)
+  discountAmount    Decimal @default(0) @db.Decimal(12, 0)
+  vatRate           Decimal @default(10) @db.Decimal(4, 2)
+  vatAmount         Decimal @db.Decimal(12, 0)
+  totalAmount       Decimal @db.Decimal(12, 0)
+  paidAmount        Decimal @default(0) @db.Decimal(12, 0)
+  outstandingAmount Decimal @default(0) @db.Decimal(12, 0) // totalAmount - paidAmount
+
+  // Status
+  status InvoiceStatus @default(DRAFT)
+
+  // Dates
+  issueDate DateTime @default(now())
+  dueDate   DateTime
+  paidDate  DateTime?
+  sentDate  DateTime?
+
+  // VAT Invoice (Hóa đơn đỏ / Hóa đơn GTGT)
+  vatInvoiceNumber   String?
+  vatInvoiceDate     DateTime?
+  vatInvoiceUrl      String?
+  vatInvoiceSeries   String?   // Ký hiệu hóa đơn
+  vatInvoiceIssuer   String?   // Đơn vị phát hành
+
+  // Files
+  pdfUrl       String?
+  attachments  Json?     // Additional attachments
+
+  // Notes
+  notes        String?
+  paymentNotes String?
+  internalNote String?
+
+  // Reminder tracking
+  reminderCount    Int       @default(0)
+  lastReminderDate DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer  Customer   @relation(fields: [customerId], references: [id])
+  contract  Contract?  @relation(fields: [contractId], references: [id])
+  createdBy User?      @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
+  payments  Payment[]
+  items     InvoiceItem[]
+
+  @@index([invoiceNumber])
+  @@index([customerId])
+  @@index([contractId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([issueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id        String @id @default(cuid())
+  invoiceId String
+
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(12, 0)
+  totalPrice  Decimal  @db.Decimal(12, 0)
+  
+  // Optional reference
+  plantTypeCode String?
+  serviceType   String?  // rental, care, exchange, other
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Payment {
+  id        String @id @default(cuid())
+  invoiceId String
+
+  amount        Decimal       @db.Decimal(12, 0)
+  paymentDate   DateTime      @default(now())
+  paymentMethod PaymentMethod @default(BANK_TRANSFER)
+
+  // Bank Transfer Details
+  bankRef       String? // Số giao dịch / Transaction ID
+  bankName      String?
+  accountNumber String?
+  accountName   String?
+
+  // Cash/Other Details
+  receivedBy    String?
+  receiptNumber String?
+
+  // Verification
+  isVerified    Boolean   @default(false)
+  verifiedAt    DateTime?
+  verifiedById  String?
+
+  // Notes
+  notes      String?
+  receiptUrl String?
+
+  // Who recorded this payment
+  recordedById String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  recordedBy User?   @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([paymentDate])
+  @@index([paymentMethod])
+  @@map("payments")
+}
+
+// ============================================================
+// QUOTATION MANAGEMENT
+// ============================================================
+
+model Quotation {
+  id          String @id @default(cuid())
+  quoteNumber String @unique // QT-2025-001
+
+  customerId  String
+  createdById String?
+
+  // Title/Description
+  title       String?
+  description String? @db.Text
+
+  // Amounts (VND)
+  subtotal      Decimal @db.Decimal(12, 0)
+  discountRate  Decimal @default(0) @db.Decimal(4, 2)
+  discountAmount Decimal @default(0) @db.Decimal(12, 0)
+  vatRate       Decimal @default(10) @db.Decimal(4, 2)
+  vatAmount     Decimal @db.Decimal(12, 0)
+  totalAmount   Decimal @db.Decimal(12, 0)
+
+  // Proposed Contract Terms
+  proposedStartDate   DateTime?
+  proposedDuration    Int?       // months
+  proposedMonthlyFee  Decimal?   @db.Decimal(12, 0)
+  proposedDeposit     Decimal?   @db.Decimal(12, 0)
+
+  // Validity Period
+  validFrom  DateTime @default(now())
+  validUntil DateTime
+
+  // Status
+  status QuotationStatus @default(DRAFT)
+
+  // Customer Response
+  customerResponse    String?
+  responseDate        DateTime?
+  rejectionReason     String?
+
+  // Conversion to Contract
+  convertedToContractId String?
+  convertedAt           DateTime?
+
+  // Notes
+  notes           String? @db.Text
+  termsConditions String? @db.Text
+  internalNotes   String? @db.Text
+
+  // Files
+  pdfUrl      String?
+  attachments Json?
+
+  // Follow-up
+  followUpDate    DateTime?
+  followUpNotes   String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer  Customer        @relation(fields: [customerId], references: [id])
+  createdBy User?           @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  items     QuotationItem[]
+
+  @@index([quoteNumber])
+  @@index([customerId])
+  @@index([status])
+  @@index([validUntil])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id          String @id @default(cuid())
+  quotationId String
+  plantTypeId String
+
+  quantity      Int
+  unitPrice     Decimal @db.Decimal(12, 0)
+  discountRate  Decimal @default(0) @db.Decimal(4, 2)
+  totalPrice    Decimal @db.Decimal(12, 0)
+
+  locationNote  String?
+  notes         String?
+
+  // Relations
+  quotation Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  plantType PlantType @relation(fields: [plantTypeId], references: [id])
+
+  @@index([quotationId])
+  @@index([plantTypeId])
+  @@map("quotation_items")
+}
+
+// ============================================================
+// CARE SCHEDULE (Regular Maintenance)
+// ============================================================
+
+model CareSchedule {
+  id String @id @default(cuid())
+
+  customerId String
+  staffId    String?
+
+  // Schedule
+  scheduledDate DateTime   @db.Date
+  scheduledTime DateTime?  @db.Time // Specific time if set
+  timeSlot      String?    // "08:00-10:00" - time window
+  status        CareStatus @default(SCHEDULED)
+
+  // Estimated duration
+  estimatedDurationMins Int @default(30)
+  actualDurationMins    Int?
+
+  // Check-in/out with GPS
+  checkedInAt   DateTime?
+  checkedOutAt  DateTime?
+  checkedInLat  Float?
+  checkedInLng  Float?
+  checkedOutLat Float?
+  checkedOutLng Float?
+
+  // Work Report
+  workNotes     String?   @db.Text
+  issuesFound   String?   @db.Text
+  actionsToken  String?   @db.Text
+  plantCount    Int?      // Number of plants serviced
+  
+  // Plant Conditions (JSON array of assessments)
+  plantAssessments Json? // [{ plantId, condition, notes }]
+
+  // Pending Requests Indicator
+  hasPendingRequests     Boolean @default(false)
+  pendingRequestsSummary String?
+
+  // Photos
+  photoUrls     Json? // ["url1", "url2"]
+  beforePhotos  Json?
+  afterPhotos   Json?
+
+  // Customer Feedback
+  customerFeedback   String?
+  satisfactionRating Int? // 1-5
+
+  // Rescheduling
+  originalDate      DateTime?
+  rescheduleReason  String?
+
+  // Notes
+  notes String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id])
+  staff    User?    @relation("StaffSchedules", fields: [staffId], references: [id])
+
+  @@index([scheduledDate])
+  @@index([staffId])
+  @@index([customerId])
+  @@index([status])
+  @@map("care_schedules")
+}
+
+// ============================================================
+// STICKY NOTES (AI-Powered Customer Notes)
+// ============================================================
+
+model StickyNote {
+  id String @id @default(cuid())
+
+  customerId   String
+  createdById  String?
+  assignedToId String?
+
+  // Content
+  title    String?
+  content  String       @db.Text
+  category NoteCategory @default(GENERAL)
+  status   NoteStatus   @default(OPEN)
+
+  // AI Analysis Results
+  aiAnalysis    Json? // { entities: [], intent: "", sentiment: "", keywords: [] }
+  aiSuggestions Json? // [{ action: "", confidence: 0.9, reason: "" }]
+  aiProcessedAt DateTime?
+
+  // Priority (AI suggested or manual override)
+  priority         Int     @default(5) // 1-10
+  priorityReason   String?
+  isAiPriority     Boolean @default(false)
+
+  // Source
+  source       String? // PHONE, EMAIL, TELEGRAM, CARE_VISIT, MANUAL
+  sourceRef    String? // Reference to source (phone number, email id, etc.)
+  callerName   String?
+  callerPhone  String?
+
+  // Resolution
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolution   String?   @db.Text
+
+  // Links to Actions Taken
+  linkedCareId       String?
+  linkedExchangeId   String?
+  linkedInvoiceId    String?
+  linkedQuotationId  String?
+
+  // Due Date (if action required)
+  dueDate      DateTime?
+  reminderDate DateTime?
+
+  // Tags
+  tags Json? // ["urgent", "payment", "complaint"]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer   Customer @relation(fields: [customerId], references: [id])
+  createdBy  User?    @relation("NoteCreatedBy", fields: [createdById], references: [id])
+  resolvedBy User?    @relation("NoteResolvedBy", fields: [resolvedById], references: [id])
+  assignedTo User?    @relation("NoteAssignedTo", fields: [assignedToId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@index([category])
+  @@index([priority])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@map("sticky_notes")
+}
+
+// ============================================================
+// DOI_CAY MODULE (Exchange/Replacement Scheduling)
+// Compatible with doi_Cay: daily_schedules, scheduled_exchanges
+// ============================================================
+
+// Daily Route Schedule
+model DailySchedule {
+  id           String   @id @default(cuid())
+  scheduleDate DateTime @unique @db.Date
+
+  status ScheduleStatus @default(DRAFT)
+
+  // Creator/Approver
+  createdById  String?
+  approvedById String?
+  approvedAt   DateTime?
+
+  // Summary Stats
+  totalStops            Int      @default(0)
+  totalPlants           Int      @default(0)
+  estimatedDurationMins Int?
+  estimatedDistanceKm   Decimal? @db.Decimal(6, 2)
+  actualDurationMins    Int?
+
+  // Route Data (ordered stops)
+  routeOrder Json? // [{ stopOrder: 1, customerId: "...", eta: "08:30" }]
+
+  // Optimization Info
+  isOptimized       Boolean   @default(false)
+  optimizedAt       DateTime?
+  optimizationNotes String?
+
+  // Execution
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Export Links
+  googleSheetId    String?
+  googleSheetUrl   String?
+  scheduleImageUrl String?
+  pdfUrl           String?
+
+  // Notes
+  notes        String? @db.Text
+  briefingNote String? @db.Text // Morning briefing
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdBy  User?               @relation("CreatedBy", fields: [createdById], references: [id])
+  approvedBy User?               @relation("ApprovedBy", fields: [approvedById], references: [id])
+  exchanges  ScheduledExchange[]
+
+  @@index([scheduleDate])
+  @@index([status])
+  @@map("daily_schedules")
+}
+
+// Individual Exchange Requests (before scheduling)
+model ExchangeRequest {
+  id         String @id @default(cuid())
+  customerId String
+
+  // Request Details
+  requestNumber String? @unique // ER-2025-001
+
+  // Plant Details
+  plantLocation    String? // Vị trí cây cần đổi
+  currentPlant     String? // Loại cây hiện tại
+  currentCondition String? // Tình trạng hiện tại
+  requestedPlant   String? // Loại cây muốn thay (nếu có yêu cầu cụ thể)
+
+  reason   String? @db.Text
+  quantity Int     @default(1)
+
+  // Priority
+  priority      ExchangePriority @default(MEDIUM)
+  priorityScore Int              @default(5) // 1-10
+  priorityNote  String?
+
+  status ExchangeStatus @default(PENDING)
+
+  // Scheduling
+  preferredDate    DateTime?
+  scheduledDate    DateTime?
+  scheduledRouteId String?
+
+  // Completion
+  completedAt     DateTime?
+  completionNotes String?
+
+  // Photos
+  beforePhotoUrls Json?
+  afterPhotoUrls  Json?
+
+  // Source Tracking
+  source      String? // STICKY_NOTE, CARE_REPORT, PHONE, TELEGRAM, EMAIL, CUSTOMER_PORTAL
+  sourceRefId String? // Reference to source record
+
+  // Notes
+  notes        String? @db.Text
+  internalNote String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([status])
+  @@index([priority])
+  @@index([scheduledDate])
+  @@map("exchange_requests")
+}
+
+// Scheduled Exchanges in Daily Route
+model ScheduledExchange {
+  id         String @id @default(cuid())
+  scheduleId String
+  customerId String
+
+  stopOrder Int
+
+  // Plants Data (JSONB for flexibility - from doi_Cay)
+  plantsData Json @default("[]")
+  // Example: [
+  //   { "action": "remove", "plantType": "Kim Tiền", "plantCode": "KT", "qty": 3, "room": "Sảnh", "condition": "poor" },
+  //   { "action": "install", "plantType": "Phát Tài", "plantCode": "PT", "qty": 3, "room": "Sảnh", "potType": "composite" }
+  // ]
+
+  totalPlantCount    Int @default(0)
+  plantsToRemove     Int @default(0)
+  plantsToInstall    Int @default(0)
+
+  // Time Planning
+  scheduledTime         DateTime? @db.Time
+  estimatedArrival      DateTime? @db.Time
+  estimatedDurationMins Int       @default(25)
+
+  // Status Tracking
+  status ExchangeStatus @default(PENDING)
+
+  // Execution Timestamps
+  arrivedAt   DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Verification
+  customerVerified   Boolean @default(false)
+  verificationMethod String? // SIGNATURE, PHOTO, SMS_CONFIRM
+
+  // Staff Report (JSONB from doi_Cay)
+  staffReport Json?
+  // Example: {
+  //   "actualPlantsRemoved": 3,
+  //   "actualPlantsInstalled": 3,
+  //   "conditionReport": [{ "plant": "Kim Tiền", "condition": "poor", "notes": "Lá hơi vàng" }],
+  //   "issues": "Khách yêu cầu thay vị trí",
+  //   "customerFeedback": "Hài lòng",
+  //   "recommendations": "Cần tưới nước nhiều hơn"
+  // }
+
+  skipReason     String?
+  skipApprovedBy String?
+
+  // Photos
+  photoUrls    Json? // ["url1", "url2"]
+  beforePhotos Json?
+  afterPhotos  Json?
+
+  // Customer signature
+  signatureUrl String?
+
+  // Linked exchange request
+  exchangeRequestId String?
+
+  // Notes
+  notes         String?
+  customerNotes String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  schedule DailySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  customer Customer      @relation(fields: [customerId], references: [id])
+
+  @@unique([scheduleId, stopOrder])
+  @@index([scheduleId])
+  @@index([customerId])
+  @@index([status])
+  @@map("scheduled_exchanges")
+}
+
+// Exchange History (Audit trail from doi_Cay)
+model ExchangeHistory {
+  id                  String  @id @default(cuid())
+  customerId          String
+  scheduleId          String?
+  scheduledExchangeId String?
+
+  exchangeDate DateTime @default(now()) @db.Date
+
+  // What was exchanged
+  plantsRemoved   Json @default("[]") // [{ code, name, qty, condition }]
+  plantsInstalled Json @default("[]") // [{ code, name, qty }]
+  totalRemoved    Int  @default(0)
+  totalInstalled  Int  @default(0)
+
+  // Staff Info
+  staffId   String?
+  staffName String?
+
+  // Location Details
+  location String?
+
+  // Feedback
+  staffNotes         String?
+  customerFeedback   String?
+  satisfactionRating Int? // 1-5
+
+  // Issues
+  issuesReported String?
+  followUpNeeded Boolean @default(false)
+  followUpNotes  String?
+
+  // Photos
+  photoUrls Json?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id])
+  staff    User?    @relation("StaffExchanges", fields: [staffId], references: [id])
+
+  @@index([customerId])
+  @@index([exchangeDate])
+  @@index([staffId])
+  @@map("exchange_history")
+}
+
+// ============================================================
+// SYSTEM TABLES
+// ============================================================
+
+// Activity Log (Audit Trail)
+model ActivityLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  action     String // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, EXPORT, IMPORT, etc.
+  entityType String // Customer, Contract, Invoice, etc.
+  entityId   String?
+
+  // Description
+  description String?
+
+  // Change Data
+  oldValues Json?
+  newValues Json?
+
+  // Request Info
+  ipAddress String?
+  userAgent String?
+
+  // Additional Context
+  metadata Json?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+// Application Settings
+model Setting {
+  id          String @id @default(cuid())
+  key         String @unique
+  value       Json
+  description String?
+  category    String? // general, invoice, email, notification, integration
+
+  isPublic Boolean @default(false) // Can be accessed without auth
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+
+  @@index([category])
+  @@map("settings")
+}
+
+// File Uploads Registry
+model FileUpload {
+  id String @id @default(cuid())
+
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int // bytes
+  
+  // Storage
+  storageType StorageType @default(MINIO)
+  storageKey  String // Path or ID in storage system
+  bucket      String?
+  url         String?
+
+  // Metadata
+  width  Int?
+  height Int?
+  
+  // Ownership
+  uploadedById String?
+
+  // Entity Link
+  entityType String? // Contract, Invoice, CareSchedule, etc.
+  entityId   String?
+
+  // Status
+  isPublic Boolean @default(false)
+  isTemp   Boolean @default(false) // Temporary upload, can be cleaned up
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  expiresAt DateTime? // For temp files
+
+  // Relations
+  uploadedBy User? @relation(fields: [uploadedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([uploadedById])
+  @@index([storageType])
+  @@map("file_uploads")
+}
+
+// Notification Templates
+model NotificationTemplate {
+  id String @id @default(cuid())
+
+  code     String @unique // INVOICE_REMINDER, CONTRACT_EXPIRY, etc.
+  name     String
+  channel  String // EMAIL, SMS, TELEGRAM, IN_APP
+  
+  subject  String?
+  body     String @db.Text
+  
+  // Variables available
+  variables Json? // ["customerName", "invoiceNumber", "amount"]
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channel])
+  @@index([isActive])
+  @@map("notification_templates")
+}
+
+// Notification Log
+model NotificationLog {
+  id String @id @default(cuid())
+
+  templateCode String?
+  channel      String // EMAIL, SMS, TELEGRAM, IN_APP
+  
+  recipient    String  // Email, phone, telegram ID
+  subject      String?
+  content      String  @db.Text
+  
+  // Status
+  status     String    @default("PENDING") // PENDING, SENT, FAILED, DELIVERED
+  sentAt     DateTime?
+  deliveredAt DateTime?
+  failedAt   DateTime?
+  errorMessage String?
+  
+  // Reference
+  entityType String?
+  entityId   String?
+  
+  // Retry
+  retryCount Int @default(0)
+  nextRetry  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([channel, status])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("notification_logs")
+}
+
+// ============================================================
+// DATABASE VIEWS (Created via migration SQL)
+// ============================================================
+
+// Note: Views are created in migration files, not in Prisma schema
+// See: prisma/migrations/xxx_create_views.sql
+//
+// Available Views:
+// 
+// 1. v_customer_summary
+//    - Customer with aggregated stats (total plants, outstanding debt, etc.)
+//    - Optimized for customer list page
+//
+// 2. v_today_care_schedule
+//    - Today's schedule with full customer details
+//    - Used for daily operations dashboard
+//
+// 3. v_outstanding_invoices
+//    - Unpaid invoices with urgency classification
+//    - Days overdue, urgency level (CRITICAL/HIGH/MEDIUM/LOW)
+//
+// 4. v_plant_statistics
+//    - Plant type stats with total rented, customer count, monthly revenue
+//    - Used for inventory and reporting
+//
+// 5. v_monthly_revenue
+//    - Monthly revenue aggregation by customer and plant type
+//    - Used for financial reports
+//
+// 6. v_exchange_queue
+//    - Pending exchange requests ordered by priority
+//    - Used for scheduling next day's route
