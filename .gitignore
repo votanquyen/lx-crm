@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+playwright-report
+test-results
 
 # next.js
 /.next/
@@ -50,6 +52,10 @@ pnpm-lock.yaml
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
 
 # flutter
 .dart_tool
