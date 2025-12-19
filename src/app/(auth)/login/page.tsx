@@ -2,8 +2,13 @@ import { signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await auth();
+  const params = await searchParams;
 
   // Redirect if already logged in
   if (session?.user) {
@@ -35,7 +40,80 @@ export default async function LoginPage() {
         </p>
       </div>
 
-      {/* Login Form */}
+      {/* Error Message */}
+      {params.error && (
+        <div className="rounded-lg bg-red-50 p-4">
+          <p className="text-sm text-red-800">
+            Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.
+          </p>
+        </div>
+      )}
+
+      {/* Email/Password Login Form */}
+      <form
+        action={async (formData: FormData) => {
+          "use server";
+          await signIn("credentials", {
+            email: formData.get("email"),
+            password: formData.get("password"),
+            redirectTo: "/",
+          });
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            placeholder="admin@locxanh.vn"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Mật khẩu
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          Đăng nhập
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-gray-500">Hoặc</span>
+        </div>
+      </div>
+
+      {/* Google OAuth Login */}
       <form
         action={async () => {
           "use server";
@@ -67,6 +145,18 @@ export default async function LoginPage() {
           Đăng nhập với Google
         </button>
       </form>
+
+      {/* Development Credentials Info */}
+      <div className="rounded-lg bg-blue-50 p-4">
+        <p className="text-xs font-medium text-blue-800">
+          Development Mode - Test Accounts:
+        </p>
+        <ul className="mt-2 space-y-1 text-xs text-blue-700">
+          <li>• admin@locxanh.vn / admin123 (Admin)</li>
+          <li>• manager@locxanh.vn / manager123 (Manager)</li>
+          <li>• staff@locxanh.vn / staff123 (Staff)</li>
+        </ul>
+      </div>
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-500">

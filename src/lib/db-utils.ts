@@ -35,36 +35,36 @@ export function decimalToString(decimal: Decimal): string {
 /**
  * Add two Decimal values safely
  */
-export function addDecimal(a: Decimal | number, b: Decimal | number): Decimal {
-  const decimalA = typeof a === "number" ? new Decimal(a) : a;
-  const decimalB = typeof b === "number" ? new Decimal(b) : b;
+export function addDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+  const decimalA = a instanceof Decimal ? a : new Decimal(a);
+  const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.plus(decimalB);
 }
 
 /**
  * Subtract Decimal values safely
  */
-export function subtractDecimal(a: Decimal | number, b: Decimal | number): Decimal {
-  const decimalA = typeof a === "number" ? new Decimal(a) : a;
-  const decimalB = typeof b === "number" ? new Decimal(b) : b;
+export function subtractDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+  const decimalA = a instanceof Decimal ? a : new Decimal(a);
+  const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.minus(decimalB);
 }
 
 /**
  * Multiply Decimal values safely
  */
-export function multiplyDecimal(a: Decimal | number, b: Decimal | number): Decimal {
-  const decimalA = typeof a === "number" ? new Decimal(a) : a;
-  const decimalB = typeof b === "number" ? new Decimal(b) : b;
+export function multiplyDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+  const decimalA = a instanceof Decimal ? a : new Decimal(a);
+  const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.times(decimalB);
 }
 
 /**
  * Divide Decimal values safely
  */
-export function divideDecimal(a: Decimal | number, b: Decimal | number): Decimal {
-  const decimalA = typeof a === "number" ? new Decimal(a) : a;
-  const decimalB = typeof b === "number" ? new Decimal(b) : b;
+export function divideDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+  const decimalA = a instanceof Decimal ? a : new Decimal(a);
+  const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.dividedBy(decimalB);
 }
 
@@ -72,9 +72,9 @@ export function divideDecimal(a: Decimal | number, b: Decimal | number): Decimal
  * Compare two Decimal values
  * Returns: -1 if a < b, 0 if a === b, 1 if a > b
  */
-export function compareDecimal(a: Decimal | number, b: Decimal | number): number {
-  const decimalA = typeof a === "number" ? new Decimal(a) : a;
-  const decimalB = typeof b === "number" ? new Decimal(b) : b;
+export function compareDecimal(a: Decimal | number | string, b: Decimal | number | string): number {
+  const decimalA = a instanceof Decimal ? a : new Decimal(a);
+  const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.comparedTo(decimalB);
 }
 

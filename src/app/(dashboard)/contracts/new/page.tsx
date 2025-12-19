@@ -12,7 +12,7 @@ export default async function NewContractPage({ searchParams }: NewContractPageP
   const params = await searchParams;
 
   // Fetch customers and plant types
-  const [customers, plantTypes] = await Promise.all([
+  const [customers, plantTypesRaw] = await Promise.all([
     prisma.customer.findMany({
       where: { status: { not: "TERMINATED" } },
       select: { id: true, code: true, companyName: true },
@@ -25,6 +25,12 @@ export default async function NewContractPage({ searchParams }: NewContractPageP
     }),
   ]);
 
+  // Convert Decimal to number for client components
+  const plantTypes = plantTypesRaw.map((pt) => ({
+    ...pt,
+    rentalPrice: pt.rentalPrice.toNumber(),
+  }));
+
   return (
     <div className="space-y-6">
       <div>
@@ -36,7 +42,7 @@ export default async function NewContractPage({ searchParams }: NewContractPageP
 
       <ContractForm
         customers={customers}
-        plantTypes={plantTypes as any}
+        plantTypes={plantTypes}
         defaultCustomerId={params.customerId}
       />
     </div>
