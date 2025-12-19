@@ -11,9 +11,11 @@ import {
   Receipt,
   Calendar,
   RefreshCcw,
-  Settings,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,12 +32,14 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Tổng quan", href: "/", icon: LayoutDashboard },
   { title: "Khách hàng", href: "/customers", icon: Users },
-  { title: "Cây xanh", href: "/plants", icon: Leaf },
+  { title: "Cây xanh", href: "/plant-types", icon: Leaf },
   { title: "Hợp đồng", href: "/contracts", icon: FileText },
+  { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
   { title: "Hóa đơn", href: "/invoices", icon: Receipt },
-  { title: "Lịch chăm sóc", href: "/schedules", icon: Calendar },
+  { title: "Thanh toán", href: "/payments", icon: CreditCard },
+  { title: "Lịch chăm sóc", href: "/care", icon: Calendar },
   { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
-  { title: "Cài đặt", href: "/settings", icon: Settings },
+  { title: "Báo cáo", href: "/analytics", icon: BarChart3 },
 ];
 
 interface SidebarProps {

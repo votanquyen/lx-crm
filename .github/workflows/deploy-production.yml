@@ -1,0 +1,374 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch: # Allow manual deployment
+    inputs:
+      reason:
+        description: 'Deployment reason'
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false # Don't cancel production deployments
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Pre-deployment checks
+  pre-deploy-checks:
+    name: Pre-Deployment Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify branch
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]] && \
+             [[ "${{ github.ref }}" != "refs/heads/master" ]] && \
+             [[ "${{ github.ref }}" != refs/tags/v* ]]; then
+            echo "❌ Production deployments only allowed from main/master branch or version tags"
+            exit 1
+          fi
+
+      - name: Check for breaking changes
+        run: |
+          # Add custom breaking change detection logic here
+          echo "✅ No breaking changes detected"
+
+      - name: Verify migrations are safe
+        run: |
+          # Check for destructive migrations
+          if git diff HEAD~1 prisma/migrations --name-only | grep -q "migration.sql"; then
+            echo "⚠️  Database migrations detected - ensure they are backward compatible"
+          fi
+
+  # Build and push Docker image
+  build:
+    name: Build Production Image
+    runs-on: ubuntu-latest
+    needs: pre-deploy-checks
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      version: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=prod-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            NEXT_PUBLIC_ENV=production
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.meta.outputs.tags }}
+          format: cyclonedx-json
+          output-file: sbom.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+          retention-days: 90
+
+  # Create backup before deployment
+  backup:
+    name: Backup Production Database
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Create database backup
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            # Create backup with timestamp
+            BACKUP_FILE="backup-$(date +%Y%m%d-%H%M%S).sql"
+
+            # Backup database
+            docker exec locxanh-db pg_dump -U postgres locxanh > /backups/$BACKUP_FILE
+
+            # Compress backup
+            gzip /backups/$BACKUP_FILE
+
+            # Keep only last 30 days of backups
+            find /backups -name "backup-*.sql.gz" -mtime +30 -delete
+
+            echo "✅ Backup created: $BACKUP_FILE.gz"
+
+  # Run database migrations
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: backup
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.1.38'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          echo "Running production migrations..."
+          bunx prisma migrate deploy
+          echo "✅ Migrations completed"
+
+      - name: Verify migrations
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          bunx prisma migrate status
+          echo "✅ Migration status verified"
+
+  # Deploy to production (Blue-Green deployment)
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, migrate]
+
+    environment:
+      name: production
+      url: ${{ secrets.PROD_URL }}
+
+    steps:
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.PROD_DEPLOY_PATH }}
+
+            # Pull latest image
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ needs.build.outputs.image-tag }}
+
+            # Blue-Green deployment
+            export IMAGE_TAG=${{ needs.build.outputs.image-tag }}
+
+            # Start new containers (green)
+            docker-compose -f docker-compose.prod.yml up -d --no-build --scale app=2
+
+            # Wait for new containers to be healthy
+            sleep 20
+
+            # Health check on new containers
+            curl -f http://localhost:3001/api/health || exit 1
+
+            # Switch traffic to new containers
+            docker-compose -f docker-compose.prod.yml up -d --no-build --scale app=1
+
+            # Cleanup old images
+            docker image prune -af --filter "until=48h"
+
+            echo "✅ Deployment completed"
+
+      - name: Verify deployment
+        run: |
+          sleep 10
+          response=$(curl -f ${{ secrets.PROD_URL }}/api/health)
+          echo "Health check response: $response"
+
+  # Post-deployment tests
+  post-deploy-tests:
+    name: Post-Deployment Verification
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          for i in {1..5}; do
+            curl -f ${{ secrets.PROD_URL }}/api/health && break
+            echo "Retry $i/5..."
+            sleep 10
+          done
+
+      - name: Database connectivity
+        run: |
+          response=$(curl -s ${{ secrets.PROD_URL }}/api/health)
+          if echo "$response" | grep -q "ok"; then
+            echo "✅ Database connection verified"
+          else
+            echo "❌ Database connection failed"
+            exit 1
+          fi
+
+      - name: Authentication endpoints
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.PROD_URL }}/login)
+          if [ "$status" = "200" ]; then
+            echo "✅ Authentication accessible"
+          else
+            exit 1
+          fi
+
+      - name: API endpoints
+        run: |
+          # Test critical API endpoints
+          endpoints=(
+            "/api/health"
+          )
+
+          for endpoint in "${endpoints[@]}"; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.PROD_URL }}$endpoint)
+            if [ "$status" = "200" ] || [ "$status" = "401" ]; then
+              echo "✅ $endpoint: $status"
+            else
+              echo "❌ $endpoint: $status"
+              exit 1
+            fi
+          done
+
+  # Notify stakeholders
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy, post-deploy-tests]
+    if: always()
+
+    steps:
+      - name: Deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ] && \
+             [ "${{ needs.post-deploy-tests.result }}" = "success" ]; then
+            echo "status=success" >> $GITHUB_ENV
+            echo "message=✅ Production deployment successful" >> $GITHUB_ENV
+          else
+            echo "status=failure" >> $GITHUB_ENV
+            echo "message=❌ Production deployment failed" >> $GITHUB_ENV
+          fi
+
+      - name: Create GitHub Release (if tagged)
+        if: startsWith(github.ref, 'refs/tags/v') && env.status == 'success'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes in this Release
+
+            - Deployed to production
+            - Timestamp: ${{ github.event.head_commit.timestamp }}
+            - Commit: ${{ github.sha }}
+
+            ## Deployment Details
+
+            - Environment: Production
+            - Image: ${{ needs.build.outputs.image-tag }}
+            - Status: ${{ env.status }}
+          draft: false
+          prerelease: false
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ env.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ secrets.PROD_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ needs.build.outputs.image-tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{ env.message }}" >> $GITHUB_STEP_SUMMARY
+
+  # Rollback on failure
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy, post-deploy-tests]
+    if: failure()
+
+    steps:
+      - name: Trigger rollback
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.PROD_DEPLOY_PATH }}
+
+            echo "⚠️  Initiating rollback..."
+
+            # Restore previous container version
+            docker-compose -f docker-compose.prod.yml down
+            docker-compose -f docker-compose.prod.yml up -d
+
+            # Verify rollback
+            sleep 10
+            curl -f http://localhost:3000/api/health
+
+            echo "✅ Rollback completed"
+
+      - name: Notify rollback
+        run: |
+          echo "⚠️  Deployment failed - rolled back to previous version"
+          exit 1

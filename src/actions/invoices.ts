@@ -104,8 +104,20 @@ export async function getInvoices(params: InvoiceSearchParams) {
     prisma.invoice.count({ where }),
   ]);
 
+  // Convert Decimal to number for client components
+  const serializedInvoices = invoices.map((inv) => ({
+    ...inv,
+    subtotal: inv.subtotal.toNumber(),
+    discountAmount: inv.discountAmount?.toNumber() ?? null,
+    vatRate: inv.vatRate.toNumber(),
+    vatAmount: inv.vatAmount.toNumber(),
+    totalAmount: inv.totalAmount.toNumber(),
+    paidAmount: inv.paidAmount.toNumber(),
+    outstandingAmount: inv.outstandingAmount.toNumber(),
+  }));
+
   return {
-    data: invoices,
+    data: serializedInvoices,
     pagination: {
       page,
       limit,
