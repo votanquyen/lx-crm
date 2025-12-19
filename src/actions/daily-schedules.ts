@@ -11,6 +11,7 @@ import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
+import { validateChronology } from "@/lib/validations/schedule";
 
 /**
  * Create daily schedule schema
@@ -540,6 +541,13 @@ export const completeStop = createAction(completeStopSchema, async (input) => {
     completedByName: session.user.name,
   };
 
+  // Validate chronological order
+  validateChronology({
+    arrivedAt: input.arrivedAt,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt,
+  });
+
   await prisma.scheduledExchange.update({
     where: { id: input.stopId },
     data: {
@@ -669,6 +677,13 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
     ? Math.round((new Date().getTime() - schedule.startedAt.getTime()) / 60000)
     : null;
 
+  // Validate chronological order before completing
+  const completedAt = new Date();
+  validateChronology({
+    startedAt: schedule.startedAt,
+    completedAt,
+  });
+
   // Atomic transaction to prevent race conditions
   await prisma.$transaction(async (tx) => {
     // Update schedule status
@@ -676,7 +691,7 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
       where: { id: scheduleId },
       data: {
         status: "COMPLETED",
-        completedAt: new Date(),
+        completedAt,
         actualDurationMins: actualDuration,
       },
     });

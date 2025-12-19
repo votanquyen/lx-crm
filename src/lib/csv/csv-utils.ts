@@ -62,12 +62,12 @@ function formatCSVCell(value: unknown): string {
 
 /**
  * Format number as Vietnamese currency string (for CSV)
+ * Uses regular spaces instead of non-breaking spaces for Excel compatibility
  */
 export function formatCurrencyForCSV(amount: number): string {
-  return new Intl.NumberFormat("vi-VN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  // Format with regular spaces instead of Intl.NumberFormat
+  // This allows Excel to treat the column as numbers for SUM/AVG calculations
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 /**
