@@ -47,7 +47,8 @@ export function DailyScheduleBuilder({
   const [selectedDate, setSelectedDate] = useState(scheduleDate);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
 
-  // Convert exchange requests to stops
+  // Convert exchange requests to stops (unused - kept for future feature)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const availableStops: Stop[] = pendingRequests.map((req) => ({
     id: req.id,
     customerId: req.customerId,

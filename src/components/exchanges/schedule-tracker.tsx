@@ -243,7 +243,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
 
       {/* Stops List */}
       <div className="space-y-4">
-        {schedule.exchanges.map((stop, index) => (
+        {schedule.exchanges.map((stop) => (
           <Card
             key={stop.id}
             className={

@@ -242,7 +242,14 @@ export async function getPlantTypeById(id: string) {
     throw new NotFoundError(`Không tìm thấy loại cây có ID: ${id}`);
   }
 
-  return plantType;
+  // Convert Decimal to number for client components
+  return {
+    ...plantType,
+    rentalPrice: plantType.rentalPrice.toNumber(),
+    depositPrice: plantType.depositPrice?.toNumber() ?? null,
+    salePrice: plantType.salePrice?.toNumber() ?? null,
+    replacementPrice: plantType.replacementPrice?.toNumber() ?? null,
+  };
 }
 
 /**

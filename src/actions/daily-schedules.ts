@@ -170,7 +170,7 @@ export const createDailySchedule = createAction(
                   plantType: request.requestedPlant || "New plant",
                   qty: request.quantity,
                 },
-              ],
+              ] as unknown as Prisma.JsonValue, // Explicit cast for Prisma
             },
           })
         )
@@ -680,6 +680,7 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
   // Validate chronological order before completing
   const completedAt = new Date();
   validateChronology({
+    arrivedAt: schedule.startedAt, // arrivedAt not applicable for entire schedule start
     startedAt: schedule.startedAt,
     completedAt,
   });

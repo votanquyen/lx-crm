@@ -112,6 +112,9 @@ export async function getContracts(params: ContractSearchParams) {
     discountAmount: contract.discountAmount?.toNumber() ?? null,
     totalMonthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? null,
     totalContractValue: contract.totalContractValue?.toNumber() ?? null,
+    // Add aliases for contract-table compatibility
+    monthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? contract.monthlyFee.toNumber(),
+    totalAmount: contract.totalContractValue?.toNumber() ?? 0,
     items: contract.items.map((item) => ({
       ...item,
       unitPrice: item.unitPrice.toNumber(),

@@ -23,7 +23,7 @@ interface ScheduleBuilderProps {
 
 export function ScheduleBuilder({
   initialStops,
-  scheduleId,
+  scheduleId: _scheduleId,
   onOptimize,
   onSave,
   isOptimizing,
@@ -48,7 +48,7 @@ export function ScheduleBuilder({
       await onSave(stops);
       setHasChanges(false);
       toast.success("Đã lưu thứ tự điểm dừng");
-    } catch (error) {
+    } catch {
       toast.error("Không thể lưu thứ tự");
     }
   };
@@ -57,7 +57,7 @@ export function ScheduleBuilder({
     try {
       await onOptimize();
       toast.success("Đã tối ưu lộ trình");
-    } catch (error) {
+    } catch {
       toast.error("Không thể tối ưu lộ trình");
     }
   };

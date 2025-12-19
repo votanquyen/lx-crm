@@ -10,7 +10,6 @@ import {
   Calendar,
   MapPin,
   User,
-  Clock,
   FileText,
   Camera,
   CheckCircle,
