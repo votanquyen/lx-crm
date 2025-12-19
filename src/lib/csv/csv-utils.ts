@@ -33,13 +33,20 @@ export function arrayToCSV<T extends Record<string, unknown>>(
 
 /**
  * Format a single CSV cell value
+ * Prevents CSV injection by sanitizing formula characters
  */
 function formatCSVCell(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value);
+
+  // Prevent CSV injection: Neutralize formula characters (=, +, -, @, \t, \r)
+  // Excel/Google Sheets execute formulas starting with these characters
+  if (/^[=+\-@\t\r]/.test(stringValue)) {
+    stringValue = "'" + stringValue; // Prepend single quote to disable formula execution
+  }
 
   // If contains comma, newline, or quote, wrap in quotes and escape quotes
   if (

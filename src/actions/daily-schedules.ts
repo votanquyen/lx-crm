@@ -419,9 +419,24 @@ export const startScheduleExecution = createSimpleAction(async (scheduleId: stri
 
   const schedule = await prisma.dailySchedule.findUnique({
     where: { id: scheduleId },
+    select: {
+      id: true,
+      status: true,
+      createdById: true,
+      approvedById: true,
+    },
   });
 
   if (!schedule) throw new NotFoundError("Lịch trình");
+
+  // Authorization check: Only creator or approver can execute
+  if (schedule.createdById !== session.user.id && schedule.approvedById !== session.user.id) {
+    throw new AppError(
+      "Bạn không có quyền thực hiện lịch trình này",
+      "FORBIDDEN",
+      403
+    );
+  }
 
   if (schedule.status !== "APPROVED") {
     throw new AppError("Chỉ có thể bắt đầu lịch đã duyệt", "INVALID_STATUS");
@@ -457,7 +472,21 @@ const completeStopSchema = z.object({
   actualPlantsInstalled: z.number().int().min(0).optional(),
   issues: z.string().max(500).optional(),
   customerFeedback: z.string().max(500).optional(),
-  photoUrls: z.array(z.string().url()).optional(),
+  photoUrls: z
+    .array(
+      z.string().url().refine(
+        (url) => {
+          // Only accept URLs from approved S3 bucket to prevent SSRF
+          const bucketUrl = process.env.MINIO_PUBLIC_URL;
+          if (!bucketUrl) return true; // If not configured, skip validation
+          return url.startsWith(bucketUrl);
+        },
+        {
+          message: "Photo URLs must be from the approved S3 bucket",
+        }
+      )
+    )
+    .optional(),
   customerVerified: z.boolean().default(false),
   verificationMethod: z.enum(["SIGNATURE", "PHOTO", "SMS_CONFIRM"]).optional(),
 });
@@ -471,9 +500,31 @@ export const completeStop = createAction(completeStopSchema, async (input) => {
 
   const stop = await prisma.scheduledExchange.findUnique({
     where: { id: input.stopId },
+    include: {
+      schedule: {
+        select: {
+          id: true,
+          status: true,
+          createdById: true,
+          approvedById: true,
+        },
+      },
+    },
   });
 
   if (!stop) throw new NotFoundError("Điểm dừng");
+
+  // Authorization check: Only creator or approver of the schedule can complete stops
+  if (
+    stop.schedule.createdById !== session.user.id &&
+    stop.schedule.approvedById !== session.user.id
+  ) {
+    throw new AppError(
+      "Bạn không có quyền cập nhật điểm dừng này",
+      "FORBIDDEN",
+      403
+    );
+  }
 
   if (stop.status === "COMPLETED") {
     throw new AppError("Điểm dừng đã hoàn thành", "INVALID_STATUS");
@@ -524,9 +575,31 @@ export const skipStop = createAction(skipStopSchema, async (input) => {
 
   const stop = await prisma.scheduledExchange.findUnique({
     where: { id: input.stopId },
+    include: {
+      schedule: {
+        select: {
+          id: true,
+          status: true,
+          createdById: true,
+          approvedById: true,
+        },
+      },
+    },
   });
 
   if (!stop) throw new NotFoundError("Điểm dừng");
+
+  // Authorization check: Only creator or approver of the schedule can skip stops
+  if (
+    stop.schedule.createdById !== session.user.id &&
+    stop.schedule.approvedById !== session.user.id
+  ) {
+    throw new AppError(
+      "Bạn không có quyền bỏ qua điểm dừng này",
+      "FORBIDDEN",
+      403
+    );
+  }
 
   await prisma.scheduledExchange.update({
     where: { id: input.stopId },
@@ -551,9 +624,29 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
   const schedule = await prisma.dailySchedule.findUnique({
     where: { id: scheduleId },
     include: { exchanges: true },
+    select: {
+      id: true,
+      status: true,
+      startedAt: true,
+      createdById: true,
+      approvedById: true,
+      exchanges: true,
+    },
   });
 
   if (!schedule) throw new NotFoundError("Lịch trình");
+
+  // Authorization check: Only creator or approver can complete
+  if (
+    schedule.createdById !== session.user.id &&
+    schedule.approvedById !== session.user.id
+  ) {
+    throw new AppError(
+      "Bạn không có quyền hoàn thành lịch trình này",
+      "FORBIDDEN",
+      403
+    );
+  }
 
   if (schedule.status !== "IN_PROGRESS") {
     throw new AppError("Lịch trình chưa bắt đầu", "INVALID_STATUS");
@@ -576,36 +669,40 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
     ? Math.round((new Date().getTime() - schedule.startedAt.getTime()) / 60000)
     : null;
 
-  await prisma.dailySchedule.update({
-    where: { id: scheduleId },
-    data: {
-      status: "COMPLETED",
-      completedAt: new Date(),
-      actualDurationMins: actualDuration,
-    },
-  });
-
-  // Update exchange requests to COMPLETED
-  const exchangeRequestIds = schedule.exchanges
-    .filter((e) => e.exchangeRequestId)
-    .map((e) => e.exchangeRequestId as string);
-
-  if (exchangeRequestIds.length > 0) {
-    await prisma.exchangeRequest.updateMany({
-      where: { id: { in: exchangeRequestIds } },
-      data: { status: "COMPLETED" },
+  // Atomic transaction to prevent race conditions
+  await prisma.$transaction(async (tx) => {
+    // Update schedule status
+    await tx.dailySchedule.update({
+      where: { id: scheduleId },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+        actualDurationMins: actualDuration,
+      },
     });
-  }
 
-  // Log completion
-  await prisma.activityLog.create({
-    data: {
-      userId: session.user.id,
-      action: "COMPLETE",
-      entityType: "DailySchedule",
-      entityId: scheduleId,
-      details: `Completed with ${schedule.exchanges.length} stops in ${actualDuration} minutes` as unknown as Prisma.JsonValue,
-    },
+    // Update exchange requests to COMPLETED
+    const exchangeRequestIds = schedule.exchanges
+      .filter((e) => e.exchangeRequestId)
+      .map((e) => e.exchangeRequestId as string);
+
+    if (exchangeRequestIds.length > 0) {
+      await tx.exchangeRequest.updateMany({
+        where: { id: { in: exchangeRequestIds } },
+        data: { status: "COMPLETED" },
+      });
+    }
+
+    // Log completion
+    await tx.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: "COMPLETE",
+        entityType: "DailySchedule",
+        entityId: scheduleId,
+        details: `Completed with ${schedule.exchanges.length} stops in ${actualDuration} minutes` as unknown as Prisma.JsonValue,
+      },
+    });
   });
 
   revalidatePath("/exchanges/daily-schedule");

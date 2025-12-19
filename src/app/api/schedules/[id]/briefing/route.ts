@@ -3,6 +3,7 @@
  * GET /api/schedules/[id]/briefing
  */
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateMorningBriefingPDF } from "@/lib/pdf/morning-briefing";
 
@@ -11,6 +12,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Authentication check
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
 
     // Fetch schedule with all details
