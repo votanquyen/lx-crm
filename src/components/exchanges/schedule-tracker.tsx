@@ -296,6 +296,8 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                     <>
                       <Button
                         onClick={() => {
+                          // Reset form to prevent data leakage between stops
+                          resetForm();
                           setActiveStopId(stop.id);
                           // Pre-fill times
                           const now = format(new Date(), "yyyy-MM-dd'T'HH:mm");
@@ -314,7 +316,11 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                     </>
                   ) : (
                     <Button
-                      onClick={() => setActiveStopId(null)}
+                      onClick={() => {
+                        // Reset form when canceling
+                        resetForm();
+                        setActiveStopId(null);
+                      }}
                       variant="ghost"
                       size="sm"
                     >
