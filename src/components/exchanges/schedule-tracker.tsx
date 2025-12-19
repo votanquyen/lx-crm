@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   CheckCircle,
@@ -44,6 +45,7 @@ interface ScheduleTrackerProps {
 }
 
 export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -121,7 +123,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
         toast.success("Đã hoàn thành điểm dừng");
         setActiveStopId(null);
         resetForm();
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể hoàn thành");
       }
@@ -144,7 +146,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
         toast.success("Đã bỏ qua điểm dừng");
         setActiveStopId(null);
         setSkipReason("");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể bỏ qua");
       }

@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ExchangeStatus, ExchangePriority } from "@prisma/client";
 import { toast } from "sonner";
 import { ExchangeRequestCard } from "./exchange-request-card";
@@ -29,6 +30,7 @@ interface ExchangeRequestListProps {
 }
 
 export function ExchangeRequestList({ initialData }: ExchangeRequestListProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<ExchangeStatus | undefined>();
   const [priority, setPriority] = useState<ExchangePriority | undefined>();
@@ -52,7 +54,7 @@ export function ExchangeRequestList({ initialData }: ExchangeRequestListProps) {
       const result = await approveExchangeRequest(id);
       if (result.success) {
         toast.success("Đã duyệt yêu cầu đổi cây");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể duyệt yêu cầu");
       }
@@ -67,7 +69,7 @@ export function ExchangeRequestList({ initialData }: ExchangeRequestListProps) {
       const result = await cancelExchangeRequest({ id, reason });
       if (result.success) {
         toast.success("Đã hủy yêu cầu");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể hủy yêu cầu");
       }
