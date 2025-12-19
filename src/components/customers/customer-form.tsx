@@ -69,7 +69,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
   const isEditing = !!customer;
 
   const form = useForm<CreateCustomerInput | UpdateCustomerInput>({
-    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema),
+    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema) as any,
     defaultValues: isEditing
       ? {
           id: customer.id,
