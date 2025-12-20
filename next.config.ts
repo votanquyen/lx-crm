@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
 
   serverExternalPackages: ["@prisma/client", "prisma"],
+
+  // Webpack configuration for custom file loaders
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.txt$/,
+      type: 'asset/source',
+    });
+    return config;
+  },
+
   experimental: {
     serverActions: {
       bodySizeLimit: "30mb", // Support large image uploads
