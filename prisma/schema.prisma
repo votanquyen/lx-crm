@@ -196,6 +196,7 @@ model User {
   createdQuotations     Quotation[]         @relation("QuotationCreatedBy")
   recordedPayments      Payment[]           @relation("PaymentRecordedBy")
   preferredByCustomers  Customer[]          @relation("PreferredStaff")
+  confirmedStatements   MonthlyStatement[]  @relation("StatementConfirmedBy")
 
   @@index([email])
   @@index([role])
@@ -437,6 +438,7 @@ model Customer {
   exchangeRequests   ExchangeRequest[]
   scheduledExchanges ScheduledExchange[]
   exchangeHistory    ExchangeHistory[]
+  monthlyStatements  MonthlyStatement[]
   preferredStaff     User?               @relation("PreferredStaff", fields: [preferredStaffId], references: [id])
 
   @@index([code])
@@ -700,6 +702,71 @@ model Invoice {
   @@index([dueDate])
   @@index([issueDate])
   @@map("invoices")
+}
+
+// ============================================================
+// MONTHLY STATEMENT (Bảng Kê - Phase 2.5)
+// ============================================================
+
+model MonthlyStatement {
+  id         String @id @default(cuid())
+  customerId String
+
+  // Period (billing cycle: 24th → 23rd)
+  year        Int  // 2025
+  month       Int  // 1-12 (billing month)
+  periodStart DateTime @db.Date // e.g., 2025-06-24
+  periodEnd   DateTime @db.Date // e.g., 2025-07-23
+
+  // Contact Info (denormalized for historical accuracy)
+  contactName String?
+
+  // Plant Data (JSONB for flexibility)
+  plants Json @default("[]")
+  // Schema: [
+  //   {
+  //     id: string,
+  //     name: string,      // "Phát tài Núi"
+  //     sizeSpec: string,  // "140-150"
+  //     quantity: number,  // 1
+  //     unitPrice: number, // 500000
+  //     total: number      // 500000
+  //   }
+  // ]
+
+  // Amounts (VND) - Decimal for precision
+  subtotal  Decimal @db.Decimal(12, 0) // Sum of plant totals
+  vatRate   Decimal @default(8) @db.Decimal(4, 2) // 8.00%
+  vatAmount Decimal @db.Decimal(12, 0) // subtotal * vatRate / 100
+  total     Decimal @db.Decimal(12, 0) // subtotal + vatAmount
+
+  // Confirmation Workflow
+  needsConfirmation Boolean   @default(true)
+  confirmedAt       DateTime?
+  confirmedById     String?
+
+  // Source tracking (for auto-rollover)
+  copiedFromId String? // Reference to previous month's statement
+
+  // Notes
+  notes         String? @db.Text
+  internalNotes String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  confirmedBy User?    @relation("StatementConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@unique([customerId, year, month])
+  @@index([customerId])
+  @@index([year, month])
+  @@index([needsConfirmation])
+  @@index([periodStart])
+  @@index([periodEnd])
+  @@map("monthly_statements")
 }
 
 model InvoiceItem {

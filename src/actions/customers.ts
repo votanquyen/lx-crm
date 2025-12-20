@@ -450,29 +450,33 @@ export async function getCustomerStats() {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const [total, active, leads, vip, withDebt] = await Promise.all([
-    prisma.customer.count({ where: { status: { not: "TERMINATED" } } }),
-    prisma.customer.count({ where: { status: "ACTIVE" } }),
-    prisma.customer.count({ where: { status: "LEAD" } }),
-    prisma.customer.count({ where: { tier: "VIP", status: { not: "TERMINATED" } } }),
-    prisma.customer.count({
-      where: {
-        status: { not: "TERMINATED" },
-        invoices: {
-          some: {
-            status: { in: ["SENT", "PARTIAL", "OVERDUE"] },
-            outstandingAmount: { gt: 0 },
-          },
-        },
-      },
-    }),
-  ]);
+  // Single query with FILTER instead of 5 separate COUNTs
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    active: bigint;
+    leads: bigint;
+    vip: bigint;
+    with_debt: bigint;
+  }]>`
+    SELECT
+      COUNT(*) FILTER (WHERE status != 'TERMINATED') as total,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+      COUNT(*) FILTER (WHERE status = 'LEAD') as leads,
+      COUNT(*) FILTER (WHERE tier = 'VIP' AND status != 'TERMINATED') as vip,
+      COUNT(DISTINCT CASE
+        WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
+          AND i."outstandingAmount" > 0
+        THEN c.id
+      END) as with_debt
+    FROM customers c
+    LEFT JOIN invoices i ON i."customerId" = c.id
+  `;
 
   return {
-    total,
-    active,
-    leads,
-    vip,
-    withDebt,
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    leads: Number(stats[0].leads),
+    vip: Number(stats[0].vip),
+    withDebt: Number(stats[0].with_debt),
   };
 }

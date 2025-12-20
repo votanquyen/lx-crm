@@ -30,6 +30,7 @@ export async function requireRole(...allowedRoles: UserRole[]): Promise<{ id: st
 
 /**
  * Check if user is authenticated (any role)
+ * Alias: requireUser for backward compatibility
  */
 export async function requireAuth(): Promise<{ id: string; role?: UserRole }> {
   const session = await auth();
@@ -43,6 +44,11 @@ export async function requireAuth(): Promise<{ id: string; role?: UserRole }> {
 }
 
 /**
+ * Alias for requireAuth (backward compatibility)
+ */
+export const requireUser = requireAuth;
+
+/**
  * Validate UUID format
  */
 export const uuidSchema = z.string().cuid("ID không hợp lệ");
@@ -54,28 +60,45 @@ export type ActionResponse<T> =
   | { success: true; data: T }
   | { success: false; error: string; code?: string };
 
+/** Auth context type */
+export interface ActionContext {
+  user?: {
+    id: string;
+    role: string;
+    email?: string;
+    name?: string;
+  };
+}
+
 /**
  * Create a validated server action
  * Uses z.output for the handler type (after transforms/defaults applied)
+ * Injects auth context as second parameter
  */
 export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
   schema: TSchema,
-  handler: (input: z.output<TSchema>) => Promise<TOutput>
+  handler: (input: z.output<TSchema>, ctx: ActionContext) => Promise<TOutput>
 ) {
   return async (input: unknown): Promise<ActionResponse<TOutput>> => {
     try {
       // Validate input
       const validatedInput = schema.parse(input);
 
-      // Execute handler
-      const result = await handler(validatedInput);
+      // Get auth context
+      const session = await auth();
+      const ctx: ActionContext = {
+        user: session?.user as ActionContext['user'],
+      };
+
+      // Execute handler with context
+      const result = await handler(validatedInput, ctx);
 
       return { success: true, data: result };
     } catch (error) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          error: error.errors[0]?.message ?? "Dữ liệu không hợp lệ",
+          error: (error as any).errors[0]?.message ?? "Dữ liệu không hợp lệ",
           code: "VALIDATION_ERROR",
         };
       }
@@ -94,6 +117,26 @@ export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
         error: "Đã xảy ra lỗi. Vui lòng thử lại.",
         code: "INTERNAL_ERROR",
       };
+    }
+  };
+}
+
+/**
+ * Create a server action without validation schema
+ * For actions that don't need input validation
+ */
+export function createServerAction<TOutput>(
+  handler: () => Promise<TOutput>
+) {
+  return async (): Promise<TOutput> => {
+    try {
+      return await handler();
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      console.error("Server action error:", error);
+      throw new AppError("Đã xảy ra lỗi. Vui lòng thử lại.", "INTERNAL_ERROR");
     }
   };
 }

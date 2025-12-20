@@ -1,4 +1,8 @@
 import { PrismaClient, CustomerStatus, ContractStatus, CustomerTier } from "@prisma/client";
+import { seedPlantTypes } from "./seeds/plant-types";
+import { seedInvoices } from "./seeds/invoices";
+import { seedPayments } from "./seeds/payments";
+import { seedQuotations } from "./seeds/quotations";
 
 const prisma = new PrismaClient();
 
@@ -28,103 +32,15 @@ async function main() {
   });
   console.log("✅ Admin user created:", adminUser.email);
 
-  // Create plant types
-  const plantTypes = await Promise.all([
-    prisma.plantType.upsert({
-      where: { code: "CAU-HANH-PHUC" },
-      update: {},
-      create: {
-        code: "CAU-HANH-PHUC",
-        name: "Cau Hạnh Phúc",
-        nameNormalized: normalizeVietnamese("Cau Hạnh Phúc"),
-        category: "Cây văn phòng",
-        description: "Cây cau xanh mượt, biểu tượng của sự thịnh vượng",
-        careInstructions: "Tưới nước 2-3 lần/tuần, đặt nơi có ánh sáng gián tiếp",
-        rentalPrice: 250000,
-        wateringFrequency: "2-3 lần/tuần",
-        isActive: true,
-      },
-    }),
-    prisma.plantType.upsert({
-      where: { code: "KIM-NGAN" },
-      update: {},
-      create: {
-        code: "KIM-NGAN",
-        name: "Kim Ngân",
-        nameNormalized: normalizeVietnamese("Kim Ngân"),
-        category: "Cây phong thủy",
-        description: "Cây mang lại tài lộc, phù hợp với văn phòng",
-        careInstructions: "Tưới nước 1-2 lần/tuần, tránh ánh nắng trực tiếp",
-        rentalPrice: 180000,
-        wateringFrequency: "1-2 lần/tuần",
-        isActive: true,
-      },
-    }),
-    prisma.plantType.upsert({
-      where: { code: "LAN-Y" },
-      update: {},
-      create: {
-        code: "LAN-Y",
-        name: "Lan Ý",
-        nameNormalized: normalizeVietnamese("Lan Ý"),
-        category: "Cây thanh lọc",
-        description: "Cây thanh lọc không khí, hoa trắng tinh khôi",
-        careInstructions: "Tưới nước khi đất khô, đặt nơi bóng mát",
-        rentalPrice: 120000,
-        wateringFrequency: "Khi đất khô",
-        isActive: true,
-      },
-    }),
-    prisma.plantType.upsert({
-      where: { code: "TRAU-BA" },
-      update: {},
-      create: {
-        code: "TRAU-BA",
-        name: "Trầu Bà",
-        nameNormalized: normalizeVietnamese("Trầu Bà"),
-        category: "Cây dây leo",
-        description: "Cây dây leo xanh tươi, dễ chăm sóc",
-        careInstructions: "Tưới nước 1-2 lần/tuần, có thể trồng trong bóng râm",
-        rentalPrice: 80000,
-        wateringFrequency: "2-3 lần/tuần",
-        isActive: true,
-      },
-    }),
-    prisma.plantType.upsert({
-      where: { code: "LOC-VUNG" },
-      update: {},
-      create: {
-        code: "LOC-VUNG",
-        name: "Lộc Vừng",
-        nameNormalized: normalizeVietnamese("Lộc Vừng"),
-        category: "Bonsai",
-        description: "Cây bonsai phong thủy, mang lại may mắn",
-        careInstructions: "Tưới nước 2-3 lần/tuần, cần ánh sáng tự nhiên",
-        rentalPrice: 350000,
-        wateringFrequency: "2-3 lần/tuần",
-        isActive: true,
-      },
-    }),
-  ]);
-  console.log("✅ Plant types created:", plantTypes.length);
+  // Seed plant types using dedicated seeder
+  await seedPlantTypes();
 
-  // Create inventory for each plant type
-  for (const plantType of plantTypes) {
-    await prisma.inventory.upsert({
-      where: { plantTypeId: plantType.id },
-      update: {},
-      create: {
-        plantTypeId: plantType.id,
-        totalStock: 50,
-        availableStock: 30,
-        rentedStock: 18,
-        damagedStock: 2,
-        reservedStock: 0,
-        lowStockThreshold: 10,
-      },
-    });
-  }
-  console.log("✅ Inventory items created:", plantTypes.length);
+  // Get all plant types for contract creation
+  const plantTypes = await prisma.plantType.findMany({
+    where: { isActive: true },
+    take: 5,
+  });
+  console.log("✅ Plant types available:", plantTypes.length);
 
   // Create sample customers
   const customers = await Promise.all([
@@ -269,6 +185,15 @@ async function main() {
     });
   }
   console.log("✅ Settings created:", settings.length);
+
+  // Seed invoices
+  await seedInvoices();
+
+  // Seed payments
+  await seedPayments();
+
+  // Seed quotations
+  await seedQuotations();
 
   console.log("\n🎉 Database seed completed successfully!");
 }

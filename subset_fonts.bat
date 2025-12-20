@@ -1,0 +1,2 @@
+python -m fontTools.subset "src/lib/fonts/Roboto-Regular.ttf" --output-file="src/lib/fonts/Roboto-Regular-VN.ttf" --unicodes="U+0020-007E,U+00A0-00FF,U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01B0,U+1EA0-1EF9"
+python -m fontTools.subset "src/lib/fonts/Roboto-Bold.ttf" --output-file="src/lib/fonts/Roboto-Bold-VN.ttf" --unicodes="U+0020-007E,U+00A0-00FF,U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01B0,U+1EA0-1EF9"

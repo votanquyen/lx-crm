@@ -101,8 +101,30 @@ export async function getContracts(params: ContractSearchParams) {
     prisma.contract.count({ where }),
   ]);
 
+  // Convert Decimal to number for client components
+  const serializedContracts = contracts.map((contract) => ({
+    ...contract,
+    monthlyFee: contract.monthlyFee.toNumber(),
+    depositAmount: contract.depositAmount?.toNumber() ?? null,
+    setupFee: contract.setupFee?.toNumber() ?? null,
+    vatRate: contract.vatRate.toNumber(),
+    discountPercent: contract.discountPercent?.toNumber() ?? null,
+    discountAmount: contract.discountAmount?.toNumber() ?? null,
+    totalMonthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? null,
+    totalContractValue: contract.totalContractValue?.toNumber() ?? null,
+    // Add aliases for contract-table compatibility
+    monthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? contract.monthlyFee.toNumber(),
+    totalAmount: contract.totalContractValue?.toNumber() ?? 0,
+    items: contract.items.map((item) => ({
+      ...item,
+      unitPrice: item.unitPrice.toNumber(),
+      discountRate: item.discountRate?.toNumber() ?? null,
+      totalPrice: item.totalPrice.toNumber(),
+    })),
+  }));
+
   return {
-    data: contracts,
+    data: serializedContracts,
     pagination: {
       page,
       limit,
@@ -667,26 +689,26 @@ export async function getContractStats() {
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-  const [total, active, expiringSoon, totalValue] = await Promise.all([
-    prisma.contract.count(),
-    prisma.contract.count({ where: { status: "ACTIVE" } }),
-    prisma.contract.count({
-      where: {
-        status: "ACTIVE",
-        endDate: { lte: thirtyDaysFromNow, gte: now },
-      },
-    }),
-    prisma.contract.aggregate({
-      where: { status: "ACTIVE" },
-      _sum: { monthlyFee: true },
-    }),
-  ]);
+  // Single query with FILTER instead of 4 separate queries
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    active: bigint;
+    expiring_soon: bigint;
+    monthly_recurring: any;
+  }]>`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
+      COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
+    FROM contracts
+  `;
 
   return {
-    total,
-    active,
-    expiringSoon,
-    monthlyRecurring: totalValue._sum.monthlyFee ?? 0,
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    expiringSoon: Number(stats[0].expiring_soon),
+    monthlyRecurring: Number(stats[0].monthly_recurring || 0),
   };
 }
 

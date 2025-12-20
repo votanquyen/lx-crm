@@ -54,7 +54,7 @@ export function InvoiceForm({
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<CreateInvoiceInput>({
-    resolver: zodResolver(createInvoiceSchema),
+    resolver: zodResolver(createInvoiceSchema) as any,
     defaultValues: {
       customerId: defaultCustomerId || "",
       contractId: defaultContractId || undefined,
@@ -141,15 +141,15 @@ export function InvoiceForm({
             <div className="space-y-2">
               <Label htmlFor="contractId">Hợp đồng (tùy chọn)</Label>
               <Select
-                value={form.watch("contractId") || ""}
-                onValueChange={(value) => form.setValue("contractId", value || undefined)}
+                value={form.watch("contractId") || undefined}
+                onValueChange={(value) => form.setValue("contractId", value === "none" ? undefined : value)}
                 disabled={!selectedCustomerId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn hợp đồng" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Không liên kết hợp đồng</SelectItem>
+                  <SelectItem value="none">Không liên kết hợp đồng</SelectItem>
                   {filteredContracts.map((contract) => (
                     <SelectItem key={contract.id} value={contract.id}>
                       {contract.contractNumber}
