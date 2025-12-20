@@ -62,11 +62,12 @@ export default function BangKePage() {
     } else {
       setCurrentStatementDetail(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCustomerId, selectedMonth]);
 
   async function loadCustomers() {
     try {
-      const result = await getCustomersForStatements();
+      const result = await getCustomersForStatements({});
       if (result.success && result.data) {
         setCustomers(result.data);
       }
@@ -115,7 +116,7 @@ export default function BangKePage() {
       setIsConfirming(true);
       const result = await confirmMonthlyStatement({ id });
       if (result.success) {
-        toast.success(result.message || "Đã xác nhận bảng kê");
+        toast.success(result.data?.message || "Đã xác nhận bảng kê");
         // Reload data
         await loadStatements();
         if (currentStatementDetail) {
@@ -208,8 +209,7 @@ export default function BangKePage() {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex h-screen">
+    <div className="flex h-[calc(100vh-4rem)]">
         {/* Sidebar - Company List */}
         <div className="w-80 border-r bg-card">
           <div className="p-4 border-b">
@@ -228,7 +228,7 @@ export default function BangKePage() {
             </div>
           </div>
 
-          <div className="overflow-y-auto h-[calc(100vh-180px)]">
+          <div className="overflow-y-auto flex-1">
             {filteredCustomers.map((customer) => {
               const customerStmts = statements.filter(
                 (s) => s.customerId === customer.id
@@ -484,7 +484,6 @@ export default function BangKePage() {
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }
