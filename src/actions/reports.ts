@@ -7,6 +7,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser, createServerAction } from "@/lib/action-utils";
 import { startOfMonth, endOfMonth, subMonths, format, differenceInDays } from "date-fns";
+import { unstable_cache } from "next/cache";
 
 // ============================================================
 // REVENUE ANALYTICS
@@ -14,33 +15,36 @@ import { startOfMonth, endOfMonth, subMonths, format, differenceInDays } from "d
 
 /**
  * Get comprehensive revenue overview
+ * Cached for 5 minutes to improve performance
  */
 export const getRevenueOverview = createServerAction(async () => {
   await requireUser();
 
-  const now = new Date();
-  const startOfThisMonth = startOfMonth(now);
-  const startOfThisYear = new Date(now.getFullYear(), 0, 1);
+  return unstable_cache(
+    async () => {
+      const now = new Date();
+      const startOfThisMonth = startOfMonth(now);
+      const startOfThisYear = new Date(now.getFullYear(), 0, 1);
 
-  // Total revenue (all-time from paid/partial invoices)
-  const totalRevenue = await prisma.invoice.aggregate({
-    where: {
-      status: { in: ["PAID", "PARTIAL"] },
-    },
-    _sum: { totalAmount: true },
-  });
+      // Total revenue (all-time from paid/partial invoices)
+      const totalRevenue = await prisma.invoice.aggregate({
+        where: {
+          status: { in: ["PAID", "PARTIAL"] },
+        },
+        _sum: { totalAmount: true },
+      });
 
-  // Year-to-date revenue
-  const ytdRevenue = await prisma.invoice.aggregate({
-    where: {
-      status: { in: ["PAID", "PARTIAL"] },
-      issueDate: { gte: startOfThisYear },
-    },
-    _sum: { totalAmount: true },
-  });
+      // Year-to-date revenue
+      const ytdRevenue = await prisma.invoice.aggregate({
+        where: {
+          status: { in: ["PAID", "PARTIAL"] },
+          issueDate: { gte: startOfThisYear },
+        },
+        _sum: { totalAmount: true },
+      });
 
-  // Month-to-date revenue
-  const mtdRevenue = await prisma.invoice.aggregate({
+      // Month-to-date revenue
+      const mtdRevenue = await prisma.invoice.aggregate({
     where: {
       status: { in: ["PAID", "PARTIAL"] },
       issueDate: { gte: startOfThisMonth },
@@ -100,14 +104,18 @@ export const getRevenueOverview = createServerAction(async () => {
     customer_count: Number(item.customer_count || 0),
   }));
 
-  return {
-    totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
-    ytdRevenue: Number(ytdRevenue._sum.totalAmount || 0),
-    mtdRevenue: Number(mtdRevenue._sum.totalAmount || 0),
-    revenueGrowth: Math.round(revenueGrowth * 10) / 10, // Round to 1 decimal
-    avgContractValue: Number(avgContract._avg.monthlyFee || 0),
-    revenueByTier: serializedRevenueByTier,
-  };
+      return {
+        totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
+        ytdRevenue: Number(ytdRevenue._sum.totalAmount || 0),
+        mtdRevenue: Number(mtdRevenue._sum.totalAmount || 0),
+        revenueGrowth: Math.round(revenueGrowth * 10) / 10, // Round to 1 decimal
+        avgContractValue: Number(avgContract._avg.monthlyFee || 0),
+        revenueByTier: serializedRevenueByTier,
+      };
+    },
+    ['revenue-overview'],
+    { revalidate: 300 } // Cache for 5 minutes
+  )();
 });
 
 /**
@@ -347,68 +355,71 @@ export const getOverdueInvoices = createServerAction(async (limit: number = 10) 
 export const getCustomerAnalytics = createServerAction(async () => {
   await requireUser();
 
-  const now = new Date();
-  const startOfThisMonth = startOfMonth(now);
+  return unstable_cache(
+    async () => {
+      const now = new Date();
+      const startOfThisMonth = startOfMonth(now);
 
-  // Total active customers
-  const totalActive = await prisma.customer.count({
-    where: { status: "ACTIVE" },
-  });
+      // Total active customers
+      const totalActive = await prisma.customer.count({
+        where: { status: "ACTIVE" },
+      });
 
-  // New customers this month
-  const newThisMonth = await prisma.customer.count({
-    where: {
-      status: "ACTIVE",
-      createdAt: { gte: startOfThisMonth },
+      // New customers this month
+      const newThisMonth = await prisma.customer.count({
+        where: {
+          status: "ACTIVE",
+          createdAt: { gte: startOfThisMonth },
+        },
+      });
+
+      // Terminated customers (churn)
+      const totalTerminated = await prisma.customer.count({
+        where: { status: "TERMINATED" },
+      });
+
+      const churnRate = totalActive > 0
+        ? (totalTerminated / (totalActive + totalTerminated)) * 100
+        : 0;
+
+      // Customer distribution by tier
+      const customersByTier = await prisma.customer.groupBy({
+        by: ["tier"],
+        where: { status: "ACTIVE" },
+        _count: true,
+      });
+
+      // Average lifetime value - use database aggregation instead of fetching all
+      const avgLifetimeValueResult = await prisma.$queryRaw<[{ avg: any }]>`
+        SELECT AVG(customer_revenue) as avg
+        FROM (
+          SELECT
+            c.id,
+            COALESCE(SUM(i."totalAmount"), 0) as customer_revenue
+          FROM customers c
+          LEFT JOIN invoices i ON i."customerId" = c.id
+            AND i.status IN ('PAID', 'PARTIAL')
+          WHERE c.status = 'ACTIVE'
+          GROUP BY c.id
+        ) customer_totals
+      `;
+
+      const avgLifetimeValue = Number(avgLifetimeValueResult[0]?.avg || 0);
+
+      return {
+        totalActive,
+        newThisMonth,
+        churnRate: Math.round(churnRate * 10) / 10,
+        avgLifetimeValue: Math.round(avgLifetimeValue),
+        customersByTier: customersByTier.map((t) => ({
+          tier: t.tier,
+          count: t._count,
+        })),
+      };
     },
-  });
-
-  // Terminated customers (churn)
-  const totalTerminated = await prisma.customer.count({
-    where: { status: "TERMINATED" },
-  });
-
-  const churnRate = totalActive > 0
-    ? (totalTerminated / (totalActive + totalTerminated)) * 100
-    : 0;
-
-  // Customer distribution by tier
-  const customersByTier = await prisma.customer.groupBy({
-    by: ["tier"],
-    where: { status: "ACTIVE" },
-    _count: true,
-  });
-
-  // Average lifetime value
-  const customers = await prisma.customer.findMany({
-    where: { status: "ACTIVE" },
-    select: {
-      id: true,
-      invoices: {
-        where: { status: { in: ["PAID", "PARTIAL"] } },
-        select: { totalAmount: true },
-      },
-    },
-  });
-
-  const lifetimeValues = customers.map((c) =>
-    c.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0)
-  );
-
-  const avgLifetimeValue = lifetimeValues.length > 0
-    ? lifetimeValues.reduce((sum, val) => sum + val, 0) / lifetimeValues.length
-    : 0;
-
-  return {
-    totalActive,
-    newThisMonth,
-    churnRate: Math.round(churnRate * 10) / 10,
-    avgLifetimeValue: Math.round(avgLifetimeValue),
-    customersByTier: customersByTier.map((t) => ({
-      tier: t.tier,
-      count: t._count,
-    })),
-  };
+    ['customer-analytics'],
+    { revalidate: 300 } // Cache for 5 minutes
+  )();
 });
 
 /**
@@ -417,41 +428,51 @@ export const getCustomerAnalytics = createServerAction(async () => {
 export const getTopCustomers = createServerAction(async (limit: number = 10) => {
   await requireUser();
 
-  const customers = await prisma.customer.findMany({
-    where: { status: "ACTIVE" },
-    include: {
-      invoices: {
-        where: { status: { in: ["PAID", "PARTIAL"] } },
-        select: { totalAmount: true },
-      },
-      contracts: {
-        where: { status: "ACTIVE" },
-        select: { monthlyFee: true },
-      },
+  return unstable_cache(
+    async () => {
+      // Use database aggregation instead of fetching all customers
+      const customers = await prisma.$queryRaw<Array<{
+        id: string;
+        company_name: string;
+        code: string;
+        tier: string;
+        total_revenue: any;
+        monthly_fee: any;
+        invoice_count: bigint;
+      }>>`
+        SELECT
+          c.id,
+          c."companyName" as company_name,
+          c.code,
+          c.tier,
+          COALESCE(SUM(i."totalAmount"), 0) as total_revenue,
+          COALESCE(SUM(ct."monthlyFee"), 0) as monthly_fee,
+          COUNT(DISTINCT i.id) as invoice_count
+        FROM customers c
+        LEFT JOIN invoices i ON i."customerId" = c.id
+          AND i.status IN ('PAID', 'PARTIAL')
+        LEFT JOIN contracts ct ON ct."customerId" = c.id
+          AND ct.status = 'ACTIVE'
+        WHERE c.status = 'ACTIVE'
+        GROUP BY c.id, c."companyName", c.code, c.tier
+        ORDER BY total_revenue DESC
+        LIMIT ${limit}
+      `;
+
+      // Convert Decimal and BigInt to numbers for serialization
+      return customers.map(c => ({
+        id: c.id,
+        companyName: c.company_name,
+        code: c.code,
+        tier: c.tier,
+        totalRevenue: Number(c.total_revenue),
+        monthlyFee: Number(c.monthly_fee),
+        invoiceCount: Number(c.invoice_count),
+      }));
     },
-  });
-
-  // Calculate total revenue per customer
-  const customersWithRevenue = customers
-    .map((c) => ({
-      id: c.id,
-      companyName: c.companyName,
-      code: c.code,
-      tier: c.tier,
-      totalRevenue: c.invoices.reduce(
-        (sum, inv) => sum + Number(inv.totalAmount),
-        0
-      ),
-      monthlyFee: c.contracts.reduce(
-        (sum, con) => sum + Number(con.monthlyFee),
-        0
-      ),
-      invoiceCount: c.invoices.length,
-    }))
-    .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .slice(0, limit);
-
-  return customersWithRevenue;
+    ['top-customers', `limit-${limit}`],
+    { revalidate: 300 } // Cache for 5 minutes
+  )();
 });
 
 // ============================================================
