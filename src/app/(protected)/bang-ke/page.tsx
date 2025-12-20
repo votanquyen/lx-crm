@@ -13,10 +13,26 @@ import {
   AlertCircle,
   Calendar,
 } from "lucide-react";
-import { getMonthlyStatements, getCustomersForStatements } from "@/actions/monthly-statements";
-import type { StatementListItem } from "@/types/monthly-statement";
+import {
+  getMonthlyStatements,
+  getCustomersForStatements,
+  getMonthlyStatement,
+  confirmMonthlyStatement,
+} from "@/actions/monthly-statements";
+import type { StatementListItem, StatementDTO } from "@/types/monthly-statement";
 import { formatCurrency } from "@/lib/format";
 import { getMonthShort } from "@/lib/statement-utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
+import { generateMonthlyStatementCSV, getStatementFilename } from "@/lib/csv/export-monthly-statement";
+import { generateMonthlyStatementPDF } from "@/lib/pdf/monthly-statement-pdf";
 
 export default function BangKePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +41,9 @@ export default function BangKePage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [currentStatementDetail, setCurrentStatementDetail] = useState<StatementDTO | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   // Load customers on mount
   useEffect(() => {
@@ -36,6 +55,15 @@ export default function BangKePage() {
     loadStatements();
   }, [selectedYear]);
 
+  // Load statement detail when customer/month changes
+  useEffect(() => {
+    if (selectedCustomerId && currentStatement) {
+      loadStatementDetail(currentStatement.id);
+    } else {
+      setCurrentStatementDetail(null);
+    }
+  }, [selectedCustomerId, selectedMonth]);
+
   async function loadCustomers() {
     try {
       const result = await getCustomersForStatements();
@@ -44,11 +72,13 @@ export default function BangKePage() {
       }
     } catch (error) {
       console.error("Failed to load customers:", error);
+      toast.error("Không thể tải danh sách công ty");
     }
   }
 
   async function loadStatements() {
     try {
+      setIsLoading(true);
       const result = await getMonthlyStatements({
         year: selectedYear,
         limit: 100,
@@ -59,6 +89,100 @@ export default function BangKePage() {
       }
     } catch (error) {
       console.error("Failed to load statements:", error);
+      toast.error("Không thể tải bảng kê");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loadStatementDetail(id: string) {
+    try {
+      setIsLoading(true);
+      const result = await getMonthlyStatement({ id });
+      if (result.success && result.data) {
+        setCurrentStatementDetail(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to load statement detail:", error);
+      setCurrentStatementDetail(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleConfirmStatement(id: string) {
+    try {
+      setIsConfirming(true);
+      const result = await confirmMonthlyStatement({ id });
+      if (result.success) {
+        toast.success(result.message || "Đã xác nhận bảng kê");
+        // Reload data
+        await loadStatements();
+        if (currentStatementDetail) {
+          await loadStatementDetail(currentStatementDetail.id);
+        }
+      } else {
+        throw new Error(result.error || "Không thể xác nhận");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Không thể xác nhận bảng kê");
+    } finally {
+      setIsConfirming(false);
+    }
+  }
+
+  function handleExportCSV() {
+    if (!currentStatementDetail) {
+      toast.error("Không có dữ liệu để xuất");
+      return;
+    }
+
+    try {
+      const csv = generateMonthlyStatementCSV(currentStatementDetail);
+      const filename = getStatementFilename(
+        currentStatementDetail.customer?.companyName || "company",
+        currentStatementDetail.year,
+        currentStatementDetail.month
+      );
+
+      // Create blob and download
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Đã xuất file CSV");
+    } catch (error) {
+      console.error("Failed to export CSV:", error);
+      toast.error("Không thể xuất file CSV");
+    }
+  }
+
+  function handleExportPDF() {
+    if (!currentStatementDetail) {
+      toast.error("Không có dữ liệu để xuất");
+      return;
+    }
+
+    try {
+      const doc = generateMonthlyStatementPDF(currentStatementDetail);
+      const filename = getStatementFilename(
+        currentStatementDetail.customer?.companyName || "company",
+        currentStatementDetail.year,
+        currentStatementDetail.month
+      ).replace(".csv", ".pdf");
+
+      doc.save(filename);
+      toast.success("Đã tạo file PDF");
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+      toast.error("Không thể xuất file PDF");
     }
   }
 
@@ -111,7 +235,7 @@ export default function BangKePage() {
               );
               const hasUnconfirmed = customerStmts.some((s) => s.needsConfirmation);
               const monthlyTotal = customerStmts.find(
-                (s) => s.month === new Date().getMonth() + 1
+                (s) => s.month === selectedMonth // FIX: Use selectedMonth instead of current month
               )?.total || 0;
 
               return (
@@ -138,7 +262,9 @@ export default function BangKePage() {
                           </div>
                         </div>
                         {hasUnconfirmed && (
-                          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                          <Badge variant="outline" className="border-amber-500 bg-amber-50 text-amber-700">
+                            <AlertCircle className="h-3 w-3" />
+                          </Badge>
                         )}
                       </div>
                       {monthlyTotal > 0 && (
@@ -208,11 +334,11 @@ export default function BangKePage() {
                 </div>
 
                 <div className="ml-auto flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!currentStatementDetail}>
                     <Download className="h-4 w-4 mr-2" />
                     Xuất Excel
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={!currentStatementDetail}>
                     <Printer className="h-4 w-4 mr-2" />
                     In
                   </Button>
@@ -263,17 +389,78 @@ export default function BangKePage() {
                         <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                           Vui lòng kiểm tra và xác nhận.
                         </p>
-                        <Button size="sm" className="mt-3">
+                        <Button
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => handleConfirmStatement(currentStatement.id)}
+                          disabled={isConfirming}
+                        >
                           <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Xác nhận
+                          {isConfirming ? "Đang xác nhận..." : "Xác nhận"}
                         </Button>
                       </div>
                     )}
 
-                    <div className="text-center text-muted-foreground py-8">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Bảng chi tiết cây đang được phát triển...</p>
-                    </div>
+                    {/* Plant Table */}
+                    {currentStatementDetail && isLoading ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p>Đang tải...</p>
+                      </div>
+                    ) : currentStatementDetail ? (
+                      <div>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-16">STT</TableHead>
+                              <TableHead>Tên cây</TableHead>
+                              <TableHead>Quy cách</TableHead>
+                              <TableHead className="text-right">Đơn giá</TableHead>
+                              <TableHead className="text-right">Số lượng</TableHead>
+                              <TableHead className="text-right">Thành tiền</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {currentStatementDetail.plants.map((plant, idx) => (
+                              <TableRow key={plant.id}>
+                                <TableCell className="font-medium">{idx + 1}</TableCell>
+                                <TableCell>{plant.name}</TableCell>
+                                <TableCell className="text-muted-foreground">{plant.sizeSpec}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(plant.unitPrice)}</TableCell>
+                                <TableCell className="text-right">{plant.quantity}</TableCell>
+                                <TableCell className="text-right font-medium">{formatCurrency(plant.total)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+
+                        {/* Financial Summary */}
+                        <div className="mt-6 space-y-2 border-t pt-4">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Tổng cộng:</span>
+                            <span className="font-medium">{formatCurrency(currentStatementDetail.subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">VAT ({currentStatementDetail.vatRate}%):</span>
+                            <span className="font-medium">{formatCurrency(currentStatementDetail.vatAmount)}</span>
+                          </div>
+                          <div className="flex justify-between text-lg font-bold border-t pt-2">
+                            <span>Thành tiền:</span>
+                            <span className="text-primary">{formatCurrency(currentStatementDetail.total)}</span>
+                          </div>
+                        </div>
+
+                        {/* Period Display */}
+                        <div className="mt-4 text-xs text-muted-foreground">
+                          Kỳ: {new Date(currentStatementDetail.periodStart).toLocaleDateString('vi-VN')} → {new Date(currentStatementDetail.periodEnd).toLocaleDateString('vi-VN')}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Chưa có dữ liệu chi tiết</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
