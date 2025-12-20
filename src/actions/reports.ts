@@ -77,7 +77,11 @@ export const getRevenueOverview = createServerAction(async () => {
   });
 
   // Revenue by customer tier
-  const revenueByTier = await prisma.$queryRaw`
+  const revenueByTier = await prisma.$queryRaw<Array<{
+    tier: string;
+    revenue: any;
+    customer_count: bigint;
+  }>>`
     SELECT
       c.tier,
       SUM(i."totalAmount") as revenue,
@@ -89,13 +93,20 @@ export const getRevenueOverview = createServerAction(async () => {
     ORDER BY revenue DESC
   `;
 
+  // Convert Decimal objects to numbers for client serialization
+  const serializedRevenueByTier = revenueByTier.map(item => ({
+    tier: item.tier,
+    revenue: Number(item.revenue || 0),
+    customer_count: Number(item.customer_count || 0),
+  }));
+
   return {
     totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
     ytdRevenue: Number(ytdRevenue._sum.totalAmount || 0),
     mtdRevenue: Number(mtdRevenue._sum.totalAmount || 0),
     revenueGrowth: Math.round(revenueGrowth * 10) / 10, // Round to 1 decimal
     avgContractValue: Number(avgContract._avg.monthlyFee || 0),
-    revenueByTier,
+    revenueByTier: serializedRevenueByTier,
   };
 });
 
