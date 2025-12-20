@@ -484,34 +484,29 @@ export async function getInvoiceStats() {
 
   const now = new Date();
 
-  const [total, pending, overdue, overdueAmount, totalReceivables] = await Promise.all([
-    prisma.invoice.count({ where: { status: { not: "CANCELLED" } } }),
-    prisma.invoice.count({ where: { status: { in: ["SENT", "PARTIAL"] } } }),
-    prisma.invoice.count({
-      where: {
-        status: { in: ["SENT", "PARTIAL"] },
-        dueDate: { lt: now },
-      },
-    }),
-    prisma.invoice.aggregate({
-      where: {
-        status: { in: ["SENT", "PARTIAL"] },
-        dueDate: { lt: now },
-      },
-      _sum: { outstandingAmount: true },
-    }),
-    prisma.invoice.aggregate({
-      where: { status: { in: ["SENT", "PARTIAL"] } },
-      _sum: { outstandingAmount: true },
-    }),
-  ]);
+  // Single query with FILTER instead of 5 separate queries
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    pending: bigint;
+    overdue: bigint;
+    overdue_amount: any;
+    total_receivables: any;
+  }]>`
+    SELECT
+      COUNT(*) FILTER (WHERE status != 'CANCELLED') as total,
+      COUNT(*) FILTER (WHERE status IN ('SENT', 'PARTIAL')) as pending,
+      COUNT(*) FILTER (WHERE status IN ('SENT', 'PARTIAL') AND "dueDate" < ${now}) as overdue,
+      COALESCE(SUM("outstandingAmount") FILTER (WHERE status IN ('SENT', 'PARTIAL') AND "dueDate" < ${now}), 0) as overdue_amount,
+      COALESCE(SUM("outstandingAmount") FILTER (WHERE status IN ('SENT', 'PARTIAL')), 0) as total_receivables
+    FROM invoices
+  `;
 
   return {
-    total,
-    pending,
-    overdue,
-    overdueAmount: overdueAmount._sum.outstandingAmount ?? 0,
-    totalReceivables: totalReceivables._sum.outstandingAmount ?? 0,
+    total: Number(stats[0].total),
+    pending: Number(stats[0].pending),
+    overdue: Number(stats[0].overdue),
+    overdueAmount: Number(stats[0].overdue_amount || 0),
+    totalReceivables: Number(stats[0].total_receivables || 0),
   };
 }
 

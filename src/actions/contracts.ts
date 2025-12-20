@@ -689,26 +689,26 @@ export async function getContractStats() {
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-  const [total, active, expiringSoon, totalValue] = await Promise.all([
-    prisma.contract.count(),
-    prisma.contract.count({ where: { status: "ACTIVE" } }),
-    prisma.contract.count({
-      where: {
-        status: "ACTIVE",
-        endDate: { lte: thirtyDaysFromNow, gte: now },
-      },
-    }),
-    prisma.contract.aggregate({
-      where: { status: "ACTIVE" },
-      _sum: { monthlyFee: true },
-    }),
-  ]);
+  // Single query with FILTER instead of 4 separate queries
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    active: bigint;
+    expiring_soon: bigint;
+    monthly_recurring: any;
+  }]>`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
+      COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
+    FROM contracts
+  `;
 
   return {
-    total,
-    active,
-    expiringSoon,
-    monthlyRecurring: totalValue._sum.monthlyFee?.toNumber() ?? 0,
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    expiringSoon: Number(stats[0].expiring_soon),
+    monthlyRecurring: Number(stats[0].monthly_recurring || 0),
   };
 }
 

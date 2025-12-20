@@ -3,6 +3,7 @@
  * Main analytics and reporting interface
  */
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import {
   getRevenueOverview,
   getMonthlyRevenue,
@@ -12,8 +13,15 @@ import {
   getContractAnalytics,
   getTopCustomers,
 } from "@/actions/reports";
-import { RevenueDashboard } from "@/components/analytics/revenue-dashboard";
-import { InvoiceAging } from "@/components/analytics/invoice-aging";
+// Dynamic import to reduce initial bundle size (recharts is large)
+const RevenueDashboard = dynamic(
+  () => import("@/components/analytics/revenue-dashboard").then(mod => ({ default: mod.RevenueDashboard })),
+  { loading: () => <div className="h-[400px] animate-pulse bg-muted rounded-lg" /> }
+);
+const InvoiceAging = dynamic(
+  () => import("@/components/analytics/invoice-aging").then(mod => ({ default: mod.InvoiceAging })),
+  { loading: () => <div className="h-[300px] animate-pulse bg-muted rounded-lg" /> }
+);
 import { AnalyticsExportButtons } from "@/components/analytics/export-buttons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

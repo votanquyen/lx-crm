@@ -31,8 +31,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { generateMonthlyStatementCSV, getStatementFilename } from "@/lib/csv/export-monthly-statement";
-import { generateMonthlyStatementPDF } from "@/lib/pdf/monthly-statement-pdf";
 
 export default function BangKePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,13 +130,16 @@ export default function BangKePage() {
     }
   }
 
-  function handleExportCSV() {
+  async function handleExportCSV() {
     if (!currentStatementDetail) {
       toast.error("Không có dữ liệu để xuất");
       return;
     }
 
     try {
+      // Dynamic import to reduce initial bundle size
+      const { generateMonthlyStatementCSV, getStatementFilename } = await import("@/lib/csv/export-monthly-statement");
+
       const csv = generateMonthlyStatementCSV(currentStatementDetail);
       const filename = getStatementFilename(
         currentStatementDetail.customer?.companyName || "company",
@@ -165,13 +166,17 @@ export default function BangKePage() {
     }
   }
 
-  function handleExportPDF() {
+  async function handleExportPDF() {
     if (!currentStatementDetail) {
       toast.error("Không có dữ liệu để xuất");
       return;
     }
 
     try {
+      // Dynamic import to reduce initial bundle size
+      const { generateMonthlyStatementPDF } = await import("@/lib/pdf/monthly-statement-pdf");
+      const { getStatementFilename } = await import("@/lib/csv/export-monthly-statement");
+
       const doc = generateMonthlyStatementPDF(currentStatementDetail);
       const filename = getStatementFilename(
         currentStatementDetail.customer?.companyName || "company",
