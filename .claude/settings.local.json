@@ -57,7 +57,11 @@
       "Bash(sqlite3:*)",
       "Bash(./pocketbase:*)",
       "Bash(./pocketbase.exe migrate:*)",
-      "Bash(./pocketbase.exe serve:*)"
+      "Bash(./pocketbase.exe serve:*)",
+      "Bash(tree:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(Get-ChildItem:*)"
     ],
     "deny": [
       "Bash(dd if=/dev/zero of=/dev/sd:*)",

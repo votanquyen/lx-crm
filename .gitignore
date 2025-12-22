@@ -79,3 +79,6 @@ prompt.md
 .gemini/settings.json
 .claude/settings.bak.json
 .claude/active-plan
+
+# Claude temp files
+.claude/*.tmp
