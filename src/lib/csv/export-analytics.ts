@@ -2,9 +2,9 @@
  * Analytics CSV Export Generators
  * Generate CSV exports for various analytics reports
  */
+import { formatCurrencyForExcel } from "@/lib/format-utils";
 import {
   arrayToCSV,
-  formatCurrencyForCSV,
   formatDateForCSV,
 } from "./csv-utils";
 
@@ -20,7 +20,15 @@ export interface MonthlyRevenueData {
 }
 
 export function generateMonthlyRevenueCSV(data: MonthlyRevenueData[]): string {
-  return arrayToCSV(data, [
+  const formattedData = data.map((item) => ({
+    ...item,
+    totalRevenue: formatCurrencyForExcel(item.totalRevenue),
+    paidAmount: formatCurrencyForExcel(item.paidAmount),
+    pendingAmount: formatCurrencyForExcel(item.pendingAmount),
+    overdueAmount: formatCurrencyForExcel(item.overdueAmount),
+  }));
+
+  return arrayToCSV(formattedData, [
     { key: "month", label: "Tháng" },
     { key: "totalRevenue", label: "Tổng doanh thu (VND)" },
     { key: "paidAmount", label: "Đã thanh toán (VND)" },
@@ -40,7 +48,12 @@ export interface InvoiceAgingData {
 }
 
 export function generateInvoiceAgingCSV(data: InvoiceAgingData[]): string {
-  return arrayToCSV(data, [
+  const formattedData = data.map((item) => ({
+    ...item,
+    totalAmount: formatCurrencyForExcel(item.totalAmount),
+  }));
+
+  return arrayToCSV(formattedData, [
     { key: "range", label: "Khoảng thời gian" },
     { key: "count", label: "Số lượng hóa đơn" },
     { key: "totalAmount", label: "Tổng tiền (VND)" },
@@ -63,7 +76,12 @@ export interface TopCustomerData {
 }
 
 export function generateTopCustomersCSV(data: TopCustomerData[]): string {
-  return arrayToCSV(data, [
+  const formattedData = data.map((item) => ({
+    ...item,
+    totalRevenue: formatCurrencyForExcel(item.totalRevenue),
+  }));
+
+  return arrayToCSV(formattedData, [
     { key: "code", label: "Mã khách hàng" },
     { key: "companyName", label: "Tên công ty" },
     { key: "tier", label: "Phân loại" },
@@ -97,9 +115,9 @@ export function generateOverdueInvoicesCSV(
     ...invoice,
     issueDate: formatDateForCSV(invoice.issueDate),
     dueDate: formatDateForCSV(invoice.dueDate),
-    totalAmount: formatCurrencyForCSV(invoice.totalAmount),
-    paidAmount: formatCurrencyForCSV(invoice.paidAmount),
-    balanceDue: formatCurrencyForCSV(invoice.balanceDue),
+    totalAmount: formatCurrencyForExcel(invoice.totalAmount),
+    paidAmount: formatCurrencyForExcel(invoice.paidAmount),
+    balanceDue: formatCurrencyForExcel(invoice.balanceDue),
   }));
 
   return arrayToCSV(formattedData, [
@@ -135,8 +153,8 @@ export function generateContractReportCSV(data: ContractReportData[]): string {
     ...contract,
     startDate: formatDateForCSV(contract.startDate),
     endDate: formatDateForCSV(contract.endDate),
-    monthlyValue: formatCurrencyForCSV(contract.monthlyValue),
-    totalValue: formatCurrencyForCSV(contract.totalValue),
+    monthlyValue: formatCurrencyForExcel(contract.monthlyValue),
+    totalValue: formatCurrencyForExcel(contract.totalValue),
   }));
 
   return arrayToCSV(formattedData, [
@@ -167,10 +185,10 @@ export interface RevenueSummaryData {
 export function generateRevenueSummaryCSV(data: RevenueSummaryData[]): string {
   const formattedData = data.map((item) => ({
     ...item,
-    newRevenue: formatCurrencyForCSV(item.newRevenue),
-    recurringRevenue: formatCurrencyForCSV(item.recurringRevenue),
-    totalRevenue: formatCurrencyForCSV(item.totalRevenue),
-    averageInvoiceValue: formatCurrencyForCSV(item.averageInvoiceValue),
+    newRevenue: formatCurrencyForExcel(item.newRevenue),
+    recurringRevenue: formatCurrencyForExcel(item.recurringRevenue),
+    totalRevenue: formatCurrencyForExcel(item.totalRevenue),
+    averageInvoiceValue: formatCurrencyForExcel(item.averageInvoiceValue),
   }));
 
   return arrayToCSV(formattedData, [

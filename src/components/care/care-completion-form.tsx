@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { completeCare } from "@/actions/care-schedules";
 import { uploadCarePhoto } from "@/lib/storage/s3-client";
@@ -163,13 +162,6 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
         toast.error(result.error || "Không thể hoàn thành");
       }
     });
-  };
-
-  const conditionColors = {
-    GOOD: "bg-green-100 text-green-800",
-    FAIR: "bg-yellow-100 text-yellow-800",
-    POOR: "bg-orange-100 text-orange-800",
-    DEAD: "bg-red-100 text-red-800",
   };
 
   return (

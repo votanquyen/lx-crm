@@ -15,13 +15,14 @@ export default async function NewQuotationPage() {
   ]);
 
   // Convert Decimal fields to numbers for client component compatibility
-  const serializedPlantTypes = plantTypesResult.plantTypes.map((pt: any) => ({
+  // Uses type assertion as plant types from DB have Decimal fields that need conversion
+  const serializedPlantTypes = plantTypesResult.plantTypes.map((pt) => ({
     ...pt,
     rentalPrice: Number(pt.rentalPrice),
     depositPrice: pt.depositPrice ? Number(pt.depositPrice) : null,
     salePrice: pt.salePrice ? Number(pt.salePrice) : null,
     replacementPrice: pt.replacementPrice ? Number(pt.replacementPrice) : null,
-  })) as any; // Type assertion since server returns subset of fields
+  }));
 
   return (
     <div className="container mx-auto max-w-4xl space-y-6 py-6">
@@ -41,8 +42,8 @@ export default async function NewQuotationPage() {
         </CardHeader>
         <CardContent>
           <QuotationForm
-            customers={customersResult.data as any}
-            plantTypes={serializedPlantTypes}
+            customers={customersResult.data as Parameters<typeof QuotationForm>[0]["customers"]}
+            plantTypes={serializedPlantTypes as Parameters<typeof QuotationForm>[0]["plantTypes"]}
           />
         </CardContent>
       </Card>

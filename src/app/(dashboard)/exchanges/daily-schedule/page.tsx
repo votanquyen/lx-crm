@@ -3,8 +3,7 @@
  * Create and manage daily exchange routes
  */
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DailyScheduleBuilder } from "@/components/exchanges/daily-schedule-builder";

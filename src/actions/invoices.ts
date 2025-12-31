@@ -7,7 +7,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth, requireManager } from "@/lib/auth-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { toDecimal, toNumber, addDecimal, multiplyDecimal, subtractDecimal, compareDecimal } from "@/lib/db-utils";
@@ -47,8 +47,7 @@ async function generateInvoiceNumber(): Promise<string> {
  * Get paginated list of invoices
  */
 export async function getInvoices(params: InvoiceSearchParams) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const validated = invoiceSearchSchema.parse(params);
   const { page, limit, search, status, customerId, overdueOnly, dateFrom, dateTo } = validated;
@@ -129,10 +128,10 @@ export async function getInvoices(params: InvoiceSearchParams) {
 
 /**
  * Get a single invoice by ID with full details
+ * Returns serialized Decimal fields for client components
  */
 export async function getInvoiceById(id: string) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -160,15 +159,34 @@ export async function getInvoiceById(id: string) {
   });
 
   if (!invoice) throw new NotFoundError("Hóa đơn");
-  return invoice;
+
+  // Serialize Decimal fields for client components
+  return {
+    ...invoice,
+    subtotal: invoice.subtotal.toNumber(),
+    discountAmount: invoice.discountAmount?.toNumber() ?? null,
+    vatRate: invoice.vatRate.toNumber(),
+    vatAmount: invoice.vatAmount.toNumber(),
+    totalAmount: invoice.totalAmount.toNumber(),
+    paidAmount: invoice.paidAmount.toNumber(),
+    outstandingAmount: invoice.outstandingAmount.toNumber(),
+    items: invoice.items.map((item) => ({
+      ...item,
+      unitPrice: item.unitPrice.toNumber(),
+      totalPrice: item.totalPrice.toNumber(),
+    })),
+    payments: invoice.payments.map((payment) => ({
+      ...payment,
+      amount: payment.amount.toNumber(),
+    })),
+  };
 }
 
 /**
  * Create a new invoice
  */
 export const createInvoice = createAction(createInvoiceSchema, async (input) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   // Verify customer exists
   const customer = await prisma.customer.findUnique({
@@ -250,8 +268,7 @@ export const createInvoice = createAction(createInvoiceSchema, async (input) => 
  */
 export const generateContractInvoice = createSimpleAction(
   async (data: { contractId: string; periodStart: Date; periodEnd: Date }) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+    const session = await requireAuth();
 
     const contract = await prisma.contract.findUnique({
       where: { id: data.contractId },
@@ -333,8 +350,7 @@ export const generateContractInvoice = createSimpleAction(
  * Send invoice (DRAFT -> SENT)
  */
 export const sendInvoice = createSimpleAction(async (id: string) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   const invoice = await prisma.invoice.findUnique({ where: { id } });
   if (!invoice) throw new NotFoundError("Hóa đơn");
@@ -367,8 +383,7 @@ export const sendInvoice = createSimpleAction(async (id: string) => {
  * Cancel invoice
  */
 export const cancelInvoice = createSimpleAction(async (id: string) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -408,8 +423,7 @@ export const cancelInvoice = createSimpleAction(async (id: string) => {
  * Record a payment
  */
 export const recordPayment = createAction(paymentSchema, async (input) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   const invoice = await prisma.invoice.findUnique({
     where: { id: input.invoiceId },
@@ -479,39 +493,33 @@ export const recordPayment = createAction(paymentSchema, async (input) => {
  * Get invoice statistics
  */
 export async function getInvoiceStats() {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const now = new Date();
 
-  const [total, pending, overdue, overdueAmount, totalReceivables] = await Promise.all([
-    prisma.invoice.count({ where: { status: { not: "CANCELLED" } } }),
-    prisma.invoice.count({ where: { status: { in: ["SENT", "PARTIAL"] } } }),
-    prisma.invoice.count({
-      where: {
-        status: { in: ["SENT", "PARTIAL"] },
-        dueDate: { lt: now },
-      },
-    }),
-    prisma.invoice.aggregate({
-      where: {
-        status: { in: ["SENT", "PARTIAL"] },
-        dueDate: { lt: now },
-      },
-      _sum: { outstandingAmount: true },
-    }),
-    prisma.invoice.aggregate({
-      where: { status: { in: ["SENT", "PARTIAL"] } },
-      _sum: { outstandingAmount: true },
-    }),
-  ]);
+  // Single query with FILTER instead of 5 separate queries
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    pending: bigint;
+    overdue: bigint;
+    overdue_amount: string | null; // PostgreSQL Decimal returns as string
+    total_receivables: string | null; // PostgreSQL Decimal returns as string
+  }]>`
+    SELECT
+      COUNT(*) FILTER (WHERE status != 'CANCELLED') as total,
+      COUNT(*) FILTER (WHERE status IN ('SENT', 'PARTIAL')) as pending,
+      COUNT(*) FILTER (WHERE status IN ('SENT', 'PARTIAL') AND "dueDate" < ${now}) as overdue,
+      COALESCE(SUM("outstandingAmount") FILTER (WHERE status IN ('SENT', 'PARTIAL') AND "dueDate" < ${now}), 0) as overdue_amount,
+      COALESCE(SUM("outstandingAmount") FILTER (WHERE status IN ('SENT', 'PARTIAL')), 0) as total_receivables
+    FROM invoices
+  `;
 
   return {
-    total,
-    pending,
-    overdue,
-    overdueAmount: overdueAmount._sum.outstandingAmount ?? 0,
-    totalReceivables: totalReceivables._sum.outstandingAmount ?? 0,
+    total: Number(stats[0].total),
+    pending: Number(stats[0].pending),
+    overdue: Number(stats[0].overdue),
+    overdueAmount: Number(stats[0].overdue_amount || 0),
+    totalReceivables: Number(stats[0].total_receivables || 0),
   };
 }
 
@@ -519,8 +527,7 @@ export async function getInvoiceStats() {
  * Get overdue invoices
  */
 export async function getOverdueInvoices(limit: number = 20) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const now = new Date();
 
@@ -543,15 +550,10 @@ export async function getOverdueInvoices(limit: number = 20) {
 
 /**
  * Update overdue invoices status (background job)
+ * Only ADMIN/MANAGER can run this
  */
 export async function updateOverdueStatus() {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
-
-  // Only ADMIN/MANAGER can run this
-  if (!["ADMIN", "MANAGER"].includes(session.user.role)) {
-    throw new AppError("Không có quyền thực hiện", "FORBIDDEN", 403);
-  }
+  await requireManager();
 
   const now = new Date();
 

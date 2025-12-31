@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import type { DailySchedule, ScheduledExchange, Customer } from "@prisma/client";
+import { setupVietnameseFonts } from "@/lib/pdf-fonts";
 
 interface ScheduleWithDetails extends DailySchedule {
   exchanges: (ScheduledExchange & {
@@ -20,6 +21,9 @@ interface ScheduleWithDetails extends DailySchedule {
 export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF {
   const doc = new jsPDF();
 
+  // Setup Vietnamese fonts
+  setupVietnameseFonts(doc);
+
   // Calculate totals
   const totalStops = schedule.exchanges.length;
   const totalPlants = schedule.exchanges.reduce((sum, ex) => sum + ex.totalPlantCount, 0);
@@ -30,12 +34,12 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
 
   // Header
   doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("LOC XANH - LICH TRINH HOM NAY", 105, 20, { align: "center" });
+  doc.setFont("Roboto", "bold");
+  doc.text("LỘC XANH - LỊCH TRÌNH HÔM NAY", 105, 20, { align: "center" });
 
   // Date
   doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
   const dateStr = format(new Date(schedule.scheduleDate), "EEEE, dd/MM/yyyy", {
     locale: vi,
   });
@@ -47,17 +51,17 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   doc.setFillColor(240, 240, 240);
   doc.rect(15, 38, 180, 25, "FD");
 
-  doc.setFont("helvetica", "bold");
-  doc.text("TONG QUAN:", 20, 45);
+  doc.setFont("Roboto", "bold");
+  doc.text("TỔNG QUAN:", 20, 45);
 
-  doc.setFont("helvetica", "normal");
-  doc.text(`So diem dung: ${totalStops}`, 20, 52);
-  doc.text(`Tong so cay: ${totalPlants}`, 75, 52);
-  doc.text(`Thoi gian du kien: ${totalDuration} phut`, 130, 52);
+  doc.setFont("Roboto", "normal");
+  doc.text(`Số điểm dừng: ${totalStops}`, 20, 52);
+  doc.text(`Tổng số cây: ${totalPlants}`, 75, 52);
+  doc.text(`Thời gian dự kiến: ${totalDuration} phút`, 130, 52);
 
-  doc.text(`Ma lich trinh: ${schedule.id.slice(0, 8).toUpperCase()}`, 20, 59);
+  doc.text(`Mã lịch trình: ${schedule.id.slice(0, 8).toUpperCase()}`, 20, 59);
   doc.text(
-    `Trang thai: ${schedule.status === "APPROVED" ? "DA DUYET" : schedule.status}`,
+    `Trạng thái: ${schedule.status === "APPROVED" ? "ĐÃ DUYỆT" : schedule.status}`,
     130,
     59
   );
@@ -82,11 +86,11 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
 
   autoTable(doc, {
     startY: 70,
-    head: [["#", "KHACH HANG", "DIA CHI", "DIEN THOAI", "SO CAY", "GIO", "THOI GIAN"]],
+    head: [["#", "KHÁCH HÀNG", "ĐỊA CHỈ", "ĐIỆN THOẠI", "SỐ CÂY", "GIỜ", "T.GIAN"]],
     body: tableData,
     theme: "grid",
     styles: {
-      font: "helvetica",
+      font: "Roboto", // Use our custom font
       fontSize: 9,
       cellPadding: 3,
     },
@@ -114,10 +118,10 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   const finalY = (doc as any).lastAutoTable.finalY || 150;
 
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("GHI CHU:", 15, finalY + 10);
+  doc.setFont("Roboto", "bold");
+  doc.text("GHI CHÚ:", 15, finalY + 10);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
   doc.setDrawColor(200);
   doc.rect(15, finalY + 13, 180, 30);
 
@@ -131,28 +135,28 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   const signY = finalY + 50;
 
   doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("LAI XE:", 20, signY);
-  doc.text("QUAN LY:", 120, signY);
+  doc.setFont("Roboto", "bold");
+  doc.text("LÁI XE:", 20, signY);
+  doc.text("QUẢN LÝ:", 120, signY);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("Roboto", "normal");
   doc.line(20, signY + 15, 80, signY + 15);
   doc.line(120, signY + 15, 180, signY + 15);
 
   doc.setFontSize(8);
-  doc.text("(Ky va ghi ro ho ten)", 35, signY + 20);
-  doc.text("(Ky va ghi ro ho ten)", 135, signY + 20);
+  doc.text("(Ký và ghi rõ họ tên)", 35, signY + 20);
+  doc.text("(Ký và ghi rõ họ tên)", 135, signY + 20);
 
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(128);
   doc.text(
-    `In luc: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
+    `In lúc: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
     105,
     280,
     { align: "center" }
   );
-  doc.text("Loc Xanh - He thong quan ly cham soc cay thue", 105, 285, {
+  doc.text("Lộc Xanh - Hệ thống quản lý chăm sóc cây thuê", 105, 285, {
     align: "center",
   });
 

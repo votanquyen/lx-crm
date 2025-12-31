@@ -60,21 +60,38 @@ export type ActionResponse<T> =
   | { success: true; data: T }
   | { success: false; error: string; code?: string };
 
+/** Auth context type */
+export interface ActionContext {
+  user?: {
+    id: string;
+    role: string;
+    email?: string;
+    name?: string;
+  };
+}
+
 /**
  * Create a validated server action
  * Uses z.output for the handler type (after transforms/defaults applied)
+ * Injects auth context as second parameter
  */
 export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
   schema: TSchema,
-  handler: (input: z.output<TSchema>) => Promise<TOutput>
+  handler: (input: z.output<TSchema>, ctx: ActionContext) => Promise<TOutput>
 ) {
   return async (input: unknown): Promise<ActionResponse<TOutput>> => {
     try {
       // Validate input
       const validatedInput = schema.parse(input);
 
-      // Execute handler
-      const result = await handler(validatedInput);
+      // Get auth context
+      const session = await auth();
+      const ctx: ActionContext = {
+        user: session?.user as ActionContext['user'],
+      };
+
+      // Execute handler with context
+      const result = await handler(validatedInput, ctx);
 
       return { success: true, data: result };
     } catch (error) {

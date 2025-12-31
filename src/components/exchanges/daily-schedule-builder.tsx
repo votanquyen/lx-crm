@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Calendar, CheckCircle, Trash2, Printer, PlayCircle } from "lucide-react";
@@ -41,11 +42,13 @@ export function DailyScheduleBuilder({
   existingSchedule,
   pendingRequests,
 }: DailyScheduleBuilderProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedDate, setSelectedDate] = useState(scheduleDate);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
 
-  // Convert exchange requests to stops
+  // Convert exchange requests to stops (unused - kept for future feature)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const availableStops: Stop[] = pendingRequests.map((req) => ({
     id: req.id,
     customerId: req.customerId,
@@ -83,7 +86,7 @@ export function DailyScheduleBuilder({
 
       if (result.success) {
         toast.success("Đã tạo lịch trình");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể tạo lịch trình");
       }
@@ -113,7 +116,7 @@ export function DailyScheduleBuilder({
 
     const result = await optimizeRoute(existingSchedule.id);
     if (result.success) {
-      window.location.reload();
+      router.refresh();
     }
   };
 
@@ -124,7 +127,7 @@ export function DailyScheduleBuilder({
       const result = await approveSchedule(existingSchedule.id);
       if (result.success) {
         toast.success("Đã duyệt lịch trình");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể duyệt lịch trình");
       }
@@ -139,7 +142,7 @@ export function DailyScheduleBuilder({
       const result = await deleteSchedule(existingSchedule.id);
       if (result.success) {
         toast.success("Đã xóa lịch trình");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể xóa lịch trình");
       }

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   FileSpreadsheet,
   CreditCard,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
   { title: "Hóa đơn", href: "/invoices", icon: Receipt },
   { title: "Thanh toán", href: "/payments", icon: CreditCard },
+  { title: "Bảng Kê", href: "/bang-ke", icon: ClipboardList },
   { title: "Lịch chăm sóc", href: "/care", icon: Calendar },
   { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },

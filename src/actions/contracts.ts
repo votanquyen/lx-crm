@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { differenceInMonths } from "date-fns";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-utils";
 import { createAction, createSimpleAction, requireRole, uuidSchema } from "@/lib/action-utils";
 import { AppError, NotFoundError, ConflictError } from "@/lib/errors";
 import { toDecimal, toNumber, addDecimal, multiplyDecimal } from "@/lib/db-utils";
@@ -48,8 +48,7 @@ async function generateContractNumber(): Promise<string> {
  * Get paginated list of contracts with filters
  */
 export async function getContracts(params: ContractSearchParams) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const validated = contractSearchSchema.parse(params);
   const { page, limit, search, status, customerId, expiringDays } = validated;
@@ -112,6 +111,9 @@ export async function getContracts(params: ContractSearchParams) {
     discountAmount: contract.discountAmount?.toNumber() ?? null,
     totalMonthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? null,
     totalContractValue: contract.totalContractValue?.toNumber() ?? null,
+    // Add aliases for contract-table compatibility
+    monthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? contract.monthlyFee.toNumber(),
+    totalAmount: contract.totalContractValue?.toNumber() ?? 0,
     items: contract.items.map((item) => ({
       ...item,
       unitPrice: item.unitPrice.toNumber(),
@@ -133,10 +135,10 @@ export async function getContracts(params: ContractSearchParams) {
 
 /**
  * Get a single contract by ID with full details
+ * Returns serialized Decimal fields for client components
  */
 export async function getContractById(id: string) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const contract = await prisma.contract.findUnique({
     where: { id },
@@ -166,15 +168,48 @@ export async function getContractById(id: string) {
   });
 
   if (!contract) throw new NotFoundError("Hợp đồng");
-  return contract;
+
+  // Serialize Decimal fields for client components
+  return {
+    ...contract,
+    monthlyFee: contract.monthlyFee.toNumber(),
+    depositAmount: contract.depositAmount?.toNumber() ?? null,
+    setupFee: contract.setupFee?.toNumber() ?? null,
+    vatRate: contract.vatRate.toNumber(),
+    discountPercent: contract.discountPercent?.toNumber() ?? null,
+    discountAmount: contract.discountAmount?.toNumber() ?? null,
+    totalMonthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? null,
+    totalContractValue: contract.totalContractValue?.toNumber() ?? null,
+    items: contract.items.map((item) => ({
+      ...item,
+      unitPrice: item.unitPrice.toNumber(),
+      discountRate: item.discountRate?.toNumber() ?? null,
+      totalPrice: item.totalPrice.toNumber(),
+      plantType: item.plantType
+        ? {
+            ...item.plantType,
+            rentalPrice: item.plantType.rentalPrice.toNumber(),
+          }
+        : null,
+    })),
+    invoices: contract.invoices.map((inv) => ({
+      ...inv,
+      subtotal: inv.subtotal.toNumber(),
+      discountAmount: inv.discountAmount?.toNumber() ?? null,
+      vatRate: inv.vatRate.toNumber(),
+      vatAmount: inv.vatAmount.toNumber(),
+      totalAmount: inv.totalAmount.toNumber(),
+      paidAmount: inv.paidAmount.toNumber(),
+      outstandingAmount: inv.outstandingAmount.toNumber(),
+    })),
+  };
 }
 
 /**
  * Create a new contract
  */
 export const createContract = createAction(createContractSchema, async (input) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   // Verify customer exists
   const customer = await prisma.customer.findUnique({
@@ -272,8 +307,7 @@ export const createContract = createAction(createContractSchema, async (input) =
  * Update contract (only DRAFT contracts can be updated)
  */
 export const updateContract = createAction(updateContractSchema, async (input) => {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  const session = await requireAuth();
 
   const { id, ...updateData } = input;
 
@@ -679,33 +713,32 @@ export const renewContract = createSimpleAction(
  * Get contract statistics
  */
 export async function getContractStats() {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const now = new Date();
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-  const [total, active, expiringSoon, totalValue] = await Promise.all([
-    prisma.contract.count(),
-    prisma.contract.count({ where: { status: "ACTIVE" } }),
-    prisma.contract.count({
-      where: {
-        status: "ACTIVE",
-        endDate: { lte: thirtyDaysFromNow, gte: now },
-      },
-    }),
-    prisma.contract.aggregate({
-      where: { status: "ACTIVE" },
-      _sum: { monthlyFee: true },
-    }),
-  ]);
+  // Single query with FILTER instead of 4 separate queries
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    active: bigint;
+    expiring_soon: bigint;
+    monthly_recurring: string | null; // PostgreSQL Decimal returns as string
+  }]>`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+      COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
+      COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
+    FROM contracts
+  `;
 
   return {
-    total,
-    active,
-    expiringSoon,
-    monthlyRecurring: totalValue._sum.monthlyFee?.toNumber() ?? 0,
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    expiringSoon: Number(stats[0].expiring_soon),
+    monthlyRecurring: Number(stats[0].monthly_recurring || 0),
   };
 }
 
@@ -713,8 +746,7 @@ export async function getContractStats() {
  * Get expiring contracts for notifications
  */
 export async function getExpiringContracts(days: number = 30) {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+  await requireAuth();
 
   const now = new Date();
   const futureDate = new Date();

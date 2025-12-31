@@ -50,7 +50,5 @@
     "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/statusline.cjs",
     "padding": 0
   },
-  "enabledPlugins": {
-    "claude-mem@thedotmack": true
-  }
+  "enabledPlugins": {}
 }

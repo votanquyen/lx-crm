@@ -66,8 +66,9 @@ export async function GET(request: NextRequest) {
         );
     }
 
-    // Return CSV file
-    return new NextResponse(csvData, {
+    // Return CSV file with UTF-8 BOM for Excel compatibility
+    const BOM = "\uFEFF";
+    return new NextResponse(BOM + csvData, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="${filename}"`,
@@ -107,6 +108,7 @@ async function exportMonthlyRevenue() {
       status: true,
       dueDate: true,
     },
+    take: 10000, // Prevent memory overflow on large datasets
   });
 
   // Group by month
@@ -168,6 +170,7 @@ async function exportInvoiceAging() {
       paidAmount: true,
       dueDate: true,
     },
+    take: 10000, // Prevent memory overflow on large datasets
   });
 
   // Aging buckets
@@ -241,6 +244,7 @@ async function exportTopCustomers() {
         },
       },
     },
+    take: 10000, // Prevent memory overflow on large datasets
   });
 
   const data: TopCustomerData[] = customers.map((customer) => {
@@ -303,6 +307,7 @@ async function exportOverdueInvoices() {
     orderBy: {
       dueDate: "asc",
     },
+    take: 10000, // Prevent memory overflow on large datasets
   });
 
   const data: OverdueInvoiceData[] = overdueInvoices.map((invoice) => {
@@ -357,6 +362,7 @@ async function exportContracts() {
     orderBy: {
       startDate: "desc",
     },
+    take: 10000, // Prevent memory overflow on large datasets
   });
 
   const data: ContractReportData[] = contracts.map((contract) => {

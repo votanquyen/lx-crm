@@ -1,7 +1,8 @@
 # Browser Testing Checklist
 
-**Session:** December 19, 2025
+**Session:** December 20, 2025
 **Status:** Ready for Testing
+**Server:** http://localhost:3003
 **Prerequisites:** Development server running (`bun run dev`)
 
 ---
@@ -14,7 +15,7 @@ cd C:\Users\Quyen_Vo\locxanh.vn
 bun run dev
 ```
 
-**Expected:** Server starts on `http://localhost:3000`
+**Expected:** Server starts on `http://localhost:3003` (or next available port)
 
 ### 2. Verify Database Connection
 - Check `.env` file has valid `DATABASE_URL`
@@ -170,6 +171,61 @@ bun run dev
 - [ ] **Chart responsiveness** - Chart resizes properly
 
 ---
+
+### Phase 2.5: Bảng Kê (Monthly Statement) 🆕 PRIORITY
+**Status:** Implementation complete, needs browser testing
+**Route:** `/bang-ke`
+**Detailed Checklist:** `plans/reports/251220-manual-testing-bangke.md`
+
+#### Navigation & Authorization
+- [ ] **Sidebar link** - "Bảng Kê" visible in sidebar
+- [ ] **Route accessible** - Navigate to `/bang-ke`
+- [ ] **Authorization** - Only ADMIN/MANAGER/ACCOUNTANT can access
+- [ ] **Unauthorized redirect** - Other roles get error/redirect
+
+#### Layout & Companies List
+- [ ] **3-column layout** - Sidebar | Main | AI panel (empty)
+- [ ] **Companies load** - Display all customers with contracts
+- [ ] **Company avatars** - Show initials from shortName
+- [ ] **Monthly totals** - Calculated total per company
+- [ ] **Search box** - Filter companies (Vietnamese)
+- [ ] **Yellow badges** - Warning for unconfirmed statements
+- [ ] **Company selection** - Click loads statement
+
+#### Statement Display
+- [ ] **Statement header** - Company name, month/year
+- [ ] **Period display** - Billing period (24th → 23rd)
+- [ ] **Month selector** - Switch between months/years
+- [ ] **Warning banner** - Yellow banner if unconfirmed
+- [ ] **Plant table** - Display all plants with calculations
+- [ ] **Subtotal** - Sum of (unitPrice × quantity)
+- [ ] **VAT (8%)** - Correct calculation
+- [ ] **Total amount** - Subtotal + VAT
+
+#### Confirmation Workflow
+- [ ] **Confirm button** - "Xác nhận bảng kê" visible
+- [ ] **Confirmation dialog** - Warning before confirming
+- [ ] **Status update** - Confirmed after action
+- [ ] **Badge removal** - Yellow badge disappears
+- [ ] **Banner removal** - Warning banner disappears
+
+#### Export Features
+- [ ] **CSV export** - Download CSV file
+- [ ] **UTF-8 encoding** - Vietnamese characters correct
+- [ ] **PDF export** - Generate PDF
+- [ ] **Vietnamese fonts** - Render correctly in PDF
+- [ ] **Company logo** - (If implemented) Logo in header
+- [ ] **Signature fields** - Space for manual signatures
+
+#### Edge Cases
+- [ ] **Empty statement** - Handle no plants gracefully
+- [ ] **Month navigation** - Switch months smoothly
+- [ ] **Large plant list** - Handle 50+ plants
+- [ ] **Year boundaries** - Dec → Jan transitions
+
+---
+
+### Phase 3.1: Daily Exchange Routes ⏳
 
 ## Cross-Feature Integration Tests
 

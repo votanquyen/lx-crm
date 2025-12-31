@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   CheckCircle,
@@ -44,6 +45,7 @@ interface ScheduleTrackerProps {
 }
 
 export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -121,7 +123,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
         toast.success("Đã hoàn thành điểm dừng");
         setActiveStopId(null);
         resetForm();
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể hoàn thành");
       }
@@ -144,7 +146,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
         toast.success("Đã bỏ qua điểm dừng");
         setActiveStopId(null);
         setSkipReason("");
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.error || "Không thể bỏ qua");
       }
@@ -241,7 +243,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
 
       {/* Stops List */}
       <div className="space-y-4">
-        {schedule.exchanges.map((stop, index) => (
+        {schedule.exchanges.map((stop) => (
           <Card
             key={stop.id}
             className={
@@ -294,6 +296,8 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                     <>
                       <Button
                         onClick={() => {
+                          // Reset form to prevent data leakage between stops
+                          resetForm();
                           setActiveStopId(stop.id);
                           // Pre-fill times
                           const now = format(new Date(), "yyyy-MM-dd'T'HH:mm");
@@ -312,7 +316,11 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                     </>
                   ) : (
                     <Button
-                      onClick={() => setActiveStopId(null)}
+                      onClick={() => {
+                        // Reset form when canceling
+                        resetForm();
+                        setActiveStopId(null);
+                      }}
                       variant="ghost"
                       size="sm"
                     >

@@ -1,8 +1,9 @@
 # Lộc Xanh CRM - Feature Roadmap
 
-**Last Updated:** December 19, 2025
-**Current Phase:** Phase 3 - Operational Excellence
-**Status:** 🟢 92% Complete (Route Planning + Care Schedule done)
+**Last Updated:** December 20, 2025
+**Current Phase:** Phase 3 - Operational Excellence (92% complete)
+**Next Phase:** Phase 2.5 - Bảng Kê (Monthly Statement) - Planned
+**Status:** 🟢 67% Overall (3.7 of 5.5 phases)
 
 ---
 
@@ -12,11 +13,12 @@
 |-------|--------|------------|
 | Phase 1: Test Infrastructure | ✅ Complete | 100% |
 | Phase 2: Core Business Features | ✅ Complete | 100% |
+| Phase 2.5: Bảng Kê (Monthly Statement) | ⏳ Planned | 0% |
 | Phase 3: Operational Excellence | 🟢 Mostly Complete | 92% |
 | Phase 4: Advanced Features | ⏳ Planned | 0% |
 | Phase 5: Enterprise Features | ⏳ Future | 0% |
 
-**Overall Completion:** 74% (3.7 of 5 phases complete)
+**Overall Completion:** 67% (3.7 of 5.5 phases complete)
 
 ---
 
@@ -143,6 +145,85 @@
 - UI components (NoteForm, NoteCard, NoteList)
 - Pages (note list, note detail)
 - AI integration (Gemini API for sentiment, keywords)
+
+---
+
+## Phase 2.5: Bảng Kê (Monthly Plant Statement) 🆕 PLANNED
+
+**Priority:** HIGH
+**Impact:** Monthly billing automation and customer transparency
+**Status:** ⏳ Planned (0%)
+**Estimated Time:** 18 hours (3 days)
+**Plan:** `plans/20251217-2333-locxanh-v4-implementation/phase-25-bangke/plan.md`
+
+### Overview
+Monthly plant rental statement system with auto-generation, confirmation workflow, and professional Vietnamese business format exports.
+
+### Features
+- [ ] Auto-generate statements on 1st of month (copy from previous)
+- [ ] 3-column UI: Sidebar (companies) | Main (statement) | AI Panel (suggestions)
+- [ ] Company list with search, avatars, monthly totals
+- [ ] Yellow warning badges for unconfirmed statements
+- [ ] Month/year selector with tabs
+- [ ] Plant table (inline editing, add/remove plants)
+- [ ] Automatic calculations (subtotal, 8% VAT, total)
+- [ ] Period dates: 24th → 23rd (custom billing cycle)
+- [ ] Confirmation workflow (prevent accidental billing)
+- [ ] Excel export (CSV with UTF-8 BOM)
+- [ ] PDF print view (company logo, signatures)
+- [ ] Vietnamese font support (reuse Phase 3 P2/P3)
+
+### Technical Implementation
+**Phase 01:** Database schema (2h)
+- MonthlyStatement model (Prisma)
+- Extend Customer model (shortName for avatar)
+- Migration scripts
+
+**Phase 02:** Backend API (4h)
+- Server actions (CRUD, confirmation workflow)
+- Auto-rollover logic (cron trigger)
+- Calculation utilities (8% VAT)
+- API routes for export
+
+**Phase 03:** Frontend UI (6h)
+- 3-column layout components
+- Company sidebar with search
+- Month selector and statement card
+- Plant table with inline editing
+- Warning states for unconfirmed
+
+**Phase 04:** Export/Print (3h)
+- Excel export (reuse CSV utilities)
+- PDF generation (reuse Vietnamese fonts)
+- Print modal with template
+
+**Phase 05:** Integration/Testing (3h)
+- Integration tests
+- Manual QA checklist
+- Deployment preparation
+
+### Business Value
+- **Efficiency:** Auto-rollover saves 2-3 hours/month
+- **Accuracy:** Prevents billing errors with confirmation workflow
+- **Professionalism:** Branded PDF statements
+- **Transparency:** Customers see plant inventory clearly
+- **Audit Trail:** Track all statement changes
+
+### Dependencies
+- Customer model (existing)
+- PlantType model (existing)
+- Vietnamese font files (Phase 3 P2/P3)
+- Currency formatting utilities (existing)
+- PDF generation patterns (morning-briefing)
+
+### Success Criteria
+- [ ] Statements auto-create correctly on month boundaries
+- [ ] Excel opens without encoding errors
+- [ ] PDF matches design spec (logo, signatures, Vietnamese text)
+- [ ] Period calculations accurate (24th → 23rd)
+- [ ] VAT calculation accurate (8%)
+- [ ] Zero data leakage between customers
+- [ ] Yellow badges visible for unconfirmed statements
 
 ---
 
