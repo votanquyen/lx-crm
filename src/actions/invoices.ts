@@ -502,8 +502,8 @@ export async function getInvoiceStats() {
     total: bigint;
     pending: bigint;
     overdue: bigint;
-    overdue_amount: any;
-    total_receivables: any;
+    overdue_amount: string | null; // PostgreSQL Decimal returns as string
+    total_receivables: string | null; // PostgreSQL Decimal returns as string
   }]>`
     SELECT
       COUNT(*) FILTER (WHERE status != 'CANCELLED') as total,

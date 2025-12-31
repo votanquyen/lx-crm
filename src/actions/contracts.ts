@@ -724,7 +724,7 @@ export async function getContractStats() {
     total: bigint;
     active: bigint;
     expiring_soon: bigint;
-    monthly_recurring: any;
+    monthly_recurring: string | null; // PostgreSQL Decimal returns as string
   }]>`
     SELECT
       COUNT(*) as total,

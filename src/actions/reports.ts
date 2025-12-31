@@ -83,7 +83,7 @@ export const getRevenueOverview = createServerAction(async () => {
   // Revenue by customer tier
   const revenueByTier = await prisma.$queryRaw<Array<{
     tier: string;
-    revenue: any;
+    revenue: string | null; // PostgreSQL Decimal returns as string
     customer_count: bigint;
   }>>`
     SELECT
@@ -390,7 +390,7 @@ export const getCustomerAnalytics = createServerAction(async () => {
       });
 
       // Average lifetime value - use database aggregation instead of fetching all
-      const avgLifetimeValueResult = await prisma.$queryRaw<[{ avg: any }]>`
+      const avgLifetimeValueResult = await prisma.$queryRaw<[{ avg: string | null }]>`
         SELECT AVG(customer_revenue) as avg
         FROM (
           SELECT
@@ -436,8 +436,8 @@ export const getTopCustomers = createServerAction(async (limit: number = 10) => 
         company_name: string;
         code: string;
         tier: string;
-        total_revenue: any;
-        monthly_fee: any;
+        total_revenue: string | null; // PostgreSQL Decimal returns as string
+        monthly_fee: string | null; // PostgreSQL Decimal returns as string
         invoice_count: bigint;
       }>>`
         SELECT

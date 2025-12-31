@@ -123,8 +123,9 @@ export default function BangKePage() {
       } else {
         throw new Error(result.error || "Không thể xác nhận");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Không thể xác nhận bảng kê");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Không thể xác nhận bảng kê";
+      toast.error(message);
     } finally {
       setIsConfirming(false);
     }
