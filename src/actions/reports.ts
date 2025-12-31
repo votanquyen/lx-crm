@@ -598,6 +598,7 @@ export const getExpiringContracts = createServerAction(
 
 /**
  * Get plant rental analytics
+ * Optimized: Batch query for plant types instead of N+1 sequential queries
  */
 export const getPlantAnalytics = createServerAction(async () => {
   await requireUser();
@@ -609,23 +610,28 @@ export const getPlantAnalytics = createServerAction(async () => {
     _count: true,
   });
 
-  const plantDetails = await Promise.all(
-    plantRentals.map(async (rental) => {
-      const plantType = await prisma.plantType.findUnique({
-        where: { id: rental.plantTypeId },
-        select: { code: true, name: true, rentalPrice: true },
-      });
+  // Batch fetch all plant types in single query (fixes N+1)
+  const plantTypeIds = plantRentals.map((r) => r.plantTypeId);
+  const plantTypes = await prisma.plantType.findMany({
+    where: { id: { in: plantTypeIds } },
+    select: { id: true, code: true, name: true, rentalPrice: true },
+  });
 
-      return {
-        plantTypeId: rental.plantTypeId,
-        code: plantType?.code || "N/A",
-        name: plantType?.name || "Unknown",
-        rentalPrice: Number(plantType?.rentalPrice || 0),
-        totalQuantity: rental._sum.quantity || 0,
-        contractCount: rental._count,
-      };
-    })
-  );
+  // Map plant types by ID for O(1) lookup
+  const plantTypeMap = new Map(plantTypes.map((pt) => [pt.id, pt]));
+
+  // Build plant details using map lookup
+  const plantDetails = plantRentals.map((rental) => {
+    const plantType = plantTypeMap.get(rental.plantTypeId);
+    return {
+      plantTypeId: rental.plantTypeId,
+      code: plantType?.code || "N/A",
+      name: plantType?.name || "Unknown",
+      rentalPrice: Number(plantType?.rentalPrice || 0),
+      totalQuantity: rental._sum.quantity || 0,
+      contractCount: rental._count,
+    };
+  });
 
   // Sort by total quantity
   const mostRented = plantDetails
