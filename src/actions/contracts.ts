@@ -101,8 +101,27 @@ export async function getContracts(params: ContractSearchParams) {
     prisma.contract.count({ where }),
   ]);
 
+  // Convert Decimal to number for client components
+  const serializedContracts = contracts.map((contract) => ({
+    ...contract,
+    monthlyFee: contract.monthlyFee.toNumber(),
+    depositAmount: contract.depositAmount?.toNumber() ?? null,
+    setupFee: contract.setupFee?.toNumber() ?? null,
+    vatRate: contract.vatRate.toNumber(),
+    discountPercent: contract.discountPercent?.toNumber() ?? null,
+    discountAmount: contract.discountAmount?.toNumber() ?? null,
+    totalMonthlyAmount: contract.totalMonthlyAmount?.toNumber() ?? null,
+    totalContractValue: contract.totalContractValue?.toNumber() ?? null,
+    items: contract.items.map((item) => ({
+      ...item,
+      unitPrice: item.unitPrice.toNumber(),
+      discountRate: item.discountRate?.toNumber() ?? null,
+      totalPrice: item.totalPrice.toNumber(),
+    })),
+  }));
+
   return {
-    data: contracts,
+    data: serializedContracts,
     pagination: {
       page,
       limit,
@@ -686,7 +705,7 @@ export async function getContractStats() {
     total,
     active,
     expiringSoon,
-    monthlyRecurring: totalValue._sum.monthlyFee ?? 0,
+    monthlyRecurring: totalValue._sum.monthlyFee?.toNumber() ?? 0,
   };
 }
 

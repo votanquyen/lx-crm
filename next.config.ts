@@ -14,16 +14,16 @@ const securityHeaders = [
       "default-src 'self'; " +
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
       "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https: blob:; " +
+      "img-src 'self' data: https: blob: https://api.node02.s3interdata.com; " +
       "font-src 'self' data:; " +
-      "connect-src 'self' https://accounts.google.com; " +
+      "connect-src 'self' https://accounts.google.com https://api.node02.s3interdata.com; " +
       "frame-src 'self' https://accounts.google.com;",
   },
 ];
 
 const nextConfig: NextConfig = {
-  // Note: Enable 'standalone' for Docker deployment (requires admin/symlink rights on Windows)
-  // output: "standalone",
+  // Enable standalone output for Docker deployment
+  output: "standalone",
 
   // Fix workspace root warning - specify project root explicitly
   outputFileTracingRoot: __dirname,
@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   experimental: {
     serverActions: {
-      bodySizeLimit: "2mb",
+      bodySizeLimit: "30mb", // Support large image uploads
     },
   },
   async headers() {

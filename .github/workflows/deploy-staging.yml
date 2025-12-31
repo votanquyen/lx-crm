@@ -1,0 +1,211 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch: # Allow manual deployment
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build and push Docker image
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=staging-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            NEXT_PUBLIC_ENV=staging
+
+  # Run database migrations
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.1.38'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: bunx prisma migrate deploy
+
+      - name: Generate Prisma client
+        run: bunx prisma generate
+
+  # Deploy to staging server
+  deploy:
+    name: Deploy to Staging Server
+    runs-on: ubuntu-latest
+    needs: [build, migrate]
+    if: success()
+
+    environment:
+      name: staging
+      url: ${{ secrets.STAGING_URL }}
+
+    steps:
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.STAGING_DEPLOY_PATH }}
+
+            # Pull latest image
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker pull ${{ needs.build.outputs.image-tag }}
+
+            # Update docker-compose
+            export IMAGE_TAG=${{ needs.build.outputs.image-tag }}
+            docker-compose -f docker-compose.staging.yml pull
+            docker-compose -f docker-compose.staging.yml up -d --no-build
+
+            # Cleanup old images
+            docker image prune -af --filter "until=24h"
+
+            # Health check
+            sleep 10
+            curl -f ${{ secrets.STAGING_URL }}/api/health || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Deployment to staging successful!"
+          echo "URL: ${{ secrets.STAGING_URL }}"
+          echo "Image: ${{ needs.build.outputs.image-tag }}"
+
+  # Smoke tests on staging
+  smoke-test:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          curl -f ${{ secrets.STAGING_URL }}/api/health
+          echo "✅ Health check passed"
+
+      - name: Database connection check
+        run: |
+          response=$(curl -s ${{ secrets.STAGING_URL }}/api/health)
+          echo "Response: $response"
+          if echo "$response" | grep -q "ok"; then
+            echo "✅ Database connection verified"
+          else
+            echo "❌ Database connection failed"
+            exit 1
+          fi
+
+      - name: Authentication check
+        run: |
+          # Check if login page loads
+          status=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.STAGING_URL }}/login)
+          if [ "$status" = "200" ]; then
+            echo "✅ Authentication endpoint accessible"
+          else
+            echo "❌ Authentication endpoint failed (HTTP $status)"
+            exit 1
+          fi
+
+  # Deployment summary
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [build, migrate, deploy, smoke-test]
+    if: always()
+
+    steps:
+      - name: Check deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" != "success" ]; then
+            echo "❌ Deployment failed"
+            exit 1
+          fi
+
+          echo "📦 Build: ${{ needs.build.result }}"
+          echo "🔄 Migrate: ${{ needs.migrate.result }}"
+          echo "🚀 Deploy: ${{ needs.deploy.result }}"
+          echo "✅ Smoke Test: ${{ needs.smoke-test.result }}"
+          echo ""
+          echo "🎉 Staging deployment completed successfully!"
+          echo "URL: ${{ secrets.STAGING_URL }}"
+
+      - name: Create deployment record
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'staging',
+              auto_merge: false,
+              required_contexts: []
+            });

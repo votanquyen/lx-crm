@@ -50,7 +50,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId }: Contr
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<CreateContractInput>({
-    resolver: zodResolver(createContractSchema),
+    resolver: zodResolver(createContractSchema) as any,
     defaultValues: {
       customerId: defaultCustomerId || "",
       startDate: new Date(),
