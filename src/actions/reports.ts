@@ -120,69 +120,82 @@ export const getRevenueOverview = createServerAction(async () => {
 
 /**
  * Get monthly revenue for the last 12 months (for charts)
+ * Optimized: Uses SQL DATE_TRUNC for grouping instead of JS processing
+ * Cached for 5 minutes
  */
 export const getMonthlyRevenue = createServerAction(async () => {
   await requireUser();
 
-  const now = new Date();
-  const twelveMonthsAgo = subMonths(now, 12);
+  return unstable_cache(
+    async () => {
+      // Use SQL for efficient grouping instead of fetching all invoices
+      const monthlyData = await prisma.$queryRaw<Array<{
+        month: Date;
+        amount: string | null;
+      }>>`
+        SELECT
+          DATE_TRUNC('month', i."issueDate") as month,
+          SUM(i."totalAmount") as amount
+        FROM invoices i
+        WHERE i.status IN ('PAID', 'PARTIAL')
+          AND i."issueDate" >= NOW() - INTERVAL '12 months'
+        GROUP BY DATE_TRUNC('month', i."issueDate")
+        ORDER BY month ASC
+      `;
 
-  // Get all paid/partial invoices from last 12 months
-  const invoices = await prisma.invoice.findMany({
-    where: {
-      status: { in: ["PAID", "PARTIAL"] },
-      issueDate: { gte: twelveMonthsAgo },
+      // Initialize all 12 months with 0
+      const now = new Date();
+      const result: Array<{ month: string; monthKey: string; amount: number }> = [];
+
+      for (let i = 11; i >= 0; i--) {
+        const monthDate = subMonths(now, i);
+        const monthKey = format(monthDate, "yyyy-MM");
+        const monthLabel = format(monthDate, "MMM yyyy");
+
+        // Find matching data from SQL result
+        const matchingData = monthlyData.find(d => {
+          const dataKey = format(new Date(d.month), "yyyy-MM");
+          return dataKey === monthKey;
+        });
+
+        result.push({
+          month: monthLabel,
+          monthKey,
+          amount: Number(matchingData?.amount || 0),
+        });
+      }
+
+      return result;
     },
-    select: {
-      issueDate: true,
-      totalAmount: true,
-    },
-  });
-
-  // Group by month
-  const monthlyData = new Map<string, number>();
-
-  // Initialize all 12 months with 0
-  for (let i = 11; i >= 0; i--) {
-    const month = subMonths(now, i);
-    const key = format(month, "yyyy-MM");
-    monthlyData.set(key, 0);
-  }
-
-  // Sum amounts by month
-  invoices.forEach((invoice) => {
-    const key = format(invoice.issueDate, "yyyy-MM");
-    const current = monthlyData.get(key) || 0;
-    monthlyData.set(key, current + Number(invoice.totalAmount));
-  });
-
-  // Convert to array format for charts
-  const data = Array.from(monthlyData.entries()).map(([month, amount]) => ({
-    month: format(new Date(month + "-01"), "MMM yyyy"),
-    monthKey: month,
-    amount,
-  }));
-
-  return data;
+    ['monthly-revenue'],
+    { revalidate: 300 } // Cache for 5 minutes
+  )();
 });
 
 /**
  * Get revenue by payment method
+ * Cached for 5 minutes
  */
 export const getRevenueByPaymentMethod = createServerAction(async () => {
   await requireUser();
 
-  const paymentStats = await prisma.payment.groupBy({
-    by: ["paymentMethod"],
-    _sum: { amount: true },
-    _count: true,
-  });
+  return unstable_cache(
+    async () => {
+      const paymentStats = await prisma.payment.groupBy({
+        by: ["paymentMethod"],
+        _sum: { amount: true },
+        _count: true,
+      });
 
-  return paymentStats.map((stat) => ({
-    method: stat.paymentMethod,
-    amount: Number(stat._sum.amount || 0),
-    count: stat._count,
-  }));
+      return paymentStats.map((stat) => ({
+        method: stat.paymentMethod,
+        amount: Number(stat._sum.amount || 0),
+        count: stat._count,
+      }));
+    },
+    ['revenue-by-payment'],
+    { revalidate: 300 }
+  )();
 });
 
 // ============================================================
@@ -191,158 +204,200 @@ export const getRevenueByPaymentMethod = createServerAction(async () => {
 
 /**
  * Get invoice analytics overview
+ * Cached for 5 minutes
  */
 export const getInvoiceAnalytics = createServerAction(async () => {
   await requireUser();
 
-  // Outstanding invoices (sent but not fully paid)
-  const outstanding = await prisma.invoice.aggregate({
-    where: {
-      status: { in: ["SENT", "PARTIAL", "OVERDUE"] },
-    },
-    _sum: { totalAmount: true },
-    _count: true,
-  });
-
-  // Overdue invoices
-  const overdue = await prisma.invoice.aggregate({
-    where: {
-      status: "OVERDUE",
-    },
-    _sum: { totalAmount: true },
-    _count: true,
-  });
-
-  // Collection rate (paid amount / total issued)
-  const totalIssued = await prisma.invoice.aggregate({
-    _sum: { totalAmount: true },
-  });
-
-  const totalPaid = await prisma.payment.aggregate({
-    where: { isVerified: true },
-    _sum: { amount: true },
-  });
-
-  const collectionRate = Number(totalIssued._sum.totalAmount || 0) > 0
-    ? (Number(totalPaid._sum.amount || 0) / Number(totalIssued._sum.totalAmount || 0)) * 100
-    : 0;
-
-  // Average days to payment
-  const paidInvoices = await prisma.invoice.findMany({
-    where: {
-      status: "PAID",
-      payments: { some: {} },
-    },
-    select: {
-      issueDate: true,
-      payments: {
-        where: { isVerified: true },
-        orderBy: { paymentDate: "asc" },
-        take: 1,
-        select: { paymentDate: true },
-      },
-    },
-  });
-
-  const daysToPayment = paidInvoices
-    .filter((inv) => inv.payments.length > 0)
-    .map((inv) =>
-      differenceInDays(inv.payments[0].paymentDate, inv.issueDate)
-    );
-
-  const avgDaysToPayment = daysToPayment.length > 0
-    ? Math.round(daysToPayment.reduce((sum, days) => sum + days, 0) / daysToPayment.length)
-    : 0;
-
-  return {
-    outstandingAmount: Number(outstanding._sum.totalAmount || 0),
-    outstandingCount: outstanding._count,
-    overdueAmount: Number(overdue._sum.totalAmount || 0),
-    overdueCount: overdue._count,
-    collectionRate: Math.round(collectionRate * 10) / 10,
-    avgDaysToPayment,
-  };
-});
-
-/**
- * Get invoice aging report
- */
-export const getInvoiceAging = createServerAction(async () => {
-  await requireUser();
-
-  const now = new Date();
-
-  const buckets = [
-    { range: "0-30 days", minDays: 0, maxDays: 30 },
-    { range: "31-60 days", minDays: 31, maxDays: 60 },
-    { range: "61-90 days", minDays: 61, maxDays: 90 },
-    { range: "90+ days", minDays: 91, maxDays: 9999 },
-  ];
-
-  const aging = await Promise.all(
-    buckets.map(async (bucket) => {
-      // Calculate date range
-      const maxDate = new Date(now);
-      maxDate.setDate(maxDate.getDate() - bucket.minDays);
-
-      const minDate = new Date(now);
-      minDate.setDate(minDate.getDate() - bucket.maxDays);
-
-      const result = await prisma.invoice.aggregate({
+  return unstable_cache(
+    async () => {
+      // Outstanding invoices (sent but not fully paid)
+      const outstanding = await prisma.invoice.aggregate({
         where: {
           status: { in: ["SENT", "PARTIAL", "OVERDUE"] },
-          dueDate: {
-            gte: bucket.maxDays < 9999 ? minDate : new Date(0), // Beginning of time for 90+
-            lte: maxDate,
-          },
         },
         _sum: { totalAmount: true },
         _count: true,
       });
 
-      return {
-        range: bucket.range,
-        count: result._count,
-        amount: Number(result._sum.totalAmount || 0),
-      };
-    })
-  );
+      // Overdue invoices
+      const overdue = await prisma.invoice.aggregate({
+        where: {
+          status: "OVERDUE",
+        },
+        _sum: { totalAmount: true },
+        _count: true,
+      });
 
-  return aging;
+      // Collection rate (paid amount / total issued)
+      const totalIssued = await prisma.invoice.aggregate({
+        _sum: { totalAmount: true },
+      });
+
+      const totalPaid = await prisma.payment.aggregate({
+        where: { isVerified: true },
+        _sum: { amount: true },
+      });
+
+      const collectionRate = Number(totalIssued._sum.totalAmount || 0) > 0
+        ? (Number(totalPaid._sum.amount || 0) / Number(totalIssued._sum.totalAmount || 0)) * 100
+        : 0;
+
+      // Average days to payment
+      const paidInvoices = await prisma.invoice.findMany({
+        where: {
+          status: "PAID",
+          payments: { some: {} },
+        },
+        select: {
+          issueDate: true,
+          payments: {
+            where: { isVerified: true },
+            orderBy: { paymentDate: "asc" },
+            take: 1,
+            select: { paymentDate: true },
+          },
+        },
+      });
+
+      const daysToPayment = paidInvoices
+        .filter((inv) => inv.payments.length > 0 && inv.payments[0] !== undefined)
+        .map((inv) =>
+          differenceInDays(inv.payments[0]!.paymentDate, inv.issueDate)
+        );
+
+      const avgDaysToPayment = daysToPayment.length > 0
+        ? Math.round(daysToPayment.reduce((sum, days) => sum + days, 0) / daysToPayment.length)
+        : 0;
+
+      return {
+        outstandingAmount: Number(outstanding._sum.totalAmount || 0),
+        outstandingCount: outstanding._count,
+        overdueAmount: Number(overdue._sum.totalAmount || 0),
+        overdueCount: overdue._count,
+        collectionRate: Math.round(collectionRate * 10) / 10,
+        avgDaysToPayment,
+      };
+    },
+    ['invoice-analytics'],
+    { revalidate: 300 }
+  )();
+});
+
+/**
+ * Get invoice aging report
+ * Optimized: Single SQL query with FILTER instead of 4 parallel queries
+ * Cached for 5 minutes
+ */
+export const getInvoiceAging = createServerAction(async () => {
+  await requireUser();
+
+  return unstable_cache(
+    async () => {
+      // Single SQL query with FILTER for all aging buckets
+      const agingData = await prisma.$queryRaw<Array<{
+        bucket_0_30_count: bigint;
+        bucket_0_30_amount: string | null;
+        bucket_31_60_count: bigint;
+        bucket_31_60_amount: string | null;
+        bucket_61_90_count: bigint;
+        bucket_61_90_amount: string | null;
+        bucket_90_plus_count: bigint;
+        bucket_90_plus_amount: string | null;
+      }>>`
+        SELECT
+          COUNT(*) FILTER (WHERE NOW() - "dueDate" <= INTERVAL '30 days') as bucket_0_30_count,
+          COALESCE(SUM("totalAmount") FILTER (WHERE NOW() - "dueDate" <= INTERVAL '30 days'), 0) as bucket_0_30_amount,
+          COUNT(*) FILTER (WHERE NOW() - "dueDate" > INTERVAL '30 days' AND NOW() - "dueDate" <= INTERVAL '60 days') as bucket_31_60_count,
+          COALESCE(SUM("totalAmount") FILTER (WHERE NOW() - "dueDate" > INTERVAL '30 days' AND NOW() - "dueDate" <= INTERVAL '60 days'), 0) as bucket_31_60_amount,
+          COUNT(*) FILTER (WHERE NOW() - "dueDate" > INTERVAL '60 days' AND NOW() - "dueDate" <= INTERVAL '90 days') as bucket_61_90_count,
+          COALESCE(SUM("totalAmount") FILTER (WHERE NOW() - "dueDate" > INTERVAL '60 days' AND NOW() - "dueDate" <= INTERVAL '90 days'), 0) as bucket_61_90_amount,
+          COUNT(*) FILTER (WHERE NOW() - "dueDate" > INTERVAL '90 days') as bucket_90_plus_count,
+          COALESCE(SUM("totalAmount") FILTER (WHERE NOW() - "dueDate" > INTERVAL '90 days'), 0) as bucket_90_plus_amount
+        FROM invoices
+        WHERE status IN ('SENT', 'PARTIAL', 'OVERDUE')
+      `;
+
+      const data = agingData[0];
+
+      // Handle case where no data (empty table)
+      if (!data) {
+        return [
+          { range: "0-30 days", count: 0, amount: 0 },
+          { range: "31-60 days", count: 0, amount: 0 },
+          { range: "61-90 days", count: 0, amount: 0 },
+          { range: "90+ days", count: 0, amount: 0 },
+        ];
+      }
+
+      return [
+        {
+          range: "0-30 days",
+          count: Number(data.bucket_0_30_count),
+          amount: Number(data.bucket_0_30_amount || 0),
+        },
+        {
+          range: "31-60 days",
+          count: Number(data.bucket_31_60_count),
+          amount: Number(data.bucket_31_60_amount || 0),
+        },
+        {
+          range: "61-90 days",
+          count: Number(data.bucket_61_90_count),
+          amount: Number(data.bucket_61_90_amount || 0),
+        },
+        {
+          range: "90+ days",
+          count: Number(data.bucket_90_plus_count),
+          amount: Number(data.bucket_90_plus_amount || 0),
+        },
+      ];
+    },
+    ['invoice-aging'],
+    { revalidate: 300 }
+  )();
 });
 
 /**
  * Get list of overdue invoices
+ * Cached for 1 minute (shorter TTL for time-sensitive data)
  */
 export const getOverdueInvoices = createServerAction(async (limit: number = 10) => {
   await requireUser();
 
-  const invoices = await prisma.invoice.findMany({
-    where: {
-      status: "OVERDUE",
-    },
-    include: {
-      customer: {
-        select: {
-          id: true,
-          companyName: true,
-          code: true,
-          email: true,
-          phone: true,
+  return unstable_cache(
+    async () => {
+      const invoices = await prisma.invoice.findMany({
+        where: {
+          status: "OVERDUE",
         },
-      },
-    },
-    orderBy: [
-      { dueDate: "asc" }, // Oldest first
-      { totalAmount: "desc" }, // Highest amount
-    ],
-    take: limit,
-  });
+        include: {
+          customer: {
+            select: {
+              id: true,
+              companyName: true,
+              code: true,
+              contactEmail: true,
+              contactPhone: true,
+            },
+          },
+        },
+        orderBy: [
+          { dueDate: "asc" }, // Oldest first
+          { totalAmount: "desc" }, // Highest amount
+        ],
+        take: limit,
+      });
 
-  return invoices.map((inv) => ({
-    ...inv,
-    daysOverdue: differenceInDays(new Date(), inv.dueDate),
-  }));
+      const now = new Date();
+      return invoices.map((inv) => ({
+        ...inv,
+        daysOverdue: differenceInDays(now, inv.dueDate),
+      }));
+    },
+    ['overdue-invoices', `limit-${limit}`],
+    { revalidate: 60 } // Cache for 1 minute
+  )();
 });
 
 // ============================================================
@@ -481,114 +536,122 @@ export const getTopCustomers = createServerAction(async (limit: number = 10) => 
 
 /**
  * Get contract analytics overview
+ * Optimized: Uses SQL AVG for duration calculation instead of JS
+ * Cached for 5 minutes
  */
 export const getContractAnalytics = createServerAction(async () => {
   await requireUser();
 
-  const now = new Date();
+  return unstable_cache(
+    async () => {
+      const now = new Date();
 
-  // Active contracts
-  const activeCount = await prisma.contract.count({
-    where: { status: "ACTIVE" },
-  });
+      // Active contracts
+      const activeCount = await prisma.contract.count({
+        where: { status: "ACTIVE" },
+      });
 
-  // Expiring soon (next 30 days)
-  const expiringSoon = await prisma.contract.count({
-    where: {
-      status: "ACTIVE",
-      endDate: {
-        gte: now,
-        lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-      },
+      // Expiring soon (next 30 days)
+      const expiringSoon = await prisma.contract.count({
+        where: {
+          status: "ACTIVE",
+          endDate: {
+            gte: now,
+            lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+          },
+        },
+      });
+
+      // Contract status distribution
+      const contractsByStatus = await prisma.contract.groupBy({
+        by: ["status"],
+        _count: true,
+      });
+
+      // Average contract duration using SQL AVG (optimized)
+      const avgDurationResult = await prisma.$queryRaw<[{ avg_months: string | null }]>`
+        SELECT
+          ROUND(AVG(EXTRACT(EPOCH FROM ("endDate" - "startDate")) / (30 * 24 * 60 * 60))) as avg_months
+        FROM contracts
+        WHERE status IN ('ACTIVE', 'EXPIRED')
+      `;
+      const avgDuration = Number(avgDurationResult[0]?.avg_months || 0);
+
+      // Renewal rate (signed after expired)
+      const expiredContracts = await prisma.contract.count({
+        where: { status: "EXPIRED" },
+      });
+
+      const renewedContracts = await prisma.contract.count({
+        where: {
+          status: "ACTIVE",
+          // Simplified: count active contracts for customers who had expired ones
+        },
+      });
+
+      const renewalRate = expiredContracts > 0
+        ? (renewedContracts / expiredContracts) * 100
+        : 0;
+
+      return {
+        activeCount,
+        expiringSoon,
+        avgDuration,
+        renewalRate: Math.round(renewalRate * 10) / 10,
+        contractsByStatus: contractsByStatus.map((s) => ({
+          status: s.status,
+          count: s._count,
+        })),
+      };
     },
-  });
-
-  // Contract status distribution
-  const contractsByStatus = await prisma.contract.groupBy({
-    by: ["status"],
-    _count: true,
-  });
-
-  // Average contract duration (in months)
-  const contracts = await prisma.contract.findMany({
-    where: { status: { in: ["ACTIVE", "EXPIRED"] } },
-    select: { startDate: true, endDate: true },
-  });
-
-  const durations = contracts.map((c) =>
-    Math.round(
-      (c.endDate.getTime() - c.startDate.getTime()) / (30 * 24 * 60 * 60 * 1000)
-    )
-  );
-
-  const avgDuration = durations.length > 0
-    ? Math.round(durations.reduce((sum, d) => sum + d, 0) / durations.length)
-    : 0;
-
-  // Renewal rate (signed after expired)
-  const expiredContracts = await prisma.contract.count({
-    where: { status: "EXPIRED" },
-  });
-
-  const renewedContracts = await prisma.contract.count({
-    where: {
-      status: "ACTIVE",
-      // Simplified: count active contracts for customers who had expired ones
-    },
-  });
-
-  const renewalRate = expiredContracts > 0
-    ? (renewedContracts / expiredContracts) * 100
-    : 0;
-
-  return {
-    activeCount,
-    expiringSoon,
-    avgDuration,
-    renewalRate: Math.round(renewalRate * 10) / 10,
-    contractsByStatus: contractsByStatus.map((s) => ({
-      status: s.status,
-      count: s._count,
-    })),
-  };
+    ['contract-analytics'],
+    { revalidate: 300 }
+  )();
 });
 
 /**
  * Get expiring contracts
+ * Cached for 5 minutes
  */
 export const getExpiringContracts = createServerAction(
   async (daysAhead: number = 30) => {
     await requireUser();
 
-    const now = new Date();
-    const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+    return unstable_cache(
+      async () => {
+        const now = new Date();
+        const futureDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
-    const contracts = await prisma.contract.findMany({
-      where: {
-        status: "ACTIVE",
-        endDate: {
-          gte: now,
-          lte: futureDate,
-        },
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            companyName: true,
-            code: true,
-            email: true,
-            phone: true,
+        const contracts = await prisma.contract.findMany({
+          where: {
+            status: "ACTIVE",
+            endDate: {
+              gte: now,
+              lte: futureDate,
+            },
           },
-        },
-      },
-      orderBy: { endDate: "asc" },
-    });
+          include: {
+            customer: {
+              select: {
+                id: true,
+                companyName: true,
+                code: true,
+                contactEmail: true,
+                contactPhone: true,
+              },
+            },
+          },
+          orderBy: { endDate: "asc" },
+        });
 
-    return contracts.map((contract) => ({
-      ...contract,
-      daysUntilExpiry: differenceInDays(contract.endDate, now),
-    }));
+        return contracts.map((contract) => ({
+          ...contract,
+          daysUntilExpiry: differenceInDays(contract.endDate, now),
+        }));
+      },
+      ['expiring-contracts', `days-${daysAhead}`],
+      { revalidate: 300 }
+    )();
   }
 );
 
@@ -599,63 +662,70 @@ export const getExpiringContracts = createServerAction(
 /**
  * Get plant rental analytics
  * Optimized: Batch query for plant types instead of N+1 sequential queries
+ * Cached for 5 minutes
  */
 export const getPlantAnalytics = createServerAction(async () => {
   await requireUser();
 
-  // Most rented plant types
-  const plantRentals = await prisma.contractItem.groupBy({
-    by: ["plantTypeId"],
-    _sum: { quantity: true },
-    _count: true,
-  });
+  return unstable_cache(
+    async () => {
+      // Most rented plant types
+      const plantRentals = await prisma.contractItem.groupBy({
+        by: ["plantTypeId"],
+        _sum: { quantity: true },
+        _count: true,
+      });
 
-  // Batch fetch all plant types in single query (fixes N+1)
-  const plantTypeIds = plantRentals.map((r) => r.plantTypeId);
-  const plantTypes = await prisma.plantType.findMany({
-    where: { id: { in: plantTypeIds } },
-    select: { id: true, code: true, name: true, rentalPrice: true },
-  });
+      // Batch fetch all plant types in single query (fixes N+1)
+      const plantTypeIds = plantRentals.map((r) => r.plantTypeId);
+      const plantTypes = await prisma.plantType.findMany({
+        where: { id: { in: plantTypeIds } },
+        select: { id: true, code: true, name: true, rentalPrice: true },
+      });
 
-  // Map plant types by ID for O(1) lookup
-  const plantTypeMap = new Map(plantTypes.map((pt) => [pt.id, pt]));
+      // Map plant types by ID for O(1) lookup
+      const plantTypeMap = new Map(plantTypes.map((pt) => [pt.id, pt]));
 
-  // Build plant details using map lookup
-  const plantDetails = plantRentals.map((rental) => {
-    const plantType = plantTypeMap.get(rental.plantTypeId);
-    return {
-      plantTypeId: rental.plantTypeId,
-      code: plantType?.code || "N/A",
-      name: plantType?.name || "Unknown",
-      rentalPrice: Number(plantType?.rentalPrice || 0),
-      totalQuantity: rental._sum.quantity || 0,
-      contractCount: rental._count,
-    };
-  });
+      // Build plant details using map lookup
+      const plantDetails = plantRentals.map((rental) => {
+        const plantType = plantTypeMap.get(rental.plantTypeId);
+        return {
+          plantTypeId: rental.plantTypeId,
+          code: plantType?.code || "N/A",
+          name: plantType?.name || "Unknown",
+          rentalPrice: Number(plantType?.rentalPrice || 0),
+          totalQuantity: rental._sum.quantity || 0,
+          contractCount: rental._count,
+        };
+      });
 
-  // Sort by total quantity
-  const mostRented = plantDetails
-    .sort((a, b) => b.totalQuantity - a.totalQuantity)
-    .slice(0, 10);
+      // Sort by total quantity
+      const mostRented = plantDetails
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 10);
 
-  // Total plants in circulation
-  const totalInCirculation = plantDetails.reduce(
-    (sum, p) => sum + p.totalQuantity,
-    0
-  );
+      // Total plants in circulation
+      const totalInCirculation = plantDetails.reduce(
+        (sum, p) => sum + p.totalQuantity,
+        0
+      );
 
-  // Average plants per contract
-  const activeContracts = await prisma.contract.count({
-    where: { status: "ACTIVE" },
-  });
+      // Average plants per contract
+      const activeContracts = await prisma.contract.count({
+        where: { status: "ACTIVE" },
+      });
 
-  const avgPlantsPerContract = activeContracts > 0
-    ? Math.round(totalInCirculation / activeContracts)
-    : 0;
+      const avgPlantsPerContract = activeContracts > 0
+        ? Math.round(totalInCirculation / activeContracts)
+        : 0;
 
-  return {
-    mostRented,
-    totalInCirculation,
-    avgPlantsPerContract,
-  };
+      return {
+        mostRented,
+        totalInCirculation,
+        avgPlantsPerContract,
+      };
+    },
+    ['plant-analytics'],
+    { revalidate: 300 }
+  )();
 });
