@@ -4,7 +4,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { differenceInMonths } from "date-fns";
 import { prisma } from "@/lib/prisma";
@@ -710,36 +710,43 @@ export const renewContract = createSimpleAction(
 );
 
 /**
- * Get contract statistics
+ * Get contract stats for dashboard
+ * Cached for 1 minute to improve performance
  */
 export async function getContractStats() {
   await requireAuth();
 
-  const now = new Date();
-  const thirtyDaysFromNow = new Date();
-  thirtyDaysFromNow.setDate(now.getDate() + 30);
+  return unstable_cache(
+    async () => {
+      const now = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(now.getDate() + 30);
 
-  // Single query with FILTER instead of 4 separate queries
-  const stats = await prisma.$queryRaw<[{
-    total: bigint;
-    active: bigint;
-    expiring_soon: bigint;
-    monthly_recurring: string | null; // PostgreSQL Decimal returns as string
-  }]>`
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
-      COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
-      COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
-    FROM contracts
-  `;
+      // Single query with FILTER instead of 4 separate queries
+      const stats = await prisma.$queryRaw<[{
+        total: bigint;
+        active: bigint;
+        expiring_soon: bigint;
+        monthly_recurring: string | null; // PostgreSQL Decimal returns as string
+      }]>`
+        SELECT
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+          COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
+          COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
+        FROM contracts
+      `;
 
-  return {
-    total: Number(stats[0].total),
-    active: Number(stats[0].active),
-    expiringSoon: Number(stats[0].expiring_soon),
-    monthlyRecurring: Number(stats[0].monthly_recurring || 0),
-  };
+      return {
+        total: Number(stats[0].total),
+        active: Number(stats[0].active),
+        expiringSoon: Number(stats[0].expiring_soon),
+        monthlyRecurring: Number(stats[0].monthly_recurring || 0),
+      };
+    },
+    ["contract-stats"],
+    { revalidate: 60 }
+  )();
 }
 
 /**

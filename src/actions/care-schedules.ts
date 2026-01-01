@@ -4,7 +4,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -81,41 +81,48 @@ export async function getCareSchedules(params: CareSearchParams) {
 }
 
 /**
- * Get today's care schedule for a staff member
+ * Get today's care schedules
+ * Cached for 30 seconds (time-sensitive data)
  */
 export async function getTodaySchedule(staffId?: string) {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  return unstable_cache(
+    async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const schedules = await prisma.careSchedule.findMany({
-    where: {
-      scheduledDate: { gte: today, lt: tomorrow },
-      ...(staffId && { staffId }),
-      status: { in: ["SCHEDULED", "IN_PROGRESS"] },
-    },
-    include: {
-      customer: {
-        select: {
-          id: true,
-          code: true,
-          companyName: true,
-          address: true,
-          district: true,
-          contactPhone: true,
-          latitude: true,
-          longitude: true,
+      const schedules = await prisma.careSchedule.findMany({
+        where: {
+          scheduledDate: { gte: today, lt: tomorrow },
+          ...(staffId && { staffId }),
+          status: { in: ["SCHEDULED", "IN_PROGRESS"] },
         },
-      },
-    },
-    orderBy: [{ scheduledTime: "asc" }, { createdAt: "asc" }],
-  });
+        include: {
+          customer: {
+            select: {
+              id: true,
+              code: true,
+              companyName: true,
+              address: true,
+              district: true,
+              contactPhone: true,
+              latitude: true,
+              longitude: true,
+            },
+          },
+        },
+        orderBy: [{ scheduledTime: "asc" }, { createdAt: "asc" }],
+      });
 
-  return schedules;
+      return schedules;
+    },
+    ["today-schedule", staffId ?? "all"],
+    { revalidate: 30 }
+  )();
 }
 
 /**
@@ -360,43 +367,51 @@ export const skipCareSchedule = createSimpleAction(
 );
 
 /**
- * Get care statistics
+ * Get care statistics for dashboard
+ * Optimized: Single raw SQL query with FILTER + cached for 1 minute
  */
 export async function getCareStats(dateFrom?: Date, dateTo?: Date) {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  return unstable_cache(
+    async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today.getTime() + 86400000);
 
-  const dateFilter = {
-    scheduledDate: {
-      ...(dateFrom && { gte: dateFrom }),
-      ...(dateTo && { lte: dateTo }),
+      // Single query with FILTER instead of 5 separate COUNTs
+      const stats = await prisma.$queryRaw<[{
+        total: bigint;
+        scheduled: bigint;
+        completed: bigint;
+        today_count: bigint;
+        in_progress: bigint;
+      }]>`
+        SELECT
+          COUNT(*) FILTER (WHERE TRUE ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as total,
+          COUNT(*) FILTER (WHERE status = 'SCHEDULED' ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as scheduled,
+          COUNT(*) FILTER (WHERE status = 'COMPLETED' ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as completed,
+          COUNT(*) FILTER (WHERE "scheduledDate" >= ${today} AND "scheduledDate" < ${tomorrow} AND status IN ('SCHEDULED', 'IN_PROGRESS')) as today_count,
+          COUNT(*) FILTER (WHERE status = 'IN_PROGRESS' ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as in_progress
+        FROM care_schedules
+      `;
+
+      const total = Number(stats[0].total);
+      const completed = Number(stats[0].completed);
+
+      return {
+        total,
+        scheduled: Number(stats[0].scheduled),
+        completed,
+        todayCount: Number(stats[0].today_count),
+        inProgress: Number(stats[0].in_progress),
+        completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+      };
     },
-  };
-
-  const [total, scheduled, completed, todayCount, inProgress] = await Promise.all([
-    prisma.careSchedule.count({ where: dateFilter }),
-    prisma.careSchedule.count({ where: { ...dateFilter, status: "SCHEDULED" } }),
-    prisma.careSchedule.count({ where: { ...dateFilter, status: "COMPLETED" } }),
-    prisma.careSchedule.count({
-      where: {
-        scheduledDate: { gte: today, lt: new Date(today.getTime() + 86400000) },
-        status: { in: ["SCHEDULED", "IN_PROGRESS"] },
-      },
-    }),
-    prisma.careSchedule.count({ where: { ...dateFilter, status: "IN_PROGRESS" } }),
-  ]);
-
-  return {
-    total,
-    scheduled,
-    completed,
-    todayCount,
-    inProgress,
-    completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
-  };
+    ["care-stats", dateFrom?.toISOString() ?? "all", dateTo?.toISOString() ?? "all"],
+    { revalidate: 60 }
+  )();
 }
 
 /**

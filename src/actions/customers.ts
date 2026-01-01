@@ -4,7 +4,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -438,61 +438,75 @@ export const deleteCustomer = createSimpleAction(async (id: string) => {
 
 /**
  * Get all unique districts for filter dropdown
+ * Cached for 5 minutes (districts rarely change)
  */
 export async function getDistricts() {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const districts = await prisma.customer.findMany({
-    where: {
-      district: { not: null },
-      status: { not: "TERMINATED" },
-    },
-    select: { district: true },
-    distinct: ["district"],
-    orderBy: { district: "asc" },
-  });
+  return unstable_cache(
+    async () => {
+      const districts = await prisma.customer.findMany({
+        where: {
+          district: { not: null },
+          status: { not: "TERMINATED" },
+        },
+        select: { district: true },
+        distinct: ["district"],
+        orderBy: { district: "asc" },
+      });
 
-  return districts
-    .map((d) => d.district)
-    .filter((d): d is string => d !== null);
+      return districts
+        .map((d) => d.district)
+        .filter((d): d is string => d !== null);
+    },
+    ["districts"],
+    { revalidate: 300 }
+  )();
 }
 
 /**
  * Get customer stats for dashboard
+ * Cached for 1 minute to improve performance
  */
 export async function getCustomerStats() {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  // Single query with FILTER instead of 5 separate COUNTs
-  // Note: Must prefix status with table alias (c. or i.) to avoid ambiguity
-  const stats = await prisma.$queryRaw<[{
-    total: bigint;
-    active: bigint;
-    leads: bigint;
-    vip: bigint;
-    with_debt: bigint;
-  }]>`
-    SELECT
-      COUNT(*) FILTER (WHERE c.status != 'TERMINATED') as total,
-      COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as active,
-      COUNT(*) FILTER (WHERE c.status = 'LEAD') as leads,
-      COUNT(*) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
-      COUNT(DISTINCT CASE
-        WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
-          AND i."outstandingAmount" > 0
-        THEN c.id
-      END) as with_debt
-    FROM customers c
-    LEFT JOIN invoices i ON i."customerId" = c.id
-  `;
+  return unstable_cache(
+    async () => {
+      // Single query with FILTER instead of 5 separate COUNTs
+      // Note: Must prefix status with table alias (c. or i.) to avoid ambiguity
+      const stats = await prisma.$queryRaw<[{
+        total: bigint;
+        active: bigint;
+        leads: bigint;
+        vip: bigint;
+        with_debt: bigint;
+      }]>`
+        SELECT
+          COUNT(*) FILTER (WHERE c.status != 'TERMINATED') as total,
+          COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as active,
+          COUNT(*) FILTER (WHERE c.status = 'LEAD') as leads,
+          COUNT(*) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
+          COUNT(DISTINCT CASE
+            WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
+              AND i."outstandingAmount" > 0
+            THEN c.id
+          END) as with_debt
+        FROM customers c
+        LEFT JOIN invoices i ON i."customerId" = c.id
+      `;
 
-  return {
-    total: Number(stats[0].total),
-    active: Number(stats[0].active),
-    leads: Number(stats[0].leads),
-    vip: Number(stats[0].vip),
-    withDebt: Number(stats[0].with_debt),
-  };
+      return {
+        total: Number(stats[0].total),
+        active: Number(stats[0].active),
+        leads: Number(stats[0].leads),
+        vip: Number(stats[0].vip),
+        withDebt: Number(stats[0].with_debt),
+      };
+    },
+    ["customer-stats"],
+    { revalidate: 60 }
+  )();
 }
