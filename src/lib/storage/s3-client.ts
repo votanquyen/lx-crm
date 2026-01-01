@@ -69,8 +69,8 @@ export async function uploadToS3(
 export function generateFileKey(filename: string, prefix?: string): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
-  const ext = filename.split(".").pop();
-  const sanitizedName = filename.split(".")[0].replace(/[^a-zA-Z0-9-_]/g, "_");
+  const ext = filename.split(".").pop() ?? "bin";
+  const sanitizedName = (filename.split(".")[0] ?? "file").replace(/[^a-zA-Z0-9-_]/g, "_");
   const baseName = prefix
     ? `${prefix}/${timestamp}-${random}-${sanitizedName}`
     : `${timestamp}-${random}-${sanitizedName}`;

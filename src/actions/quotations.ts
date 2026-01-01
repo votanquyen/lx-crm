@@ -249,7 +249,7 @@ export async function getQuotations(params: QuotationSearchInput) {
   const serializedQuotations = quotations.map((q) => ({
     ...q,
     subtotal: q.subtotal.toNumber(),
-    discountPercent: q.discountPercent?.toNumber() ?? null,
+    discountRate: q.discountRate?.toNumber() ?? 0,
     discountAmount: q.discountAmount?.toNumber() ?? null,
     vatRate: q.vatRate.toNumber(),
     vatAmount: q.vatAmount.toNumber(),
@@ -369,7 +369,7 @@ export async function getQuotationStats() {
  * Create new quotation
  */
 export async function createQuotation(data: CreateQuotationInput) {
-  const user = await requireAuth();
+  const session = await requireAuth();
 
   const validated = createQuotationSchema.parse(data);
 
@@ -400,7 +400,7 @@ export async function createQuotation(data: CreateQuotationInput) {
       data: {
         quoteNumber,
         customerId: validated.customerId,
-        createdById: user.id,
+        createdById: session.user.id,
         title: validated.title,
         description: validated.description,
         validFrom: validated.validFrom,
@@ -523,24 +523,30 @@ export async function updateQuotation(data: UpdateQuotationInput) {
     }
   }
 
+  const { customerId: _customerId, items: _items, ...updateFields } = updateData;
+
   const quotation = await prisma.quotation.update({
     where: { id },
     data: {
-      ...updateData,
-      ...(updateData.subtotal !== undefined && {
-        subtotal: toDecimal(updateData.subtotal),
+      ...updateFields,
+      ...(updateFields.subtotal !== undefined && {
+        subtotal: toDecimal(updateFields.subtotal),
       }),
-      ...(updateData.discountRate !== undefined && {
-        discountRate: toDecimal(updateData.discountRate),
+      ...(updateFields.discountRate !== undefined && {
+        discountRate: toDecimal(updateFields.discountRate),
       }),
-      ...(updateData.vatRate !== undefined && {
-        vatRate: toDecimal(updateData.vatRate),
+      ...(updateFields.vatRate !== undefined && {
+        vatRate: toDecimal(updateFields.vatRate),
       }),
-      ...(updateData.proposedMonthlyFee !== undefined && {
-        proposedMonthlyFee: toDecimal(updateData.proposedMonthlyFee),
+      ...(updateFields.proposedMonthlyFee !== undefined && {
+        proposedMonthlyFee: updateFields.proposedMonthlyFee !== null
+          ? toDecimal(updateFields.proposedMonthlyFee)
+          : null,
       }),
-      ...(updateData.proposedDeposit !== undefined && {
-        proposedDeposit: toDecimal(updateData.proposedDeposit),
+      ...(updateFields.proposedDeposit !== undefined && {
+        proposedDeposit: updateFields.proposedDeposit !== null
+          ? toDecimal(updateFields.proposedDeposit)
+          : null,
       }),
       ...totals,
     },
@@ -907,6 +913,7 @@ export async function sendQuotation(data: SendQuotationInput) {
 
 /**
  * Mark quotation as viewed by customer
+ * Note: VIEWED status not in schema - just returns the quotation unchanged
  */
 export async function markQuotationAsViewed(id: string) {
   const quotation = await prisma.quotation.findUnique({
@@ -918,21 +925,8 @@ export async function markQuotationAsViewed(id: string) {
     throw new NotFoundError("Không tìm thấy báo giá");
   }
 
-  if (quotation.status !== "SENT") {
-    return quotation;
-  }
-
-  const updated = await prisma.quotation.update({
-    where: { id },
-    data: {
-      status: "VIEWED",
-    },
-  });
-
-  revalidatePath("/quotations");
-  revalidatePath(`/quotations/${id}`);
-
-  return updated;
+  // VIEWED status not available in current schema - just return quotation
+  return quotation;
 }
 
 /**
@@ -950,7 +944,7 @@ export async function acceptQuotation(id: string, response?: string) {
     throw new NotFoundError("Không tìm thấy báo giá");
   }
 
-  if (!["SENT", "VIEWED"].includes(quotation.status)) {
+  if (quotation.status !== "SENT") {
     throw new AppError("Chỉ có thể chấp nhận báo giá đã gửi");
   }
 
@@ -992,7 +986,7 @@ export async function rejectQuotation(id: string, reason?: string) {
     throw new NotFoundError("Không tìm thấy báo giá");
   }
 
-  if (!["SENT", "VIEWED"].includes(quotation.status)) {
+  if (quotation.status !== "SENT") {
     throw new AppError("Chỉ có thể từ chối báo giá đã gửi");
   }
 
@@ -1021,7 +1015,7 @@ export async function markExpiredQuotations() {
   const result = await prisma.quotation.updateMany({
     where: {
       status: {
-        in: ["SENT", "VIEWED"],
+        in: ["SENT"],
       },
       validUntil: {
         lt: now,

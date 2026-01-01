@@ -37,6 +37,7 @@ export function ScheduleBuilder({
 
     const items = Array.from(stops);
     const [reorderedItem] = items.splice(result.source.index, 1);
+    if (!reorderedItem) return;
     items.splice(result.destination.index, 0, reorderedItem);
 
     setStops(items);

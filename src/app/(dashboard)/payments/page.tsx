@@ -135,7 +135,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold">{payment.invoice.invoiceNumber}</span>
+                      <span className="font-semibold">{payment.invoice?.invoiceNumber ?? 'N/A'}</span>
                       <Badge variant={payment.isVerified ? "default" : "secondary"}>
                         {payment.isVerified ? "Đã xác minh" : "Chưa xác minh"}
                       </Badge>
@@ -143,7 +143,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                     </div>
 
                     <div className="text-sm text-muted-foreground">
-                      {payment.invoice.customer.companyName}
+                      {payment.invoice?.customer.companyName ?? 'Không xác định'}
                     </div>
 
                     <div className="flex items-center gap-4 text-sm">

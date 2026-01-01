@@ -4,10 +4,9 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 import { requireAuth, requireManager } from "@/lib/auth-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError, ConflictError } from "@/lib/errors";
@@ -438,28 +437,36 @@ export const deleteCustomer = createSimpleAction(async (id: string) => {
 
 /**
  * Get all unique districts for filter dropdown
+ * Cached for 5 minutes (districts rarely change)
  */
+const getCachedDistricts = unstable_cache(
+  async () => {
+    const districts = await prisma.customer.findMany({
+      where: {
+        district: { not: null },
+        status: { not: "TERMINATED" },
+      },
+      select: { district: true },
+      distinct: ["district"],
+      orderBy: { district: "asc" },
+    });
+
+    return districts
+      .map((d) => d.district)
+      .filter((d): d is string => d !== null);
+  },
+  ["districts"],
+  { revalidate: 300 }
+);
+
 export async function getDistricts() {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
-
-  const districts = await prisma.customer.findMany({
-    where: {
-      district: { not: null },
-      status: { not: "TERMINATED" },
-    },
-    select: { district: true },
-    distinct: ["district"],
-    orderBy: { district: "asc" },
-  });
-
-  return districts
-    .map((d) => d.district)
-    .filter((d): d is string => d !== null);
+  await requireAuth();
+  return getCachedDistricts();
 }
 
 /**
  * Get customer stats for dashboard
+ * Cached for 1 minute to improve performance
  */
 export async function getCustomerStats() {
   const session = await auth();
@@ -487,11 +494,19 @@ export async function getCustomerStats() {
     LEFT JOIN invoices i ON i."customerId" = c.id
   `;
 
-  return {
-    total: Number(stats[0].total),
-    active: Number(stats[0].active),
-    leads: Number(stats[0].leads),
-    vip: Number(stats[0].vip),
-    withDebt: Number(stats[0].with_debt),
-  };
+    return {
+      total: Number(stats[0].total),
+      active: Number(stats[0].active),
+      leads: Number(stats[0].leads),
+      vip: Number(stats[0].vip),
+      withDebt: Number(stats[0].with_debt),
+    };
+  },
+  ["customer-stats"],
+  { revalidate: 60 }
+);
+
+export async function getCustomerStats() {
+  await requireAuth();
+  return getCachedCustomerStats();
 }

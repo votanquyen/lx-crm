@@ -129,7 +129,7 @@ export const getMonthlyStatement = createAction(
       periodStart: statement.periodStart.toISOString(),
       periodEnd: statement.periodEnd.toISOString(),
       contactName: statement.contactName,
-      plants: statement.plants as PlantItem[],
+      plants: statement.plants as unknown as PlantItem[],
       subtotal: Number(statement.subtotal),
       vatRate: Number(statement.vatRate),
       vatAmount: Number(statement.vatAmount),
@@ -458,7 +458,7 @@ export const autoRolloverStatements = createAction(
           periodStart: newPeriod.periodStart,
           periodEnd: newPeriod.periodEnd,
           contactName: prevStmt.contactName ?? prevStmt.customer.contactName,
-          plants: prevStmt.plants, // Copy plants from previous month
+          plants: prevStmt.plants as Prisma.InputJsonValue, // Copy plants from previous month
           subtotal: prevStmt.subtotal,
           vatRate: 8,
           vatAmount: prevStmt.vatAmount,

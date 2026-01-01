@@ -4,11 +4,12 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { requireAuth } from "@/lib/action-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { analyzeNote } from "@/lib/ai";
@@ -235,33 +236,64 @@ export const deleteStickyNote = createSimpleAction(async (id: string) => {
 /**
  * Get note statistics for dashboard
  */
+/**
+ * Get note statistics for dashboard
+ * Optimized: Single raw SQL query with FILTER + cached for 1 minute
+ */
+const getCachedNoteStats = unstable_cache(
+  async () => {
+    // Single query with FILTER instead of separate queries
+    const stats = await prisma.$queryRaw<[{
+      total: bigint;
+      open: bigint;
+      urgent_priority: bigint;
+      general: bigint;
+      urgent: bigint;
+      complaint: bigint;
+      request: bigint;
+      feedback: bigint;
+      exchange: bigint;
+      care: bigint;
+      payment: bigint;
+    }]>`
+      SELECT
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status IN ('OPEN', 'IN_PROGRESS')) as open,
+        COUNT(*) FILTER (WHERE priority >= 8 AND status != 'RESOLVED') as urgent_priority,
+        COUNT(*) FILTER (WHERE category = 'GENERAL' AND status != 'RESOLVED') as general,
+        COUNT(*) FILTER (WHERE category = 'URGENT' AND status != 'RESOLVED') as urgent,
+        COUNT(*) FILTER (WHERE category = 'COMPLAINT' AND status != 'RESOLVED') as complaint,
+        COUNT(*) FILTER (WHERE category = 'REQUEST' AND status != 'RESOLVED') as request,
+        COUNT(*) FILTER (WHERE category = 'FEEDBACK' AND status != 'RESOLVED') as feedback,
+        COUNT(*) FILTER (WHERE category = 'EXCHANGE' AND status != 'RESOLVED') as exchange,
+        COUNT(*) FILTER (WHERE category = 'CARE' AND status != 'RESOLVED') as care,
+        COUNT(*) FILTER (WHERE category = 'PAYMENT' AND status != 'RESOLVED') as payment
+      FROM sticky_notes
+    `;
+
+    return {
+      total: Number(stats[0].total),
+      open: Number(stats[0].open),
+      urgent: Number(stats[0].urgent_priority),
+      byCategory: {
+        GENERAL: Number(stats[0].general),
+        URGENT: Number(stats[0].urgent),
+        COMPLAINT: Number(stats[0].complaint),
+        REQUEST: Number(stats[0].request),
+        FEEDBACK: Number(stats[0].feedback),
+        EXCHANGE: Number(stats[0].exchange),
+        CARE: Number(stats[0].care),
+        PAYMENT: Number(stats[0].payment),
+      } as Record<NoteCategory, number>,
+    };
+  },
+  ["note-stats"],
+  { revalidate: 60 }
+);
+
 export async function getNoteStats() {
-  const session = await auth();
-  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
-
-  const [total, open, urgent, byCategory] = await Promise.all([
-    prisma.stickyNote.count(),
-    prisma.stickyNote.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
-    prisma.stickyNote.count({ where: { priority: { gte: 8 }, status: { not: "RESOLVED" } } }),
-    prisma.stickyNote.groupBy({
-      by: ["category"],
-      where: { status: { not: "RESOLVED" } },
-      _count: true,
-    }),
-  ]);
-
-  return {
-    total,
-    open,
-    urgent,
-    byCategory: byCategory.reduce(
-      (acc, item) => ({
-        ...acc,
-        [item.category]: item._count,
-      }),
-      {} as Record<NoteCategory, number>
-    ),
-  };
+  await requireAuth();
+  return getCachedNoteStats();
 }
 
 /**

@@ -43,12 +43,21 @@ import {
   deleteQuotation,
   convertQuotationToContract,
 } from "@/actions/quotations";
-import type { Quotation, Customer, QuotationItem, PlantType, User } from "@prisma/client";
+import type { Quotation, QuotationItem, PlantType, User } from "@prisma/client";
 
+// Accept partial customer data that matches what getQuotationById returns
 interface QuotationActionsProps {
   quotation: Quotation & {
-    customer: Customer;
-    items: (QuotationItem & { plantType: PlantType })[];
+    customer: {
+      id: string;
+      code: string;
+      companyName: string;
+      taxCode?: string | null;
+      address?: string;
+      contactPhone?: string | null;
+      contactEmail?: string | null;
+    };
+    items: (QuotationItem & { plantType: Pick<PlantType, "id" | "code" | "name" | "description" | "imageUrl" | "rentalPrice" | "category"> })[];
     createdBy: Pick<User, "id" | "name" | "email"> | null;
   };
 }

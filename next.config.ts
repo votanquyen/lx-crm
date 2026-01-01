@@ -22,8 +22,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker deployment
-  output: "standalone",
+  // Disable standalone for local dev/build testing on Windows (symlink issues)
+  // Enable for Docker deployment: output: "standalone",
 
   // Fix workspace root warning - specify project root explicitly
   outputFileTracingRoot: __dirname,

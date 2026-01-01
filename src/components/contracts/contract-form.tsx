@@ -22,8 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createContractSchema, type CreateContractInput } from "@/lib/validations/contract";
-import { createContract } from "@/actions/contracts";
+import { createContractSchema, updateContractSchema, type CreateContractInput, type UpdateContractInput } from "@/lib/validations/contract";
+import { createContract, updateContract } from "@/actions/contracts";
 
 type PlantType = {
   id: string;
@@ -38,28 +38,62 @@ type Customer = {
   companyName: string;
 };
 
+type ContractForEdit = {
+  id: string;
+  customerId: string;
+  startDate: Date;
+  endDate: Date;
+  depositAmount: number | null;
+  paymentTerms: string | null;
+  notes: string | null;
+  items: {
+    plantTypeId: string;
+    quantity: number;
+    unitPrice: number;
+    notes: string | null;
+  }[];
+};
+
 interface ContractFormProps {
   customers: Customer[];
   plantTypes: PlantType[];
   defaultCustomerId?: string;
+  contract?: ContractForEdit;
 }
 
-export function ContractForm({ customers, plantTypes, defaultCustomerId }: ContractFormProps) {
+export function ContractForm({ customers, plantTypes, defaultCustomerId, contract }: ContractFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const isEditing = !!contract;
+
   const form = useForm<CreateContractInput>({
-    resolver: zodResolver(createContractSchema) as any,
-    defaultValues: {
-      customerId: defaultCustomerId || "",
-      startDate: new Date(),
-      endDate: new Date(new Date().setMonth(new Date().getMonth() + 12)),
-      depositAmount: 0,
-      paymentTerms: "Thanh toán hàng tháng, vào ngày 15 mỗi tháng",
-      notes: "",
-      items: [{ plantTypeId: "", quantity: 1, unitPrice: 0 }],
-    },
+    resolver: zodResolver(isEditing ? updateContractSchema : createContractSchema) as any,
+    defaultValues: isEditing
+      ? {
+          customerId: contract.customerId,
+          startDate: new Date(contract.startDate),
+          endDate: new Date(contract.endDate),
+          depositAmount: contract.depositAmount ?? 0,
+          paymentTerms: contract.paymentTerms ?? "",
+          notes: contract.notes ?? "",
+          items: contract.items.map((item) => ({
+            plantTypeId: item.plantTypeId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            notes: item.notes ?? undefined,
+          })),
+        }
+      : {
+          customerId: defaultCustomerId || "",
+          startDate: new Date(),
+          endDate: new Date(new Date().setMonth(new Date().getMonth() + 12)),
+          depositAmount: 0,
+          paymentTerms: "Thanh toán hàng tháng, vào ngày 15 mỗi tháng",
+          notes: "",
+          items: [{ plantTypeId: "", quantity: 1, unitPrice: 0 }],
+        },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -83,11 +117,31 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId }: Contr
   const onSubmit = (data: CreateContractInput) => {
     setError(null);
     startTransition(async () => {
-      const result = await createContract(data);
-      if (result.success) {
-        router.push(`/contracts/${result.data.id}`);
+      if (isEditing) {
+        // Update existing contract
+        const updateData: UpdateContractInput = {
+          id: contract.id,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          depositAmount: data.depositAmount,
+          paymentTerms: data.paymentTerms,
+          notes: data.notes,
+          items: data.items,
+        };
+        const result = await updateContract(updateData);
+        if (result.success) {
+          router.push(`/contracts/${contract.id}`);
+        } else {
+          setError(result.error);
+        }
       } else {
-        setError(result.error);
+        // Create new contract
+        const result = await createContract(data);
+        if (result.success) {
+          router.push(`/contracts/${result.data.id}`);
+        } else {
+          setError(result.error);
+        }
       }
     });
   };
@@ -118,6 +172,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId }: Contr
               <Select
                 value={form.watch("customerId")}
                 onValueChange={(value) => form.setValue("customerId", value)}
+                disabled={isEditing}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Chọn khách hàng" />
@@ -130,6 +185,11 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId }: Contr
                   ))}
                 </SelectContent>
               </Select>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">
+                  Không thể thay đổi khách hàng khi chỉnh sửa hợp đồng
+                </p>
+              )}
               {form.formState.errors.customerId && (
                 <p className="text-sm text-destructive">
                   {form.formState.errors.customerId.message}
@@ -294,7 +354,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId }: Contr
       <div className="flex gap-4">
         <Button type="submit" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Tạo hợp đồng
+          {isEditing ? "Cập nhật hợp đồng" : "Tạo hợp đồng"}
         </Button>
         <Button
           type="button"

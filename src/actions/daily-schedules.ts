@@ -170,7 +170,7 @@ export const createDailySchedule = createAction(
                   plantType: request.requestedPlant || "New plant",
                   qty: request.quantity,
                 },
-              ] as unknown as Prisma.JsonValue, // Explicit cast for Prisma
+              ] as Prisma.InputJsonValue,
             },
           })
         )
@@ -557,8 +557,8 @@ export const completeStop = createAction(completeStopSchema, async (input) => {
       completedAt: input.completedAt,
       customerVerified: input.customerVerified,
       verificationMethod: input.verificationMethod,
-      staffReport: staffReport as unknown as Prisma.JsonValue,
-      photoUrls: input.photoUrls as unknown as Prisma.JsonValue,
+      staffReport: staffReport as Prisma.InputJsonValue,
+      photoUrls: (input.photoUrls ?? []) as Prisma.InputJsonValue,
     },
   });
 
@@ -631,7 +631,6 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
 
   const schedule = await prisma.dailySchedule.findUnique({
     where: { id: scheduleId },
-    include: { exchanges: true },
     select: {
       id: true,
       status: true,
@@ -716,7 +715,7 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
         action: "COMPLETE",
         entityType: "DailySchedule",
         entityId: scheduleId,
-        details: `Completed with ${schedule.exchanges.length} stops in ${actualDuration} minutes` as unknown as Prisma.JsonValue,
+        description: `Completed with ${schedule.exchanges.length} stops in ${actualDuration} minutes`,
       },
     });
   });

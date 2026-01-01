@@ -26,12 +26,20 @@ import {
 import { createPlantType, updatePlantType } from "@/actions/plant-types";
 import { createPlantTypeSchema } from "@/lib/validations/plant-type";
 import type { z } from "zod";
-import type { PlantType } from "@prisma/client";
+import type { PlantType, Prisma } from "@prisma/client";
 
 type FormValues = z.infer<typeof createPlantTypeSchema>;
 
+// Accept both Decimal (from Prisma) and number (from server actions with toNumber() conversion)
+type PlantTypeInput = Omit<PlantType, "rentalPrice" | "depositPrice" | "salePrice" | "replacementPrice"> & {
+  rentalPrice: Prisma.Decimal | number;
+  depositPrice: Prisma.Decimal | number | null;
+  salePrice: Prisma.Decimal | number | null;
+  replacementPrice: Prisma.Decimal | number | null;
+};
+
 interface PlantTypeFormProps {
-  plantType?: PlantType;
+  plantType?: PlantTypeInput;
 }
 
 export function PlantTypeForm({ plantType }: PlantTypeFormProps) {

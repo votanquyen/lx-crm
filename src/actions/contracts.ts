@@ -4,7 +4,7 @@
  */
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { differenceInMonths } from "date-fns";
 import { prisma } from "@/lib/prisma";
@@ -237,7 +237,9 @@ export const createContract = createAction(createContractSchema, async (input) =
   });
 
   if (plantTypes.length !== plantTypeIds.length) {
-    throw new AppError("Một số loại cây không tồn tại", "INVALID_PLANT_TYPES");
+    const foundIds = new Set(plantTypes.map(pt => pt.id));
+    const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+    throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
   }
 
   // Calculate monthly amount
@@ -345,7 +347,9 @@ export const updateContract = createAction(updateContractSchema, async (input) =
     });
 
     if (plantTypes.length !== plantTypeIds.length) {
-      throw new AppError("Một số loại cây không tồn tại", "INVALID_PLANT_TYPES");
+      const foundIds = new Set(plantTypes.map(pt => pt.id));
+      const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+      throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
     }
 
     monthlyFee = toDecimal(0);
@@ -710,36 +714,44 @@ export const renewContract = createSimpleAction(
 );
 
 /**
- * Get contract statistics
+ * Get contract stats for dashboard
+ * Cached for 1 minute to improve performance
  */
+const getCachedContractStats = unstable_cache(
+  async () => {
+    const now = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    // Single query with FILTER instead of 4 separate queries
+    const stats = await prisma.$queryRaw<[{
+      total: bigint;
+      active: bigint;
+      expiring_soon: bigint;
+      monthly_recurring: string | null; // PostgreSQL Decimal returns as string
+    }]>`
+      SELECT
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
+        COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
+        COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
+      FROM contracts
+    `;
+
+    return {
+      total: Number(stats[0].total),
+      active: Number(stats[0].active),
+      expiringSoon: Number(stats[0].expiring_soon),
+      monthlyRecurring: Number(stats[0].monthly_recurring || 0),
+    };
+  },
+  ["contract-stats"],
+  { revalidate: 60 }
+);
+
 export async function getContractStats() {
   await requireAuth();
-
-  const now = new Date();
-  const thirtyDaysFromNow = new Date();
-  thirtyDaysFromNow.setDate(now.getDate() + 30);
-
-  // Single query with FILTER instead of 4 separate queries
-  const stats = await prisma.$queryRaw<[{
-    total: bigint;
-    active: bigint;
-    expiring_soon: bigint;
-    monthly_recurring: string | null; // PostgreSQL Decimal returns as string
-  }]>`
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
-      COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" <= ${thirtyDaysFromNow} AND "endDate" >= ${now}) as expiring_soon,
-      COALESCE(SUM("monthlyFee") FILTER (WHERE status = 'ACTIVE'), 0) as monthly_recurring
-    FROM contracts
-  `;
-
-  return {
-    total: Number(stats[0].total),
-    active: Number(stats[0].active),
-    expiringSoon: Number(stats[0].expiring_soon),
-    monthlyRecurring: Number(stats[0].monthly_recurring || 0),
-  };
+  return getCachedContractStats();
 }
 
 /**

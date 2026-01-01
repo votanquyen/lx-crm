@@ -47,19 +47,6 @@ export function DailyScheduleBuilder({
   const [selectedDate, setSelectedDate] = useState(scheduleDate);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
 
-  // Convert exchange requests to stops (unused - kept for future feature)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const availableStops: Stop[] = pendingRequests.map((req) => ({
-    id: req.id,
-    customerId: req.customerId,
-    customerName: req.customer.companyName,
-    address: `${req.customer.address}, ${req.customer.district}`,
-    latitude: req.customer.latitude || 0,
-    longitude: req.customer.longitude || 0,
-    plantCount: req.quantity,
-    estimatedDurationMins: 30,
-  }));
-
   // Convert existing schedule to stops
   const existingStops: Stop[] = existingSchedule?.exchanges.map((ex) => ({
     id: ex.id,
@@ -102,7 +89,6 @@ export function DailyScheduleBuilder({
         stopOrder: index + 1,
         customerId: stop.customerId,
         exchangeRequestId: stop.id,
-        estimatedArrival: stop.estimatedArrival,
       })),
     });
 
