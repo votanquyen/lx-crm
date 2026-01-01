@@ -194,7 +194,7 @@ ssh-keygen -t ed25519 -C "deploy@locxanh" -f ~/.ssh/locxanh_deploy
 
 ### Quick Start with Coolify
 
-For detailed step-by-step instructions, see: **[Coolify Deployment Guide](./coolify-deployment-guide.md)**
+For detailed step-by-step instructions, see: **[Coolify Deployment Guide](./coolify-deployment.md)**
 
 ### Why Choose Coolify?
 
@@ -1260,7 +1260,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 
 ## Related Documentation
 
-- **Coolify Deployment**: `./coolify-deployment-guide.md` - Step-by-step Coolify deployment
+- **Coolify Deployment**: `./coolify-deployment.md` - Complete step-by-step Coolify deployment (1200+ lines)
 - **Architecture**: `./system-architecture.md`
 - **Code Standards**: `./code-standards.md`
 - **Project Roadmap**: `./project-roadmap.md`
