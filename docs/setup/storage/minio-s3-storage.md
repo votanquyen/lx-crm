@@ -1,21 +1,81 @@
-# MinIO S3 Setup Guide
+# MinIO S3 Storage Guide
 
-**Purpose:** Configure external MinIO S3 server for photo storage
-**Use Case:** Care schedule photos, exchange photos, plant images
-**Architecture:** External MinIO server (different from VPS)
-
----
-
-## Prerequisites
-
-- MinIO server running (external host or VPS)
-- Access to MinIO admin console
-- Domain or IP address for MinIO server
-- SSL certificate (recommended for HTTPS)
+**Purpose:** Configure MinIO S3 server for photo storage
+**Use Cases:** Care schedule photos, exchange photos, plant images
+**Architecture:** External MinIO server or S3-compatible service
 
 ---
 
-## Option 1: External MinIO Server (Recommended)
+## Quick Start (5 Minutes)
+
+**Pre-Setup Checklist:**
+- [ ] MinIO server accessible (external host or VPS)
+- [ ] Domain or IP for MinIO (`minio.yourserver.com`)
+- [ ] SSL certificate (Let's Encrypt recommended)
+- [ ] Firewall ports open (9000, 9001)
+
+**Setup Steps:**
+1. Install MinIO server OR use S3InterData provider
+2. Configure systemd service (self-hosted) OR get credentials (S3InterData)
+3. Create bucket: `locxanh-photos`
+4. Set public read policy
+5. Configure CORS
+6. Update `.env` file
+7. Run test script: `bun run scripts/test-minio-upload.ts`
+
+---
+
+## Option 1: S3InterData Provider (Recommended for Quick Setup)
+
+### Configuration
+
+**Credentials (Production):**
+```bash
+MINIO_ENDPOINT=https://api.node02.s3interdata.com
+MINIO_USE_SSL=true
+MINIO_ACCESS_KEY=I0dpNE71gubtfI6fLPLl
+MINIO_SECRET_KEY=m2j0DZVyeu4x2pKSqIabGyKNYoGbBQfi63I2hMTM
+MINIO_BUCKET=s3-10552-36074-storage-default
+MINIO_REGION=us-east-1
+MINIO_PUBLIC_URL=https://api.node02.s3interdata.com/s3-10552-36074-storage-default
+```
+
+### Set Bucket Policy
+
+**Script:** `scripts/set-bucket-policy.ts`
+```bash
+bun add @aws-sdk/s3-request-presigner
+bun run scripts/set-bucket-policy.ts
+```
+
+**Policy Applied:**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": ["s3:GetObject"],
+      "Resource": ["arn:aws:s3:::s3-10552-36074-storage-default/*"]
+    }
+  ]
+}
+```
+
+### Performance Metrics
+
+| Metric | Value |
+|--------|-------|
+| Upload Speed | 8-9 MB/s |
+| Time to Upload 5MB | ~0.6s |
+| Connection Latency | <100ms |
+| Public URL Access | <200ms |
+
+---
+
+## Option 2: Self-Hosted MinIO Server
 
 ### Step 1: Install MinIO Server
 
@@ -75,11 +135,6 @@ ProtectProc=invisible
 EnvironmentFile=-/etc/default/minio
 ExecStartPre=/bin/bash -c "if [ -z \"${MINIO_VOLUMES}\" ]; then echo \"Variable MINIO_VOLUMES not set in /etc/default/minio\"; exit 1; fi"
 ExecStart=/usr/local/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
-
-# MinIO RELEASE.2023-05-04T21-44-30Z adds support for Type=notify (https://www.freedesktop.org/software/systemd/man/systemd.service.html#Type=)
-# This may improve systemctl setups where other services use `After=minio.server`
-# Uncomment the line to enable the functionality
-# Type=notify
 
 # Let systemd restart this service always
 Restart=always
@@ -220,7 +275,7 @@ sudo systemctl enable certbot.timer
 
 ---
 
-## Option 2: Docker Compose (Quick Setup)
+## Option 3: Docker Compose (Development)
 
 **File:** `docker-compose.minio.yml`
 ```yaml
@@ -261,7 +316,7 @@ docker-compose -f docker-compose.minio.yml up -d
 
 ---
 
-## Configure MinIO Bucket
+## Bucket Configuration
 
 ### Step 1: Access Console
 
@@ -384,7 +439,7 @@ mc admin policy attach myminio readwrite --user locxanh-app
 
 **File:** `.env`
 ```bash
-# MinIO S3 Configuration (External Host)
+# MinIO S3 Configuration
 MINIO_ENDPOINT=https://minio.yourserver.com
 MINIO_USE_SSL=true
 MINIO_ACCESS_KEY=your_access_key_here
@@ -431,6 +486,75 @@ testConnection();
 **Run:**
 ```bash
 bun run scripts/test-minio-connection.ts
+```
+
+---
+
+## Photo Upload Flow
+
+```
+User uploads photo in care completion form
+       ↓
+Frontend sends file buffer to API
+       ↓
+uploadCarePhoto(buffer, filename)
+       ↓
+Generates unique key: care/[timestamp]-[random]-[filename]
+       ↓
+S3 Client uploads to MinIO
+       ↓
+Returns public URL
+       ↓
+URL saved to database (photoUrls array)
+       ↓
+Photo displays in care detail page
+```
+
+**Example URL:**
+```
+https://api.node02.s3interdata.com/s3-10552-36074-storage-default/care/1766136600327-i8s56s-care-test.jpg
+```
+
+### File Organization
+
+```
+locxanh-photos/
+├── care/                    # Care schedule photos
+│   ├── [timestamp]-[random]-photo1.jpg
+│   ├── [timestamp]-[random]-photo2.jpg
+│   └── ...
+├── exchange/                # Exchange schedule photos
+│   └── [timestamp]-[random]-photo.jpg
+└── test/                    # Test files
+    └── [timestamp]-[random]-test.png
+```
+
+---
+
+## Usage in Application
+
+### Upload Photo (Care Schedule)
+
+```typescript
+import { uploadCarePhoto } from "@/lib/storage/s3-client";
+
+// In care completion form
+const handlePhotoUpload = async (file: File) => {
+  const buffer = await file.arrayBuffer();
+  const url = await uploadCarePhoto(Buffer.from(buffer), file.name);
+
+  // Save URL to database
+  photoUrls.push(url);
+};
+```
+
+### Display Photo
+
+```tsx
+// In care detail page
+{schedule.photoUrls?.map((url, index) => (
+  <img key={index} src={url} alt={`Photo ${index + 1}`} />
+))}
 ```
 
 ---
@@ -584,17 +708,58 @@ sudo tail -f /var/log/nginx/error.log
 
 ---
 
-## Next Steps
+## Testing Checklist
 
-1. ✅ Set up MinIO server (external host)
-2. ✅ Configure SSL certificates
-3. ✅ Create `locxanh-photos` bucket
-4. ✅ Set public read policy
-5. ✅ Configure CORS
-6. ✅ Create service account
-7. ✅ Update `.env` file
-8. ⏳ Test photo upload
-9. ⏳ Verify public URLs work
-10. ⏳ Test from care completion form
+### Server Tests
+- [ ] MinIO service running
+- [ ] Nginx reverse proxy working
+- [ ] SSL certificate valid
+- [ ] Firewall configured
+- [ ] Console accessible
 
-**Ready to test photo uploads!** 🚀
+### Application Tests
+- [ ] Connection test passes: `bun run scripts/test-minio-upload.ts`
+- [ ] Upload test passes
+- [ ] Public URL accessible
+- [ ] Care photo upload works
+- [ ] Multiple uploads work
+- [ ] Large file upload works (5MB tested at 8-9 MB/s)
+
+### Browser Tests
+- [ ] Photo upload from care form
+- [ ] Photo preview works
+- [ ] Photo displays in detail view
+- [ ] Mobile upload works
+- [ ] Multiple photo upload works
+
+---
+
+## Quick Reference
+
+**MinIO Console:** `https://console.minio.yourserver.com`
+**API Endpoint:** `https://minio.yourserver.com`
+**Bucket URL:** `https://minio.yourserver.com/locxanh-photos`
+
+**Systemd Commands:**
+```bash
+sudo systemctl status minio    # Check status
+sudo systemctl start minio     # Start service
+sudo systemctl stop minio      # Stop service
+sudo systemctl restart minio   # Restart service
+sudo journalctl -u minio -f    # View logs
+```
+
+**mc CLI Commands:**
+```bash
+mc ls myminio/locxanh-photos                    # List files
+mc cp photo.jpg myminio/locxanh-photos/         # Upload file
+mc rm myminio/locxanh-photos/photo.jpg          # Delete file
+mc policy get myminio/locxanh-photos            # Check policy
+mc anonymous set download myminio/locxanh-photos # Set public
+mc admin info myminio                            # Server info
+mc du myminio/locxanh-photos                     # Storage usage
+```
+
+---
+
+**Ready to upload photos!** 📸
