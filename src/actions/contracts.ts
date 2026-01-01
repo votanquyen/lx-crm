@@ -237,7 +237,9 @@ export const createContract = createAction(createContractSchema, async (input) =
   });
 
   if (plantTypes.length !== plantTypeIds.length) {
-    throw new AppError("Một số loại cây không tồn tại", "INVALID_PLANT_TYPES");
+    const foundIds = new Set(plantTypes.map(pt => pt.id));
+    const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+    throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
   }
 
   // Calculate monthly amount
@@ -345,7 +347,9 @@ export const updateContract = createAction(updateContractSchema, async (input) =
     });
 
     if (plantTypes.length !== plantTypeIds.length) {
-      throw new AppError("Một số loại cây không tồn tại", "INVALID_PLANT_TYPES");
+      const foundIds = new Set(plantTypes.map(pt => pt.id));
+      const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+      throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
     }
 
     monthlyFee = toDecimal(0);
