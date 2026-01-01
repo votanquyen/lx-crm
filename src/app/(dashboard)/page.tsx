@@ -3,7 +3,6 @@
  */
 import { Suspense } from "react";
 import Link from "next/link";
-import { auth } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -157,18 +156,65 @@ async function TodaySchedules() {
   );
 }
 
-async function AlertsSection() {
-  const [expiringContracts, overdueInvoices, recentNotes] = await Promise.all([
+/**
+ * Display component for recent notes (receives pre-fetched data)
+ */
+function RecentNotesDisplay({ notes }: { notes: Awaited<ReturnType<typeof getRecentNotes>> }) {
+  if (notes.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        <StickyNote className="mx-auto h-8 w-8 mb-2 opacity-50" />
+        <p>Không có ghi chú nào cần xử lý</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {notes.map((note) => (
+        <div key={note.id} className="flex items-start gap-3">
+          <div
+            className={`rounded-full p-2 ${
+              note.category === "URGENT"
+                ? "bg-red-100 text-red-600"
+                : note.category === "COMPLAINT"
+                  ? "bg-orange-100 text-orange-600"
+                  : "bg-muted"
+            }`}
+          >
+            <StickyNote className="h-4 w-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <Link
+              href={`/customers/${note.customer.id}`}
+              className="font-medium text-sm hover:underline"
+            >
+              {note.customer.companyName}
+            </Link>
+            <p className="text-sm text-muted-foreground truncate">{note.content}</p>
+          </div>
+          <Badge variant={note.category === "URGENT" ? "destructive" : "secondary"}>
+            {note.category}
+          </Badge>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Wrapper for Alerts that only fetches expiring contracts and overdue invoices
+ * Notes are fetched separately by RecentNotesWrapper
+ */
+async function AlertsAndNotesWrapper() {
+  const [expiringContracts, overdueInvoices] = await Promise.all([
     getExpiringContracts(14),
     getOverdueInvoices(5),
-    getRecentNotes(5),
   ]);
 
-  const urgentNotes = recentNotes.filter((n) => n.category === "URGENT");
+  const hasAlerts = expiringContracts.length > 0 || overdueInvoices.length > 0;
 
-  if (expiringContracts.length === 0 && overdueInvoices.length === 0 && urgentNotes.length === 0) {
-    return null;
-  }
+  if (!hasAlerts) return null;
 
   return (
     <Card className="border-orange-200 bg-orange-50/50">
@@ -215,83 +261,28 @@ async function AlertsSection() {
             </div>
           </div>
         )}
-        {urgentNotes.length > 0 && (
-          <div>
-            <p className="font-medium text-sm mb-2 text-orange-600">
-              Ghi chú khẩn cấp ({urgentNotes.length})
-            </p>
-            <div className="space-y-2">
-              {urgentNotes.slice(0, 3).map((note) => (
-                <Link
-                  key={note.id}
-                  href={`/customers/${note.customer.id}`}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
-                >
-                  • {note.customer.companyName}: {note.content.substring(0, 50)}...
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 }
 
-async function RecentNotesSection() {
+/**
+ * Wrapper for recent notes section
+ */
+async function RecentNotesWrapper() {
   const notes = await getRecentNotes(5);
-
-  if (notes.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <StickyNote className="mx-auto h-8 w-8 mb-2 opacity-50" />
-        <p>Không có ghi chú nào cần xử lý</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {notes.map((note) => (
-        <div key={note.id} className="flex items-start gap-3">
-          <div
-            className={`rounded-full p-2 ${
-              note.category === "URGENT"
-                ? "bg-red-100 text-red-600"
-                : note.category === "COMPLAINT"
-                  ? "bg-orange-100 text-orange-600"
-                  : "bg-muted"
-            }`}
-          >
-            <StickyNote className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/customers/${note.customer.id}`}
-              className="font-medium text-sm hover:underline"
-            >
-              {note.customer.companyName}
-            </Link>
-            <p className="text-sm text-muted-foreground truncate">{note.content}</p>
-          </div>
-          <Badge variant={note.category === "URGENT" ? "destructive" : "secondary"}>
-            {note.category}
-          </Badge>
-        </div>
-      ))}
-    </div>
-  );
+  return <RecentNotesDisplay notes={notes} />;
 }
 
 export default async function DashboardPage() {
-  const session = await auth();
+  // Note: auth() is already called in layout.tsx - no need to duplicate here
 
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Xin chào, {session?.user?.name?.split(" ").pop() || "Bạn"}!
+          Xin chào!
         </h1>
         <p className="text-muted-foreground">
           Đây là tổng quan hoạt động kinh doanh hôm nay.
@@ -318,9 +309,9 @@ export default async function DashboardPage() {
         <DashboardStats />
       </Suspense>
 
-      {/* Alerts */}
+      {/* Alerts and Notes - Single data fetch for both sections */}
       <Suspense fallback={null}>
-        <AlertsSection />
+        <AlertsAndNotesWrapper />
       </Suspense>
 
       {/* Main Content Grid */}
@@ -349,7 +340,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Notes */}
+        {/* Recent Notes - Now part of AlertsAndNotesData above */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -368,7 +359,7 @@ export default async function DashboardPage() {
                 </div>
               }
             >
-              <RecentNotesSection />
+              <RecentNotesWrapper />
             </Suspense>
           </CardContent>
         </Card>

@@ -242,32 +242,17 @@ const getCachedInvoiceAnalytics = unstable_cache(
       ? (Number(totalPaid._sum.amount || 0) / Number(totalIssued._sum.totalAmount || 0)) * 100
       : 0;
 
-    // Average days to payment
-    const paidInvoices = await prisma.invoice.findMany({
-      where: {
-        status: "PAID",
-        payments: { some: {} },
-      },
-      select: {
-        issueDate: true,
-        payments: {
-          where: { isVerified: true },
-          orderBy: { paymentDate: "asc" },
-          take: 1,
-          select: { paymentDate: true },
-        },
-      },
-    });
+    // Average days to payment - optimized with SQL aggregate
+    // Replaces unbounded findMany that fetched ALL paid invoices
+    const avgDaysResult = await prisma.$queryRaw<[{ avg_days: string | null }]>`
+      SELECT AVG(EXTRACT(DAY FROM (p."paymentDate" - i."issueDate"))) as avg_days
+      FROM invoices i
+      JOIN payments p ON p."invoiceId" = i.id
+      WHERE i.status = 'PAID'
+        AND p."isVerified" = true
+    `;
 
-    const daysToPayment = paidInvoices
-      .filter((inv) => inv.payments.length > 0 && inv.payments[0] !== undefined)
-      .map((inv) =>
-        differenceInDays(inv.payments[0]!.paymentDate, inv.issueDate)
-      );
-
-    const avgDaysToPayment = daysToPayment.length > 0
-      ? Math.round(daysToPayment.reduce((sum, days) => sum + days, 0) / daysToPayment.length)
-      : 0;
+    const avgDaysToPayment = Math.round(Number(avgDaysResult[0]?.avg_days || 0));
 
     return {
       outstandingAmount: Number(outstanding._sum.totalAmount || 0),
