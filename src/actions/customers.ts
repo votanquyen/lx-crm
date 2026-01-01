@@ -466,6 +466,7 @@ export async function getCustomerStats() {
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
   // Single query with FILTER instead of 5 separate COUNTs
+  // Note: Must prefix status with table alias (c. or i.) to avoid ambiguity
   const stats = await prisma.$queryRaw<[{
     total: bigint;
     active: bigint;
@@ -474,10 +475,10 @@ export async function getCustomerStats() {
     with_debt: bigint;
   }]>`
     SELECT
-      COUNT(*) FILTER (WHERE status != 'TERMINATED') as total,
-      COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,
-      COUNT(*) FILTER (WHERE status = 'LEAD') as leads,
-      COUNT(*) FILTER (WHERE tier = 'VIP' AND status != 'TERMINATED') as vip,
+      COUNT(*) FILTER (WHERE c.status != 'TERMINATED') as total,
+      COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as active,
+      COUNT(*) FILTER (WHERE c.status = 'LEAD') as leads,
+      COUNT(*) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
       COUNT(DISTINCT CASE
         WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
           AND i."outstandingAmount" > 0
