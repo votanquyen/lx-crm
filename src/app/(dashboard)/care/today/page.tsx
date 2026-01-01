@@ -15,12 +15,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string }> = {
   SCHEDULED: { label: "Chờ thực hiện", color: "bg-yellow-100 text-yellow-800" },
   IN_PROGRESS: { label: "Đang thực hiện", color: "bg-blue-100 text-blue-800" },
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
   CANCELLED: { label: "Đã hủy", color: "bg-gray-100 text-gray-800" },
   RESCHEDULED: { label: "Dời lịch", color: "bg-purple-100 text-purple-800" },
+  SKIPPED: { label: "Bỏ qua", color: "bg-orange-100 text-orange-800" },
 };
 
 async function TodaySchedulesContent() {
@@ -148,8 +149,8 @@ async function TodaySchedulesContent() {
                       {schedule.customer.code}
                     </div>
                   </div>
-                  <Badge className={statusConfig[schedule.status].color}>
-                    {statusConfig[schedule.status].label}
+                  <Badge className={statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}>
+                    {statusConfig[schedule.status]?.label ?? schedule.status}
                   </Badge>
                 </div>
               </CardHeader>

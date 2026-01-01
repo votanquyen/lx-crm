@@ -193,9 +193,9 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
       CANCELLED: { label: "Đã bỏ qua", color: "bg-red-500" },
     };
 
-    const config = statusMap[status] || statusMap.PENDING;
+    const config = statusMap[status] ?? statusMap.PENDING;
     return (
-      <Badge className={`${config.color} text-white`}>{config.label}</Badge>
+      <Badge className={`${config?.color} text-white`}>{config?.label}</Badge>
     );
   };
 

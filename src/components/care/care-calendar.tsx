@@ -25,12 +25,13 @@ interface CareCalendarProps {
   onViewSchedule?: (schedule: CareScheduleWithRelations) => void;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string }> = {
   SCHEDULED: { label: "Đã lên lịch", color: "bg-blue-100 text-blue-800" },
   IN_PROGRESS: { label: "Đang thực hiện", color: "bg-yellow-100 text-yellow-800" },
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
   CANCELLED: { label: "Đã hủy", color: "bg-gray-100 text-gray-800" },
   RESCHEDULED: { label: "Dời lịch", color: "bg-purple-100 text-purple-800" },
+  SKIPPED: { label: "Bỏ qua", color: "bg-orange-100 text-orange-800" },
 };
 
 export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: CareCalendarProps) {
@@ -173,9 +174,9 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
                         <div className="mt-1">
                           <Badge
                             variant="secondary"
-                            className={`text-xs ${statusConfig[schedule.status].color}`}
+                            className={`text-xs ${statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}`}
                           >
-                            {statusConfig[schedule.status].label}
+                            {statusConfig[schedule.status]?.label ?? schedule.status}
                           </Badge>
                         </div>
 

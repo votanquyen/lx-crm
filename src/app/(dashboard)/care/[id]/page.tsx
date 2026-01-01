@@ -23,12 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string }> = {
   SCHEDULED: { label: "Chờ thực hiện", color: "bg-yellow-100 text-yellow-800" },
   IN_PROGRESS: { label: "Đang thực hiện", color: "bg-blue-100 text-blue-800" },
   COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
   CANCELLED: { label: "Đã hủy", color: "bg-gray-100 text-gray-800" },
   RESCHEDULED: { label: "Dời lịch", color: "bg-purple-100 text-purple-800" },
+  SKIPPED: { label: "Bỏ qua", color: "bg-orange-100 text-orange-800" },
 };
 
 interface DetailPageProps {
@@ -57,9 +58,9 @@ async function CareDetailContent({ params }: DetailPageProps) {
 
   if (!schedule) notFound();
 
-  // Parse plant conditions if exists
-  const plantConditions = schedule.plantConditions
-    ? JSON.parse(schedule.plantConditions)
+  // Parse plant assessments if exists
+  const plantAssessments = Array.isArray(schedule.plantAssessments)
+    ? (schedule.plantAssessments as Record<string, unknown>[])
     : [];
 
   return (
@@ -70,8 +71,8 @@ async function CareDetailContent({ params }: DetailPageProps) {
           <h1 className="text-3xl font-bold">{schedule.customer.companyName}</h1>
           <p className="text-gray-600 mt-1">Chi tiết lịch chăm sóc</p>
         </div>
-        <Badge className={statusConfig[schedule.status].color}>
-          {statusConfig[schedule.status].label}
+        <Badge className={statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}>
+          {statusConfig[schedule.status]?.label ?? schedule.status}
         </Badge>
       </div>
 
@@ -210,35 +211,35 @@ async function CareDetailContent({ params }: DetailPageProps) {
                 </div>
               )}
 
-              {schedule.actionsTaken && (
+              {schedule.actionsToken && (
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Hành động đã thực hiện</div>
                   <div className="bg-green-50 p-3 rounded text-sm border border-green-200">
-                    {schedule.actionsTaken}
+                    {schedule.actionsToken}
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Plant Conditions */}
-          {plantConditions.length > 0 && (
+          {/* Plant Assessments */}
+          {plantAssessments.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Đánh giá tình trạng cây</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {plantConditions.map((pc: any, index: number) => (
+                  {plantAssessments.map((pc: Record<string, unknown>, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded">
                       <div className="flex-1">
-                        <div className="font-medium">{pc.plantTypeName}</div>
-                        {pc.notes && (
+                        <div className="font-medium">{String(pc.plantTypeName ?? '')}</div>
+                        {typeof pc.notes === 'string' && pc.notes && (
                           <div className="text-sm text-gray-600 mt-1">{pc.notes}</div>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="text-sm text-gray-600">{pc.count} cây</div>
+                        <div className="text-sm text-gray-600">{String(pc.count ?? 0)} cây</div>
                         <Badge
                           variant="secondary"
                           className={
@@ -268,7 +269,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
           )}
 
           {/* Photos */}
-          {schedule.photoUrls && schedule.photoUrls.length > 0 && (
+          {Array.isArray(schedule.photoUrls) && schedule.photoUrls.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -278,7 +279,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4">
-                  {schedule.photoUrls.map((url: string, index: number) => (
+                  {(schedule.photoUrls as string[]).map((url: string, index: number) => (
                     <a
                       key={index}
                       href={url}

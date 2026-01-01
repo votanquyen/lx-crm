@@ -61,7 +61,21 @@
       "Bash(tree:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(Get-ChildItem:*)"
+      "Bash(Get-ChildItem:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm run validate)",
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(git diff:*)",
+      "Bash(if [ ! -d \"C:/Users/Quyen_Vo/locxanh.vn/plans/reports\" ])",
+      "Bash(then mkdir -p \"C:/Users/Quyen_Vo/locxanh.vn/plans/reports\")",
+      "Bash(fi)",
+      "Bash(pnpm run lint:fix)",
+      "Bash(npx next build:*)"
     ],
     "deny": [
       "Bash(dd if=/dev/zero of=/dev/sd:*)",

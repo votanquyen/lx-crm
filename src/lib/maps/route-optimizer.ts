@@ -2,7 +2,7 @@
  * Google Maps Route Optimizer
  * Optimize delivery routes using Google Maps Directions API
  */
-import { Client, TravelMode, DirectionsResponse } from "@googlemaps/google-maps-services-js";
+import { Client, TravelMode, DirectionsResponseData } from "@googlemaps/google-maps-services-js";
 
 const client = new Client({});
 
@@ -46,14 +46,15 @@ export async function optimizeRoute(
   }
 
   if (stops.length === 1) {
+    const firstStop = stops[0]!;
     return {
       stops,
       totalDistanceKm: 0,
-      totalDurationMins: stops[0].estimatedDurationMins || 30,
+      totalDurationMins: firstStop.estimatedDurationMins ?? 30,
       waypoints: [
         {
           stopOrder: 1,
-          stop: stops[0],
+          stop: firstStop,
           eta: "08:00",
           distanceFromPrevious: 0,
           durationFromPrevious: 0,
@@ -70,11 +71,13 @@ export async function optimizeRoute(
 
   try {
     // Use first stop as origin and last as destination
+    const firstStop = stops[0]!;
+    const lastStop = stops[stops.length - 1]!;
     const origin = startLocation
       ? `${startLocation.lat},${startLocation.lng}`
-      : `${stops[0].latitude},${stops[0].longitude}`;
+      : `${firstStop.latitude},${firstStop.longitude}`;
 
-    const destination = `${stops[stops.length - 1].latitude},${stops[stops.length - 1].longitude}`;
+    const destination = `${lastStop.latitude},${lastStop.longitude}`;
 
     // Middle stops as waypoints
     const waypoints = stops
@@ -110,7 +113,7 @@ export async function optimizeRoute(
  * Parse Google Maps Directions API response
  */
 function parseDirectionsResponse(
-  response: DirectionsResponse,
+  response: DirectionsResponseData,
   stops: Stop[],
   hasStartLocation: boolean
 ): OptimizedRoute {
@@ -124,13 +127,15 @@ function parseDirectionsResponse(
   let totalDuration = 0;
 
   // Get optimized waypoint order
-  const waypointOrder = route.waypoint_order || [];
-  const reorderedStops = hasStartLocation
+  const waypointOrder = route.waypoint_order ?? [];
+  const firstStop = stops[0]!;
+  const lastStop = stops[stops.length - 1]!;
+  const reorderedStops: Stop[] = hasStartLocation
     ? stops
     : [
-        stops[0],
-        ...waypointOrder.map((index) => stops[index + 1]),
-        stops[stops.length - 1],
+        firstStop,
+        ...waypointOrder.map((index: number) => stops[index + 1]!),
+        lastStop,
       ];
 
   // Calculate waypoints with ETAs
@@ -139,7 +144,7 @@ function parseDirectionsResponse(
   currentTime.setHours(8, 0, 0, 0); // Start at 8:00 AM
 
   for (let i = 0; i < reorderedStops.length; i++) {
-    const stop = reorderedStops[i];
+    const stop = reorderedStops[i]!;
     const leg = legs[i];
 
     if (leg) {
@@ -148,7 +153,7 @@ function parseDirectionsResponse(
     }
 
     // Add stop duration (service time)
-    const stopDuration = stop.estimatedDurationMins || 30;
+    const stopDuration = stop.estimatedDurationMins ?? 30;
     currentTime = new Date(currentTime.getTime() + stopDuration * 60000);
 
     waypoints.push({
@@ -183,7 +188,7 @@ function simpleRouteOptimization(stops: Stop[]): OptimizedRoute {
     return {
       stops,
       totalDistanceKm: 0,
-      totalDurationMins: stops.reduce((sum, s) => sum + (s.estimatedDurationMins || 30), 0),
+      totalDurationMins: stops.reduce((sum, s) => sum + (s.estimatedDurationMins ?? 30), 0),
       waypoints: stops.map((stop, i) => ({
         stopOrder: i + 1,
         stop,
@@ -195,20 +200,22 @@ function simpleRouteOptimization(stops: Stop[]): OptimizedRoute {
   }
 
   // Nearest neighbor optimization
-  const optimized: Stop[] = [stops[0]];
+  const firstStop = stops[0]!;
+  const optimized: Stop[] = [firstStop];
   const remaining = stops.slice(1);
 
   while (remaining.length > 0) {
-    const current = optimized[optimized.length - 1];
+    const current = optimized[optimized.length - 1]!;
     let nearestIndex = 0;
     let minDistance = Infinity;
 
     for (let i = 0; i < remaining.length; i++) {
+      const candidate = remaining[i]!;
       const distance = calculateDistance(
         current.latitude,
         current.longitude,
-        remaining[i].latitude,
-        remaining[i].longitude
+        candidate.latitude,
+        candidate.longitude
       );
       if (distance < minDistance) {
         minDistance = distance;
@@ -216,14 +223,14 @@ function simpleRouteOptimization(stops: Stop[]): OptimizedRoute {
       }
     }
 
-    optimized.push(remaining[nearestIndex]);
+    optimized.push(remaining[nearestIndex]!);
     remaining.splice(nearestIndex, 1);
   }
 
   return {
     stops: optimized,
     totalDistanceKm: 0,
-    totalDurationMins: optimized.reduce((sum, s) => sum + (s.estimatedDurationMins || 30), 0),
+    totalDurationMins: optimized.reduce((sum, s) => sum + (s.estimatedDurationMins ?? 30), 0),
     waypoints: optimized.map((stop, i) => ({
       stopOrder: i + 1,
       stop,
@@ -260,7 +267,8 @@ function calculateEta(index: number, stops: Stop[]): string {
 
   let totalMinutes = startMinute;
   for (let i = 0; i <= index; i++) {
-    totalMinutes += stops[i].estimatedDurationMins || 30;
+    const stop = stops[i];
+    totalMinutes += stop?.estimatedDurationMins ?? 30;
     if (i < index) {
       totalMinutes += 15; // Travel time between stops
     }

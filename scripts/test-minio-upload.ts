@@ -2,11 +2,8 @@
  * Test MinIO S3 Photo Upload
  * Verifies S3 connection, upload, and public URL access
  */
-import { S3Client, ListBucketsCommand, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3Client, ListBucketsCommand } from "@aws-sdk/client-s3";
 import { uploadToS3, uploadCarePhoto, generateFileKey } from "../src/lib/storage/s3-client";
-import * as fs from "fs";
-import * as path from "path";
 
 // Colors for console output
 const colors = {

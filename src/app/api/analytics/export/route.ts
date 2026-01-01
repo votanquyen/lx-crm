@@ -130,11 +130,11 @@ async function exportMonthlyRevenue() {
     const data = monthlyData.get(monthKey)!;
     data.totalRevenue += Number(invoice.totalAmount);
 
-    if (invoice.status === "PAID" || invoice.status === "PARTIALLY_PAID") {
+    if (invoice.status === "PAID" || invoice.status === "PARTIAL") {
       data.paidAmount += Number(invoice.paidAmount);
     }
 
-    if (invoice.status === "PENDING" || invoice.status === "PARTIALLY_PAID") {
+    if (invoice.status === "SENT" || invoice.status === "PARTIAL") {
       data.pendingAmount += Number(invoice.totalAmount) - Number(invoice.paidAmount);
     }
 
@@ -162,7 +162,7 @@ async function exportInvoiceAging() {
   const unpaidInvoices = await prisma.invoice.findMany({
     where: {
       status: {
-        in: ["PENDING", "PARTIALLY_PAID", "OVERDUE"],
+        in: ["SENT", "PARTIAL", "OVERDUE"],
       },
     },
     select: {
@@ -192,7 +192,7 @@ async function exportInvoiceAging() {
       (today.getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    let bucket: InvoiceAgingData;
+    let bucket: InvoiceAgingData | undefined;
     if (daysOverdue < 0) {
       bucket = aging[0]; // Not due yet
     } else if (daysOverdue <= 30) {
@@ -205,8 +205,10 @@ async function exportInvoiceAging() {
       bucket = aging[4];
     }
 
-    bucket.count++;
-    bucket.totalAmount += balance;
+    if (bucket) {
+      bucket.count++;
+      bucket.totalAmount += balance;
+    }
   });
 
   // Calculate percentages
@@ -285,7 +287,7 @@ async function exportOverdueInvoices() {
   const overdueInvoices = await prisma.invoice.findMany({
     where: {
       status: {
-        in: ["OVERDUE", "PARTIALLY_PAID"],
+        in: ["OVERDUE", "PARTIAL"],
       },
       dueDate: {
         lt: today,
@@ -351,8 +353,8 @@ async function exportContracts() {
       status: true,
       startDate: true,
       endDate: true,
-      monthlyValue: true,
-      totalValue: true,
+      monthlyFee: true,
+      totalContractValue: true,
       items: {
         select: {
           quantity: true,
@@ -366,7 +368,10 @@ async function exportContracts() {
   });
 
   const data: ContractReportData[] = contracts.map((contract) => {
-    const plantCount = contract.items.reduce((sum, item) => sum + item.quantity, 0);
+    const plantCount = contract.items.reduce(
+      (sum: number, item: { quantity: number }) => sum + item.quantity,
+      0
+    );
 
     return {
       contractNumber: contract.contractNumber,
@@ -375,8 +380,8 @@ async function exportContracts() {
       status: contract.status,
       startDate: contract.startDate,
       endDate: contract.endDate,
-      monthlyValue: Number(contract.monthlyValue),
-      totalValue: Number(contract.totalValue),
+      monthlyValue: Number(contract.monthlyFee),
+      totalValue: Number(contract.totalContractValue ?? 0),
       plantCount,
     };
   });

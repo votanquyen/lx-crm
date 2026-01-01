@@ -110,7 +110,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
 
     it('detects overpayment correctly', () => {
-      const _totalAmount = 1000000;
+      // totalAmount context: testing overpayment with 400k against 300k outstanding
       const outstandingAmount = 300000;
       const excessivePayment = 400000;
 

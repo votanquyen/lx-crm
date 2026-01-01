@@ -60,7 +60,6 @@ export default function BangKePage() {
     } else {
       setCurrentStatementDetail(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCustomerId, selectedMonth]);
 
   async function loadCustomers() {
