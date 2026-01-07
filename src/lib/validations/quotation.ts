@@ -129,10 +129,80 @@ export const createQuotationSchema = z
   );
 
 /**
+ * Base quotation schema (without refinements for partial updates)
+ */
+const baseQuotationSchema = z.object({
+  // Customer
+  customerId: z.string().cuid("ID khách hàng không hợp lệ"),
+
+  // Basic info
+  title: z
+    .string()
+    .min(1, "Tiêu đề là bắt buộc")
+    .max(200, "Tiêu đề quá dài")
+    .optional()
+    .nullable(),
+  description: z.string().max(2000).optional().nullable(),
+
+  // Validity period
+  validFrom: z.date({ message: "Ngày bắt đầu hiệu lực là bắt buộc" }),
+  validUntil: z.date({ message: "Ngày hết hiệu lực là bắt buộc" }),
+
+  // Pricing (calculated fields - optional on create)
+  subtotal: z.number().nonnegative().default(0),
+  discountRate: z
+    .number()
+    .min(0, "Chiết khấu không thể âm")
+    .max(100, "Chiết khấu không thể vượt quá 100%")
+    .default(0),
+  discountAmount: z.number().nonnegative().default(0),
+  vatRate: z
+    .number()
+    .min(0, "VAT không thể âm")
+    .max(100, "VAT không thể vượt quá 100%")
+    .default(10),
+  vatAmount: z.number().nonnegative().default(0),
+  totalAmount: z.number().nonnegative().default(0),
+
+  // Proposed contract terms
+  proposedStartDate: z.date().optional().nullable(),
+  proposedDuration: z
+    .number()
+    .int("Thời hạn phải là số nguyên")
+    .positive("Thời hạn phải lớn hơn 0")
+    .max(120, "Thời hạn tối đa 120 tháng")
+    .optional()
+    .nullable(),
+  proposedMonthlyFee: z
+    .number()
+    .nonnegative("Phí hàng tháng không thể âm")
+    .max(1000000000, "Phí hàng tháng quá lớn")
+    .optional()
+    .nullable(),
+  proposedDeposit: z
+    .number()
+    .nonnegative("Tiền cọc không thể âm")
+    .max(1000000000, "Tiền cọc quá lớn")
+    .optional()
+    .nullable(),
+
+  // Notes
+  notes: z.string().max(2000).optional().nullable(),
+  termsConditions: z.string().max(5000).optional().nullable(),
+  internalNotes: z.string().max(2000).optional().nullable(),
+
+  // Items
+  items: z
+    .array(quotationItemSchema)
+    .min(1, "Báo giá phải có ít nhất 1 sản phẩm")
+    .max(100, "Quá nhiều sản phẩm"),
+});
+
+/**
  * Update Quotation Schema
  * Similar to create but allows partial updates
  */
-export const updateQuotationSchema = createQuotationSchema
+export const updateQuotationSchema = baseQuotationSchema
   .partial()
   .extend({
     id: z.string().cuid("ID báo giá không hợp lệ"),
