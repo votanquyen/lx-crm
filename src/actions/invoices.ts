@@ -7,10 +7,12 @@
 import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, requireManager } from "@/lib/auth-utils";
+import { requireAuth, requireManager, requireAccountant } from "@/lib/auth-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { toDecimal, toNumber, addDecimal, multiplyDecimal, subtractDecimal, compareDecimal } from "@/lib/db-utils";
+import { CACHE_TTL, RATE_LIMITS } from "@/lib/constants";
+import { requireRateLimit } from "@/lib/rate-limit";
 import {
   createInvoiceSchema,
   invoiceSearchSchema,
@@ -188,6 +190,12 @@ export async function getInvoiceById(id: string) {
 export const createInvoice = createAction(createInvoiceSchema, async (input) => {
   const session = await requireAuth();
 
+  // Rate limit mutations
+  await requireRateLimit("invoice-create", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
   // Verify customer exists
   const customer = await prisma.customer.findUnique({
     where: { id: input.customerId },
@@ -348,9 +356,10 @@ export const generateContractInvoice = createSimpleAction(
 
 /**
  * Send invoice (DRAFT -> SENT)
+ * Requires ADMIN, MANAGER, or ACCOUNTANT role
  */
 export const sendInvoice = createSimpleAction(async (id: string) => {
-  const session = await requireAuth();
+  const session = await requireAccountant(); // Financial operation requires accountant+
 
   const invoice = await prisma.invoice.findUnique({ where: { id } });
   if (!invoice) throw new NotFoundError("Hóa đơn");
@@ -381,9 +390,10 @@ export const sendInvoice = createSimpleAction(async (id: string) => {
 
 /**
  * Cancel invoice
+ * Requires ADMIN or MANAGER role (status change is a sensitive operation)
  */
 export const cancelInvoice = createSimpleAction(async (id: string) => {
-  const session = await requireAuth();
+  const session = await requireManager(); // Status change requires manager+
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -523,7 +533,7 @@ const getCachedInvoiceStats = unstable_cache(
     };
   },
   ["invoice-stats"],
-  { revalidate: 60 }
+  { revalidate: CACHE_TTL.STATS }
 );
 
 export async function getInvoiceStats() {

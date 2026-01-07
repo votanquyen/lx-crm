@@ -2,6 +2,7 @@
  * Customer Detail Component
  * Shows customer info with tabbed sections
  */
+import React from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -17,6 +18,7 @@ import {
   Trash2,
   Crown,
   Star,
+  Receipt,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,10 +29,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus, CustomerTier, InvoiceStatus } from "@prisma/client";
+import type { Decimal } from "@prisma/client/runtime/library";
+
+interface CustomerInvoice {
+  id: string;
+  invoiceNumber: string;
+  status: InvoiceStatus;
+  issueDate: Date;
+  dueDate: Date;
+  totalAmount: Decimal;
+  paidAmount: Decimal;
+  outstandingAmount: Decimal;
+}
 
 interface CustomerDetailProps {
   customer: {
@@ -52,6 +74,7 @@ interface CustomerDetailProps {
     createdAt: Date;
     updatedAt: Date;
     createdBy: { id: string; name: string | null; email: string } | null;
+    invoices: CustomerInvoice[];
     _count: {
       customerPlants: number;
       stickyNotes: number;
@@ -79,6 +102,59 @@ const tierConfig: Record<CustomerTier, { label: string; icon: typeof Crown; colo
   PREMIUM: { label: "Premium", icon: Star, color: "text-purple-500" },
   STANDARD: { label: "Standard", icon: Star, color: "text-muted-foreground" },
 };
+
+const invoiceStatusConfig: Record<
+  InvoiceStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
+  DRAFT: { label: "Nháp", variant: "secondary" },
+  SENT: { label: "Đã gửi", variant: "outline" },
+  PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
+  PAID: { label: "Đã thanh toán", variant: "default" },
+  OVERDUE: { label: "Quá hạn", variant: "destructive" },
+  CANCELLED: { label: "Đã hủy", variant: "destructive" },
+  REFUNDED: { label: "Đã hoàn tiền", variant: "secondary" },
+};
+
+/** Memoized invoice row to prevent unnecessary re-renders */
+const CustomerInvoiceRow = React.memo(({ invoice }: { invoice: CustomerInvoice }) => {
+  const invStatus = invoiceStatusConfig[invoice.status];
+  const isOverdue = invoice.status !== "PAID" && invoice.status !== "CANCELLED" && new Date(invoice.dueDate) < new Date();
+  const invoiceNo = invoice.invoiceNumber.match(/^(\d+)/)?.[1] ?? invoice.invoiceNumber;
+
+  return (
+    <TableRow>
+      <TableCell>
+        <Link href={`/invoices/${invoice.id}`} className="font-medium hover:underline">
+          {invoiceNo}
+        </Link>
+      </TableCell>
+      <TableCell>
+        <Badge variant={invStatus.variant}>{invStatus.label}</Badge>
+        {isOverdue && invoice.status !== "OVERDUE" && (
+          <Badge variant="destructive" className="ml-2">Quá hạn</Badge>
+        )}
+      </TableCell>
+      <TableCell>{formatDate(invoice.issueDate)}</TableCell>
+      <TableCell className={isOverdue ? "text-destructive font-medium" : ""}>
+        {formatDate(invoice.dueDate)}
+      </TableCell>
+      <TableCell className="text-right">
+        {Number(invoice.totalAmount).toLocaleString()}đ
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {Number(invoice.outstandingAmount) > 0 ? (
+          <span className="text-orange-600">
+            {Number(invoice.outstandingAmount).toLocaleString()}đ
+          </span>
+        ) : (
+          <span className="text-green-600">0</span>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+});
+CustomerInvoiceRow.displayName = "CustomerInvoiceRow";
 
 export function CustomerDetail({ customer }: CustomerDetailProps) {
   const status = statusConfig[customer.status];
@@ -129,7 +205,7 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           icon={Leaf}
           label="Cây xanh"
@@ -139,6 +215,12 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
           icon={FileText}
           label="Hợp đồng"
           value={customer._count.contracts}
+        />
+        <StatCard
+          icon={Receipt}
+          label="Hóa đơn"
+          value={customer._count.invoices}
+          highlight={customer._count.invoices > 0}
         />
         <StatCard
           icon={StickyNote}
@@ -320,13 +402,30 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {customer._count.invoices === 0 ? (
+              {customer.invoices.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
+                  <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
                   Khách hàng chưa có hóa đơn nào
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground">
-                  Tính năng đang được phát triển...
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Số HĐ</TableHead>
+                        <TableHead>Trạng thái</TableHead>
+                        <TableHead>Ngày phát hành</TableHead>
+                        <TableHead>Hạn thanh toán</TableHead>
+                        <TableHead className="text-right">Tổng tiền</TableHead>
+                        <TableHead className="text-right">Còn nợ</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {customer.invoices.map((invoice) => (
+                        <CustomerInvoiceRow key={invoice.id} invoice={invoice} />
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </CardContent>

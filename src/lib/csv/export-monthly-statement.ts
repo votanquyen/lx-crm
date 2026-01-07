@@ -3,7 +3,7 @@
  * Generate Excel-compatible CSV export for Bảng Kê
  */
 
-import { formatCurrencyForExcel } from "@/lib/format-utils";
+import { formatCurrencyForExcel } from "@/lib/format";
 import type { StatementDTO } from "@/types/monthly-statement";
 import { arrayToCSV, formatDateForCSV } from "./csv-utils";
 

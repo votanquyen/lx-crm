@@ -69,6 +69,9 @@ export interface SearchParams extends PaginationParams {
   endDate?: string;
 }
 
+// Auth types
+export type { AuthUser, AuthSession, ActionContext } from "./auth";
+
 // Dashboard stats
 export interface DashboardStats {
   customers: {

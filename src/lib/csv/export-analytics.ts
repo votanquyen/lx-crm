@@ -2,7 +2,7 @@
  * Analytics CSV Export Generators
  * Generate CSV exports for various analytics reports
  */
-import { formatCurrencyForExcel } from "@/lib/format-utils";
+import { formatCurrencyForExcel } from "@/lib/format";
 import {
   arrayToCSV,
   formatDateForCSV,
