@@ -12,6 +12,8 @@ import { requireAuth } from "@/lib/auth-utils";
 import { createAction, createSimpleAction, requireRole, uuidSchema } from "@/lib/action-utils";
 import { AppError, NotFoundError, ConflictError } from "@/lib/errors";
 import { toDecimal, toNumber, addDecimal, multiplyDecimal } from "@/lib/db-utils";
+import { CACHE_TTL, RATE_LIMITS, TRANSACTION } from "@/lib/constants";
+import { requireRateLimit } from "@/lib/rate-limit";
 import {
   createContractSchema,
   updateContractSchema,
@@ -211,6 +213,12 @@ export async function getContractById(id: string) {
 export const createContract = createAction(createContractSchema, async (input) => {
   const session = await requireAuth();
 
+  // Rate limit mutations
+  await requireRateLimit("contract-create", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
   // Verify customer exists
   const customer = await prisma.customer.findUnique({
     where: { id: input.customerId },
@@ -311,6 +319,12 @@ export const createContract = createAction(createContractSchema, async (input) =
 export const updateContract = createAction(updateContractSchema, async (input) => {
   const session = await requireAuth();
 
+  // Rate limit mutations
+  await requireRateLimit("contract-update", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
   const { id, ...updateData } = input;
 
   // Get existing contract
@@ -372,7 +386,8 @@ export const updateContract = createAction(updateContractSchema, async (input) =
   }
 
   // Update contract
-  const contract = await prisma.$transaction(async (tx) => {
+  const contract = await prisma.$transaction(
+    async (tx) => {
     // Delete existing items if new items provided
     if (itemsData) {
       await tx.contractItem.deleteMany({ where: { contractId: id } });
@@ -399,7 +414,9 @@ export const updateContract = createAction(updateContractSchema, async (input) =
         },
       },
     });
-  });
+    },
+    { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
+  );
 
   // Log activity
   await prisma.activityLog.create({
@@ -425,7 +442,7 @@ export const updateContract = createAction(updateContractSchema, async (input) =
 export const activateContract = createSimpleAction(async (id: string) => {
   // Validate ID format and require role
   uuidSchema.parse(id);
-  const user = await requireRole("ADMIN", "MANAGER");
+  const session = await requireRole("ADMIN", "MANAGER");
 
   const contract = await prisma.contract.findUnique({
     where: { id },
@@ -441,7 +458,8 @@ export const activateContract = createSimpleAction(async (id: string) => {
   const plantTypeIds = contract.items.map((item) => item.plantTypeId);
 
   // Update contract and inventory atomically in transaction
-  const updated = await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(
+    async (tx) => {
     // Fetch inventories inside transaction for atomicity
     const inventories = await tx.inventory.findMany({
       where: { plantTypeId: { in: plantTypeIds } },
@@ -496,12 +514,14 @@ export const activateContract = createSimpleAction(async (id: string) => {
     }
 
     return updatedContract;
-  });
+    },
+    { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
+  );
 
   // Log activity
   await prisma.activityLog.create({
     data: {
-      userId: user.id,
+      userId: session.user.id,
       action: "ACTIVATE",
       entityType: "Contract",
       entityId: id,
@@ -521,7 +541,7 @@ export const activateContract = createSimpleAction(async (id: string) => {
 export const cancelContract = createSimpleAction(
   async (data: { id: string; reason?: string }) => {
     uuidSchema.parse(data.id);
-    const user = await requireRole("ADMIN", "MANAGER");
+    const session = await requireRole("ADMIN", "MANAGER");
 
     const contract = await prisma.contract.findUnique({
       where: { id: data.id },
@@ -536,7 +556,8 @@ export const cancelContract = createSimpleAction(
     // If active, return inventory
     const wasActive = contract.status === "ACTIVE";
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(
+      async (tx) => {
       // Update contract
       const updatedContract = await tx.contract.update({
         where: { id: data.id },
@@ -573,12 +594,14 @@ export const cancelContract = createSimpleAction(
       }
 
       return updatedContract;
-    });
+      },
+      { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
+    );
 
     // Log activity
     await prisma.activityLog.create({
       data: {
-        userId: user.id,
+        userId: session.user.id,
         action: "CANCEL",
         entityType: "Contract",
         entityId: data.id,
@@ -604,7 +627,7 @@ export const renewContract = createSimpleAction(
     adjustments?: { plantTypeId: string; quantity: number; unitPrice?: number }[];
   }) => {
     uuidSchema.parse(data.id);
-    const user = await requireRole("ADMIN", "MANAGER");
+    const session = await requireRole("ADMIN", "MANAGER");
 
     const oldContract = await prisma.contract.findUnique({
       where: { id: data.id },
@@ -616,15 +639,7 @@ export const renewContract = createSimpleAction(
       throw new AppError("Chỉ có thể gia hạn hợp đồng đang hoạt động hoặc hết hạn", "INVALID_STATUS");
     }
 
-    // Check if already renewed by checking if another contract has this as previousContractId
-    const existingRenewal = await prisma.contract.findFirst({
-      where: { previousContractId: oldContract.id },
-    });
-    if (existingRenewal) {
-      throw new ConflictError("Hợp đồng đã được gia hạn trước đó");
-    }
-
-    // Validate dates
+    // Validate dates (duplicate check moved inside transaction to prevent race condition)
     if (data.endDate <= data.startDate) {
       throw new AppError("Ngày kết thúc phải sau ngày bắt đầu", "INVALID_DATES");
     }
@@ -661,8 +676,17 @@ export const renewContract = createSimpleAction(
     // Generate new contract number
     const contractNumber = await generateContractNumber();
 
-    // Create new contract and update old
-    const newContract = await prisma.$transaction(async (tx) => {
+    // Create new contract and update old (with atomic duplicate check inside transaction)
+    const newContract = await prisma.$transaction(
+      async (tx) => {
+      // Check for existing renewal inside transaction to prevent race condition
+      const existingRenewal = await tx.contract.findFirst({
+        where: { previousContractId: oldContract.id },
+      });
+      if (existingRenewal) {
+        throw new ConflictError("Hợp đồng đã được gia hạn trước đó");
+      }
+
       // Create new contract
       const created = await tx.contract.create({
         data: {
@@ -694,12 +718,14 @@ export const renewContract = createSimpleAction(
       });
 
       return created;
-    });
+      },
+      { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
+    );
 
     // Log activity
     await prisma.activityLog.create({
       data: {
-        userId: user.id,
+        userId: session.user.id,
         action: "RENEW",
         entityType: "Contract",
         entityId: data.id,
@@ -746,7 +772,7 @@ const getCachedContractStats = unstable_cache(
     };
   },
   ["contract-stats"],
-  { revalidate: 60 }
+  { revalidate: CACHE_TTL.STATS }
 );
 
 export async function getContractStats() {

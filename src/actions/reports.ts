@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/action-utils";
 import { startOfMonth, endOfMonth, subMonths, format, differenceInDays } from "date-fns";
 import { unstable_cache } from "next/cache";
+import { requireRateLimit } from "@/lib/rate-limit";
+import { RATE_LIMITS, CACHE_TTL } from "@/lib/constants";
 
 // ============================================================
 // REVENUE ANALYTICS
@@ -110,11 +112,15 @@ const getCachedRevenueOverview = unstable_cache(
     };
   },
   ['revenue-overview'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getRevenueOverview() {
   await requireUser();
+  await requireRateLimit("report-revenue", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedRevenueOverview();
 }
 
@@ -165,11 +171,15 @@ const getCachedMonthlyRevenue = unstable_cache(
     return result;
   },
   ['monthly-revenue'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getMonthlyRevenue() {
   await requireUser();
+  await requireRateLimit("report-monthly", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedMonthlyRevenue();
 }
 
@@ -192,11 +202,15 @@ const getCachedRevenueByPaymentMethod = unstable_cache(
     }));
   },
   ['revenue-by-payment'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getRevenueByPaymentMethod() {
   await requireUser();
+  await requireRateLimit("report-payment-method", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedRevenueByPaymentMethod();
 }
 
@@ -264,11 +278,15 @@ const getCachedInvoiceAnalytics = unstable_cache(
     };
   },
   ['invoice-analytics'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getInvoiceAnalytics() {
   await requireUser();
+  await requireRateLimit("report-invoice-analytics", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedInvoiceAnalytics();
 }
 
@@ -339,11 +357,15 @@ const getCachedInvoiceAging = unstable_cache(
     ];
   },
   ['invoice-aging'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getInvoiceAging() {
   await requireUser();
+  await requireRateLimit("report-invoice-aging", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedInvoiceAging();
 }
 
@@ -382,11 +404,15 @@ const getCachedOverdueInvoicesDefault = unstable_cache(
     }));
   },
   ['overdue-invoices', 'limit-10'],
-  { revalidate: 60 }
+  { revalidate: CACHE_TTL.STATS }
 );
 
 export async function getOverdueInvoices(limit: number = 10) {
   await requireUser();
+  await requireRateLimit("report-overdue", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
 
   // Use pre-cached version for default limit
   if (limit === 10) {
@@ -425,7 +451,7 @@ export async function getOverdueInvoices(limit: number = 10) {
       }));
     },
     ['overdue-invoices', `limit-${limit}`],
-    { revalidate: 60 }
+    { revalidate: CACHE_TTL.STATS }
   )();
 }
 
@@ -500,11 +526,15 @@ const getCachedCustomerAnalytics = unstable_cache(
     };
   },
   ['customer-analytics'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getCustomerAnalytics() {
   await requireUser();
+  await requireRateLimit("report-customer-analytics", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedCustomerAnalytics();
 }
 
@@ -554,11 +584,15 @@ const getCachedTopCustomersDefault = unstable_cache(
     }));
   },
   ['top-customers', 'limit-10'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getTopCustomers(limit: number = 10) {
   await requireUser();
+  await requireRateLimit("report-top-customers", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
 
   // Use pre-cached version for default limit
   if (limit === 10) {
@@ -607,7 +641,7 @@ export async function getTopCustomers(limit: number = 10) {
       }));
     },
     ['top-customers', `limit-${limit}`],
-    { revalidate: 300 }
+    { revalidate: CACHE_TTL.HEAVY_QUERY }
   )();
 }
 
@@ -682,11 +716,15 @@ const getCachedContractAnalytics = unstable_cache(
     };
   },
   ['contract-analytics'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getContractAnalytics() {
   await requireUser();
+  await requireRateLimit("report-contract-analytics", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedContractAnalytics();
 }
 
@@ -727,11 +765,15 @@ const getCachedExpiringContractsDefault = unstable_cache(
     }));
   },
   ['expiring-contracts', 'days-30'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getExpiringContracts(daysAhead: number = 30) {
   await requireUser();
+  await requireRateLimit("report-expiring-contracts", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
 
   // Use pre-cached version for default 30 days
   if (daysAhead === 30) {
@@ -772,7 +814,7 @@ export async function getExpiringContracts(daysAhead: number = 30) {
       }));
     },
     ['expiring-contracts', `days-${daysAhead}`],
-    { revalidate: 300 }
+    { revalidate: CACHE_TTL.HEAVY_QUERY }
   )();
 }
 
@@ -844,10 +886,14 @@ const getCachedPlantAnalytics = unstable_cache(
     };
   },
   ['plant-analytics'],
-  { revalidate: 300 }
+  { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
 export async function getPlantAnalytics() {
   await requireUser();
+  await requireRateLimit("report-plant-analytics", {
+    max: RATE_LIMITS.REPORT.limit,
+    windowMs: RATE_LIMITS.REPORT.window * 1000,
+  });
   return getCachedPlantAnalytics();
 }

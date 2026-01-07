@@ -4,12 +4,13 @@
  */
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { useDebouncedCallback } from "use-debounce";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
   const isEditing = !!customer;
 
   const form = useForm<CreateCustomerInput | UpdateCustomerInput>({
-    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema) as any,
+    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema) as Resolver<CreateCustomerInput | UpdateCustomerInput>,
     defaultValues: isEditing
       ? {
           id: customer.id,
@@ -119,7 +120,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     });
   };
 
-  const geocodeAddress = async () => {
+  const geocodeAddress = useDebouncedCallback(async () => {
     const address = form.getValues("address");
     if (!address) {
       toast.error("Vui lòng nhập địa chỉ trước");
@@ -139,20 +140,29 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         { headers: { "User-Agent": "LocXanh-CRM/4.0" } }
       );
 
-      const data = await res.json();
-      if (data[0]) {
-        form.setValue("latitude", parseFloat(data[0].lat));
-        form.setValue("longitude", parseFloat(data[0].lon));
-        toast.success("Đã lấy tọa độ thành công");
-      } else {
-        toast.error("Không tìm thấy tọa độ cho địa chỉ này");
+      if (!res.ok) {
+        if (res.status === 429) {
+          toast.error("Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút");
+          return;
+        }
+        throw new Error(`Geocoding failed: ${res.status}`);
       }
+
+      const data = await res.json();
+      if (data.length === 0) {
+        toast.warning("Không tìm thấy tọa độ cho địa chỉ này");
+        return;
+      }
+
+      form.setValue("latitude", parseFloat(data[0].lat));
+      form.setValue("longitude", parseFloat(data[0].lon));
+      toast.success("Đã lấy tọa độ thành công");
     } catch {
       toast.error("Lỗi khi lấy tọa độ");
     } finally {
       setIsGeocoding(false);
     }
-  };
+  }, 1000, { leading: true, trailing: false });
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -191,11 +201,12 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                 variant="outline"
                 onClick={geocodeAddress}
                 disabled={isGeocoding}
+                aria-label={isGeocoding ? "Đang lấy tọa độ" : "Lấy tọa độ từ địa chỉ"}
               >
                 {isGeocoding ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-4 w-4" aria-hidden="true" />
                 )}
               </Button>
             </div>

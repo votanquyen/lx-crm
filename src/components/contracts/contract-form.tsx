@@ -4,9 +4,9 @@
  */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Plus, Trash2, Loader2 } from "lucide-react";
@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createContractSchema, updateContractSchema, type CreateContractInput, type UpdateContractInput } from "@/lib/validations/contract";
 import { createContract, updateContract } from "@/actions/contracts";
+import { formatCurrency } from "@/lib/format";
 
 type PlantType = {
   id: string;
@@ -69,7 +70,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
   const isEditing = !!contract;
 
   const form = useForm<CreateContractInput>({
-    resolver: zodResolver(isEditing ? updateContractSchema : createContractSchema) as any,
+    resolver: zodResolver(isEditing ? updateContractSchema : createContractSchema) as Resolver<CreateContractInput>,
     defaultValues: isEditing
       ? {
           customerId: contract.customerId,
@@ -102,17 +103,18 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
   });
 
   const watchItems = form.watch("items");
-  const monthlyTotal = watchItems.reduce((sum, item) => {
-    return sum + (item.quantity || 0) * (item.unitPrice || 0);
-  }, 0);
+  const monthlyTotal = useMemo(
+    () => watchItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0), 0),
+    [watchItems]
+  );
 
-  const handlePlantTypeChange = (index: number, plantTypeId: string) => {
+  const handlePlantTypeChange = useCallback((index: number, plantTypeId: string) => {
     const plantType = plantTypes.find((pt) => pt.id === plantTypeId);
     if (plantType) {
       form.setValue(`items.${index}.plantTypeId`, plantTypeId);
       form.setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
     }
-  };
+  }, [plantTypes, form]);
 
   const onSubmit = (data: CreateContractInput) => {
     setError(null);
@@ -144,13 +146,6 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
         }
       }
     });
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
   };
 
   return (

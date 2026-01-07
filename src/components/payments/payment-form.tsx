@@ -4,7 +4,7 @@
  */
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -43,7 +43,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createPaymentSchema) as any,
+    resolver: zodResolver(createPaymentSchema) as Resolver<FormValues>,
     defaultValues: payment
       ? {
           invoiceId: payment.invoiceId,

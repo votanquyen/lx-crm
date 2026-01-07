@@ -3,9 +3,9 @@
  */
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Plus, Trash2, Loader2 } from "lucide-react";
@@ -23,6 +23,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createInvoiceSchema, type CreateInvoiceInput } from "@/lib/validations/contract";
 import { createInvoice } from "@/actions/invoices";
+import { formatCurrency } from "@/lib/format";
 
 type Customer = {
   id: string;
@@ -54,7 +55,7 @@ export function InvoiceForm({
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<CreateInvoiceInput>({
-    resolver: zodResolver(createInvoiceSchema) as any,
+    resolver: zodResolver(createInvoiceSchema) as Resolver<CreateInvoiceInput>,
     defaultValues: {
       customerId: defaultCustomerId || "",
       contractId: defaultContractId || undefined,
@@ -74,9 +75,10 @@ export function InvoiceForm({
   const filteredContracts = contracts.filter((c) => c.customerId === selectedCustomerId);
 
   const watchItems = form.watch("items");
-  const total = watchItems.reduce((sum, item) => {
-    return sum + (item.quantity || 0) * (item.unitPrice || 0);
-  }, 0);
+  const total = useMemo(
+    () => watchItems.reduce((sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0), 0),
+    [watchItems]
+  );
 
   const onSubmit = (data: CreateInvoiceInput) => {
     setError(null);
@@ -88,13 +90,6 @@ export function InvoiceForm({
         setError(result.error);
       }
     });
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
   };
 
   return (

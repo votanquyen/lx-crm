@@ -1,6 +1,6 @@
 /**
  * Authorization Utilities
- * Role-based access control helpers
+ * Single source of truth for role-based access control
  */
 
 import { auth } from "@/lib/auth";
@@ -21,12 +21,15 @@ export async function requireAuth() {
 
 /**
  * Check if user has required role
+ * Supports both rest params: requireRole("ADMIN", "MANAGER")
+ * and array: requireRole(["ADMIN", "MANAGER"])
  * @throws AppError if user doesn't have required role
  */
-export async function requireRole(roles: UserRole | UserRole[]) {
+export async function requireRole(...roles: (UserRole | UserRole[])[]) {
   const session = await requireAuth();
 
-  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  // Flatten to support both rest params and array input
+  const allowedRoles = roles.flat() as UserRole[];
 
   if (!allowedRoles.includes(session.user.role as UserRole)) {
     throw new AppError(
@@ -52,7 +55,7 @@ export async function requireAdmin() {
  * @throws AppError if user is not admin or manager
  */
 export async function requireManager() {
-  return requireRole(["ADMIN", "MANAGER"]);
+  return requireRole("ADMIN", "MANAGER");
 }
 
 /**
@@ -60,5 +63,5 @@ export async function requireManager() {
  * @throws AppError if user is not admin, manager, or accountant
  */
 export async function requireAccountant() {
-  return requireRole(["ADMIN", "MANAGER", "ACCOUNTANT"]);
+  return requireRole("ADMIN", "MANAGER", "ACCOUNTANT");
 }
