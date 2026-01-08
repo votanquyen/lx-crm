@@ -7,6 +7,12 @@ import autoTable from "jspdf-autotable";
 import type { StatementDTO, PlantItem } from "@/types/monthly-statement";
 import { setupVietnameseFonts } from "@/lib/pdf-fonts";
 import { formatPeriodLabel } from "@/lib/statement-utils";
+import { formatNumber } from "@/lib/format";
+
+// Extend jsPDF with autoTable properties
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: { finalY: number };
+}
 
 /**
  * Generate monthly statement PDF
@@ -51,8 +57,8 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
     plant.name,
     plant.sizeSpec,
     `${plant.quantity}`,
-    formatCurrency(plant.unitPrice),
-    formatCurrency(plant.total),
+    formatNumber(plant.unitPrice),
+    formatNumber(plant.total),
   ]);
 
   autoTable(doc, {
@@ -60,9 +66,9 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
     head: [["STT", "TÊN CÂY", "QUY CÁCH", "SL", "ĐƠN GIÁ", "THÀNH TIỀN"]],
     body: tableData,
     foot: [
-      ["", "", "", "", "Tổng cộng:", formatCurrency(subtotal)],
-      ["", "", "", "", `VAT (${vatRate}%):`, formatCurrency(vatAmount)],
-      ["", "", "", "", "Tổng thanh toán:", formatCurrency(total)],
+      ["", "", "", "", "Tổng cộng:", formatNumber(subtotal)],
+      ["", "", "", "", `VAT (${vatRate}%):`, formatNumber(vatAmount)],
+      ["", "", "", "", "Tổng thanh toán:", formatNumber(total)],
     ],
     theme: "grid",
     styles: {
@@ -93,7 +99,7 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
   });
 
   // Signature Section
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY + 15;
 
   doc.setFontSize(11);
   doc.setFont("Roboto", "bold");
@@ -116,11 +122,4 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
   );
 
   return doc;
-}
-
-/**
- * Format currency for PDF display
- */
-function formatCurrency(amount: number): string {
-  return amount.toLocaleString("vi-VN");
 }

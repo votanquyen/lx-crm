@@ -24,8 +24,33 @@ export const CACHE_TTL = {
  */
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
+  DEFAULT_PAGE_SIZE: 20,
   DEFAULT_LIMIT: 20,
+  MIN_PAGE_SIZE: 1,
+  MAX_PAGE_SIZE: 100,
   MAX_LIMIT: 100,
+} as const;
+
+/**
+ * Validation limits
+ */
+export const VALIDATION_LIMITS = {
+  MAX_AMOUNT_VND: 1_000_000_000,            // 1 billion VND
+  MAX_QUANTITY: 10_000,
+  TEXT_MAX_LENGTH: 500,
+  TEXTAREA_MAX_LENGTH: 2000,
+  COMPANY_NAME_MAX: 255,
+  ADDRESS_MAX: 500,
+  PHONE_LENGTH: 10,
+} as const;
+
+/**
+ * Input patterns for validation
+ */
+export const INPUT_PATTERNS = {
+  PHONE_VN: /^(0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-9]|9[0-9])[0-9]{7}$/,
+  TAX_CODE: /^[0-9]{10}(-[0-9]{3})?$/,
+  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 } as const;
 
 /**
@@ -42,6 +67,8 @@ export const INVOICE_AGING_BUCKETS = [
  * Contract expiration thresholds in days
  */
 export const CONTRACT_THRESHOLDS = {
+  /** Contracts expiring within this many days show critical warning */
+  CRITICAL: 7,
   /** Contracts expiring within this many days are "expiring soon" */
   EXPIRING_SOON: 30,
   /** Contracts expiring within this many days show warning */
@@ -66,6 +93,18 @@ export const RATE_LIMITS = {
   REPORT: { limit: 5, window: 30 },
   LIST: { limit: 20, window: 10 },
   MUTATION: { limit: 30, window: 60 },
+  DEFAULT_WINDOW_MS: 60_000,
+  DEFAULT_MAX_REQUESTS: 10,
+} as const;
+
+/**
+ * Database transaction settings
+ */
+export const TRANSACTION = {
+  /** Default timeout in milliseconds (10 seconds) */
+  DEFAULT_TIMEOUT_MS: 10_000,
+  /** Maximum retries for transaction conflicts */
+  MAX_RETRIES: 3,
 } as const;
 
 /**
@@ -89,3 +128,5 @@ export const HCMC_DISTRICTS = [
   "Tân Bình", "Tân Phú", "Bình Tân", "Thủ Đức", "Nhà Bè", "Hóc Môn",
   "Củ Chi", "Bình Chánh", "Cần Giờ",
 ] as const;
+
+export type HCMCDistrict = typeof HCMC_DISTRICTS[number];

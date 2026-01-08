@@ -6,33 +6,14 @@ import { z } from "zod";
 import { auth } from "./auth";
 import { AppError } from "./errors";
 
+// Re-export auth helpers from centralized location for backward compatibility
+export { requireAuth, requireRole, requireAdmin, requireManager, requireAccountant } from "./auth-utils";
+
 /** User roles for authorization */
 export type UserRole = "ADMIN" | "MANAGER" | "STAFF";
 
-/**
- * Check if user has required role(s)
- * Throws AppError if unauthorized or missing role
- */
-export async function requireRole(...allowedRoles: UserRole[]): Promise<{ id: string; role: UserRole }> {
-  const session = await auth();
-  if (!session?.user) {
-    throw new AppError("Vui lòng đăng nhập", "UNAUTHORIZED", 401);
-  }
-
-  const userRole = (session.user as { role?: string }).role as UserRole | undefined;
-
-  if (!userRole || !allowedRoles.includes(userRole)) {
-    throw new AppError("Không có quyền thực hiện thao tác này", "FORBIDDEN", 403);
-  }
-
-  return { id: session.user.id as string, role: userRole };
-}
-
-/**
- * Check if user is authenticated (any role)
- * Alias: requireUser for backward compatibility
- */
-export async function requireAuth(): Promise<{ id: string; role?: UserRole }> {
+/** @deprecated Use requireAuth from @/lib/auth-utils directly */
+export const requireUser = async () => {
   const session = await auth();
   if (!session?.user) {
     throw new AppError("Vui lòng đăng nhập", "UNAUTHORIZED", 401);
@@ -41,12 +22,7 @@ export async function requireAuth(): Promise<{ id: string; role?: UserRole }> {
     id: session.user.id as string,
     role: (session.user as { role?: string }).role as UserRole | undefined
   };
-}
-
-/**
- * Alias for requireAuth (backward compatibility)
- */
-export const requireUser = requireAuth;
+};
 
 /**
  * Validate UUID format
@@ -98,7 +74,7 @@ export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          error: (error as any).errors[0]?.message ?? "Dữ liệu không hợp lệ",
+          error: error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
           code: "VALIDATION_ERROR",
         };
       }

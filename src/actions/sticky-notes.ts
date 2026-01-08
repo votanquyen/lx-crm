@@ -13,6 +13,7 @@ import { requireAuth } from "@/lib/action-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { analyzeNote } from "@/lib/ai";
+import { CACHE_TTL } from "@/lib/constants";
 import type { NoteStatus, NoteCategory } from "@prisma/client";
 
 /**
@@ -288,7 +289,7 @@ const getCachedNoteStats = unstable_cache(
     };
   },
   ["note-stats"],
-  { revalidate: 60 }
+  { revalidate: CACHE_TTL.STATS }
 );
 
 export async function getNoteStats() {

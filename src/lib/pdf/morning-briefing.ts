@@ -9,6 +9,11 @@ import { vi } from "date-fns/locale";
 import type { DailySchedule, ScheduledExchange, Customer } from "@prisma/client";
 import { setupVietnameseFonts } from "@/lib/pdf-fonts";
 
+// Extend jsPDF with autoTable properties
+interface JsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: { finalY: number };
+}
+
 interface ScheduleWithDetails extends DailySchedule {
   exchanges: (ScheduledExchange & {
     customer: Pick<Customer, "code" | "companyName" | "address" | "district" | "contactPhone">;
@@ -115,7 +120,7 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   });
 
   // Notes section
-  const finalY = (doc as any).lastAutoTable.finalY || 150;
+  const finalY = (doc as JsPDFWithAutoTable).lastAutoTable.finalY || 150;
 
   doc.setFontSize(10);
   doc.setFont("Roboto", "bold");

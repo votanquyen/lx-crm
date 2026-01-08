@@ -8,11 +8,12 @@ import { MapPin, Package, Clock, GripVertical } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Stop } from "@/lib/maps/route-optimizer";
+import type { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface StopCardProps {
   stop: Stop & { stopOrder?: number; eta?: string };
   isDragging?: boolean;
-  dragHandleProps?: any;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
 export function StopCard({ stop, isDragging, dragHandleProps }: StopCardProps) {

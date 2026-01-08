@@ -98,15 +98,7 @@ export function absDecimal(value: Decimal | number): Decimal {
   return decimal.abs();
 }
 
-/**
- * Format currency in Vietnamese Dong (for Decimal type)
- * Supports both number and Prisma Decimal types
- */
-export function formatCurrencyDecimal(amount: number | Decimal): string {
-  const value = typeof amount === "number" ? amount : amount.toNumber();
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+// Re-export formatCurrency as formatCurrencyDecimal for backward compatibility
+import { formatCurrency } from "./format";
+/** @deprecated Use formatCurrency from @/lib/format instead */
+export const formatCurrencyDecimal = formatCurrency;

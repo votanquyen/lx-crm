@@ -30,33 +30,46 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // For development: hardcoded admin credentials
-        // In production, you should hash passwords and store in DB
+        // Development-only credentials (gated behind NODE_ENV)
+        // In production, use database users with hashed passwords
+        const DEV_MODE = process.env.NODE_ENV === "development";
+
+        if (!DEV_MODE) {
+          // In production, authenticate against database
+          // TODO: Implement proper database authentication with bcrypt
+          console.warn("[Auth] Credentials provider disabled in production - use OAuth");
+          return null;
+        }
+
+        // Dev users with passwords from environment variables
         const devUsers = [
           {
             id: "dev-admin",
             email: "admin@locxanh.vn",
-            password: "admin123",
+            password: process.env.DEV_ADMIN_PASSWORD ?? "",
             name: "Admin Lộc Xanh",
             role: "ADMIN" as UserRole,
           },
           {
             id: "dev-manager",
             email: "manager@locxanh.vn",
-            password: "manager123",
+            password: process.env.DEV_MANAGER_PASSWORD ?? "",
             name: "Manager",
             role: "MANAGER" as UserRole,
           },
           {
             id: "dev-staff",
             email: "staff@locxanh.vn",
-            password: "staff123",
+            password: process.env.DEV_STAFF_PASSWORD ?? "",
             name: "Staff",
             role: "STAFF" as UserRole,
           },
         ];
 
-        const user = devUsers.find(
+        // Filter out users without configured passwords
+        const configuredUsers = devUsers.filter((u) => u.password !== "");
+
+        const user = configuredUsers.find(
           (u) =>
             u.email === credentials.email &&
             u.password === credentials.password
@@ -128,28 +141,5 @@ export async function getCurrentUser() {
   return session?.user;
 }
 
-/**
- * Require authentication (server-side)
- * Throws redirect to login if not authenticated
- */
-export async function requireAuth() {
-  const session = await auth();
-  if (!session?.user) {
-    throw new Error("Unauthorized");
-  }
-  return session;
-}
-
-/**
- * Require specific roles (server-side)
- */
-export async function requireRole(allowedRoles: UserRole[]) {
-  const session = await requireAuth();
-  const userRole = (session.user.role ?? "STAFF") as UserRole;
-
-  if (!allowedRoles.includes(userRole)) {
-    throw new Error("Forbidden");
-  }
-
-  return session;
-}
+// Re-export auth utilities from centralized location
+export { requireAuth, requireRole, requireAdmin, requireManager, requireAccountant } from "./auth-utils";

@@ -13,6 +13,7 @@
     "lint": "eslint . --ext .ts,.tsx && tsc --noEmit",
     "lint:fix": "eslint . --ext .ts,.tsx --fix && prettier --write .",
     "format": "prettier --write .",
+    "validate": "tsc --noEmit && eslint . --ext .ts,.tsx",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

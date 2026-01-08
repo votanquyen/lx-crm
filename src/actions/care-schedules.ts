@@ -11,6 +11,7 @@ import { auth } from "@/lib/auth";
 import { requireAuth } from "@/lib/action-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
+import { CACHE_TTL } from "@/lib/constants";
 import {
   createCareScheduleSchema,
   updateCareScheduleSchema,
@@ -119,7 +120,7 @@ function createTodayScheduleCache(staffId?: string) {
       return schedules;
     },
     ["today-schedule", staffId ?? "all"],
-    { revalidate: 30 }
+    { revalidate: CACHE_TTL.SHORT }
   );
 }
 
@@ -416,7 +417,7 @@ const getCachedCareStats = unstable_cache(
     };
   },
   ["care-stats"],
-  { revalidate: 60 }
+  { revalidate: CACHE_TTL.STATS }
 );
 
 export async function getCareStats(dateFrom?: Date, dateTo?: Date) {
@@ -463,7 +464,7 @@ export async function getCareStats(dateFrom?: Date, dateTo?: Date) {
       };
     },
     ["care-stats", dateFrom?.toISOString() ?? "all", dateTo?.toISOString() ?? "all"],
-    { revalidate: 60 }
+    { revalidate: CACHE_TTL.STATS }
   )();
 }
 
