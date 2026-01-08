@@ -1,22 +1,22 @@
 # Project Roadmap
 
 **Lộc Xanh CRM - Development Phases & Future Plans**
-**Last Updated**: December 22, 2025
+**Last Updated**: 2026-01-08
 
 ---
 
 ## 📍 Current Status
 
-### Phase Completion: 74%
+### Phase Completion: 80%
 
-| Phase | Status | Completion | Key Features |
-|-------|--------|------------|--------------|
-| **Phase 1** | ✅ Complete | 100% | Test infrastructure, core models |
-| **Phase 2** | ✅ Complete | 100% | Business logic, analytics |
-| **Phase 2.5** | 🚧 In Progress | 50% | Monthly statements (Bảng Kê) |
-| **Phase 3** | 🔄 Starting | 10% | Performance optimization |
-| **Phase 4** | 📋 Planned | 0% | Advanced features |
-| **Phase 5** | 📋 Future | 0% | Mobile & AI |
+| Phase         | Status         | Completion | Key Features                     |
+| ------------- | -------------- | ---------- | -------------------------------- |
+| **Phase 1**   | ✅ Complete    | 100%       | Test infrastructure, core models |
+| **Phase 2**   | ✅ Complete    | 100%       | Business logic, analytics        |
+| **Phase 2.5** | 🚧 In Progress | 65%        | Monthly statements (Bảng Kê)     |
+| **Phase 3**   | 🚧 In Progress | 25%        | Performance & Dashboard UX       |
+| **Phase 4**   | 📋 Planned     | 0%         | Advanced features                |
+| **Phase 5**   | 📋 Future      | 0%         | Mobile & AI                      |
 
 ---
 
@@ -26,6 +26,7 @@
 **Status**: Production Ready
 
 ### Achievements
+
 - ✅ **Database Schema**: 15 models, 40+ indexes, 6 views
 - ✅ **Authentication**: NextAuth.js 5 with RBAC (5 roles)
 - ✅ **Test Infrastructure**: 97.5% coverage, 121 tests
@@ -33,6 +34,7 @@
 - ✅ **Basic CRUD**: Customer management with Vietnamese search
 
 ### Key Components
+
 ```typescript
 // Core models implemented
 - User & Authentication
@@ -48,6 +50,7 @@
 ```
 
 ### Metrics
+
 - **Test Coverage**: 97.5% lines, 94.55% functions
 - **Database Indexes**: 15+ optimized
 - **API Endpoints**: 10+ server actions
@@ -61,6 +64,7 @@
 **Status**: All features operational
 
 ### Achievements
+
 - ✅ **Contract Management**: Full lifecycle with auto-calculation
 - ✅ **Invoicing System**: Complete with payment tracking
 - ✅ **Care Scheduling**: GPS-enabled, route optimization
@@ -72,6 +76,7 @@
 ### Feature Details
 
 #### Contract System
+
 ```typescript
 // Lifecycle: DRAFT → SENT → NEGOTIATING → SIGNED → ACTIVE → EXPIRED
 // Auto-calculation: monthlyFee, deposit, VAT, discounts
@@ -80,6 +85,7 @@
 ```
 
 #### Invoicing & Payments
+
 ```typescript
 // Types: Service, deposit, setup, penalty
 // Status: DRAFT → SENT → PARTIAL → PAID → OVERDUE
@@ -88,6 +94,7 @@
 ```
 
 #### Care Operations
+
 ```typescript
 // Scheduling: Weekly/bi-weekly/monthly
 // GPS: Check-in/out with coordinates
@@ -97,6 +104,7 @@
 ```
 
 #### Analytics
+
 ```typescript
 // Revenue: Monthly recurring, growth metrics
 // Customers: Active, new, churn, lifetime value
@@ -105,6 +113,7 @@
 ```
 
 ### Metrics
+
 - **Features Implemented**: 8 major modules
 - **Server Actions**: 15+ complex operations
 - **Components**: 50+ React components
@@ -119,6 +128,7 @@
 **Priority**: High
 
 ### Current Progress
+
 - ✅ **Database Schema**: MonthlyStatement model created
 - ✅ **Data Structure**: JSON plant data with pricing
 - ✅ **Billing Cycle**: 24th → 23rd logic
@@ -130,6 +140,7 @@
 ### Remaining Tasks
 
 #### 1. Automated Generation (Week 1-2)
+
 ```typescript
 // Cron job: Generate statements on 24th each month
 // Logic:
@@ -142,6 +153,7 @@
 ```
 
 #### 2. Customer Portal (Week 3)
+
 ```typescript
 // Features:
 // - View monthly statements
@@ -152,6 +164,7 @@
 ```
 
 #### 3. Export & Integration (Week 4)
+
 ```typescript
 // Excel export with Vietnamese formatting
 // PDF generation with company branding
@@ -160,6 +173,7 @@
 ```
 
 ### Success Criteria
+
 - [ ] 100% automated generation
 - [ ] 95%+ customer portal adoption
 - [ ] < 5% manual corrections needed
@@ -174,6 +188,7 @@
 **Priority**: High
 
 ### Objectives
+
 - **Dashboard Performance**: 60% faster load times
 - **Database Load**: 40% reduction with caching
 - **Bundle Size**: 35% reduction
@@ -182,6 +197,7 @@
 ### Roadmap
 
 #### Q1 2026: Query Optimization
+
 ```typescript
 // 1. Redis Integration
 - Install Redis for caching
@@ -200,6 +216,7 @@
 ```
 
 #### Q2 2026: Frontend Performance
+
 ```typescript
 // 1. Code Splitting
 - Dynamic imports for heavy components
@@ -218,6 +235,7 @@
 ```
 
 #### Q3 2026: Caching Strategy
+
 ```typescript
 // 1. React Query Implementation
 - Server state management
@@ -236,6 +254,7 @@
 ```
 
 ### Expected Results
+
 - **Page Load**: < 2s → < 1s
 - **Dashboard**: < 1s → < 500ms
 - **Search**: < 500ms → < 200ms
@@ -252,6 +271,7 @@
 ### 4.1 Customer Self-Service Portal
 
 #### Features
+
 ```typescript
 // Authentication
 - Email/password login
@@ -278,6 +298,7 @@
 ```
 
 #### Tech Stack
+
 - **Frontend**: Next.js 16 (separate app)
 - **Auth**: NextAuth.js with credentials
 - **Styling**: TailwindCSS + shadcn/ui
@@ -286,6 +307,7 @@
 ### 4.2 Advanced Analytics & AI
 
 #### Predictive Analytics
+
 ```typescript
 // Churn Prediction
 - Analyze usage patterns
@@ -304,6 +326,7 @@
 ```
 
 #### AI Enhancements
+
 ```typescript
 // Automated Insights
 - Weekly summary emails
@@ -319,6 +342,7 @@
 ### 4.3 Integration Ecosystem
 
 #### Accounting Software
+
 ```typescript
 // Export Formats
 - QuickBooks integration
@@ -332,6 +356,7 @@
 ```
 
 #### Communication
+
 ```typescript
 // Email Integration
 - Automated invoice delivery
@@ -352,6 +377,7 @@
 ### 4.4 Advanced Operations
 
 #### Route Optimization
+
 ```typescript
 // VRP (Vehicle Routing Problem)
 - Multiple vehicle routing
@@ -367,6 +393,7 @@
 ```
 
 #### Inventory Management
+
 ```typescript
 // Advanced Features
 - Supplier management
@@ -387,6 +414,7 @@
 ### 5.1 React Native Mobile App
 
 #### Staff App
+
 ```typescript
 // Core Features
 - Daily schedule with GPS
@@ -403,6 +431,7 @@
 ```
 
 #### Customer App
+
 ```typescript
 // Features
 - Statement viewing
@@ -413,6 +442,7 @@
 ```
 
 #### Architecture
+
 - **Framework**: React Native (Expo)
 - **State**: Redux Toolkit
 - **API**: GraphQL or REST
@@ -422,6 +452,7 @@
 ### 5.2 White-Label Capabilities
 
 #### Multi-Tenant Architecture
+
 ```typescript
 // Database
 - Separate schemas per tenant
@@ -444,6 +475,7 @@
 ### 5.3 Marketplace & Extensions
 
 #### Plugin System
+
 ```typescript
 // Extension Points
 - Custom integrations
@@ -463,28 +495,31 @@
 ## 🎯 Success Metrics by Phase
 
 ### Phase 2.5 (Current)
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Statement Automation | 100% | 50% | 🟡 |
-| Customer Portal Adoption | 95% | 0% | 🔴 |
-| Manual Corrections | < 5% | 10% | 🟡 |
-| Processing Time | < 1 min | 2 min | 🟡 |
+
+| Metric                   | Target  | Current | Status |
+| ------------------------ | ------- | ------- | ------ |
+| Statement Automation     | 100%    | 50%     | 🟡     |
+| Customer Portal Adoption | 95%     | 0%      | 🔴     |
+| Manual Corrections       | < 5%    | 10%     | 🟡     |
+| Processing Time          | < 1 min | 2 min   | 🟡     |
 
 ### Phase 3 (Next)
-| Metric | Current | Target | Improvement |
-|--------|---------|--------|-------------|
-| Dashboard Load | 1.2s | 0.5s | 58% faster |
-| Database CPU | 80% | 40% | 50% reduction |
-| Bundle Size | 450KB | 290KB | 35% smaller |
-| API Response | 250ms | 150ms | 40% faster |
+
+| Metric         | Current | Target | Improvement   |
+| -------------- | ------- | ------ | ------------- |
+| Dashboard Load | 1.2s    | 0.5s   | 58% faster    |
+| Database CPU   | 80%     | 40%    | 50% reduction |
+| Bundle Size    | 450KB   | 290KB  | 35% smaller   |
+| API Response   | 250ms   | 150ms  | 40% faster    |
 
 ### Phase 4 (Advanced)
-| Metric | Target | Business Impact |
-|--------|--------|-----------------|
-| Customer Portal Usage | 80% | Reduced support load |
-| Churn Prediction Accuracy | 85% | Proactive retention |
-| Mobile App Adoption | 70% | Field efficiency |
-| Integration Partners | 3+ | Ecosystem growth |
+
+| Metric                    | Target | Business Impact      |
+| ------------------------- | ------ | -------------------- |
+| Customer Portal Usage     | 80%    | Reduced support load |
+| Churn Prediction Accuracy | 85%    | Proactive retention  |
+| Mobile App Adoption       | 70%    | Field efficiency     |
+| Integration Partners      | 3+     | Ecosystem growth     |
 
 ---
 
@@ -492,21 +527,21 @@
 
 ### Technical Risks
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| **Database Scaling** | High | Medium | Query optimization, caching, read replicas |
-| **Mobile App Complexity** | Medium | High | Start with MVP, phased rollout |
-| **Integration Complexity** | Medium | Medium | Use established APIs, webhook patterns |
-| **Performance Degradation** | High | Low | Continuous monitoring, proactive optimization |
+| Risk                        | Impact | Probability | Mitigation                                    |
+| --------------------------- | ------ | ----------- | --------------------------------------------- |
+| **Database Scaling**        | High   | Medium      | Query optimization, caching, read replicas    |
+| **Mobile App Complexity**   | Medium | High        | Start with MVP, phased rollout                |
+| **Integration Complexity**  | Medium | Medium      | Use established APIs, webhook patterns        |
+| **Performance Degradation** | High   | Low         | Continuous monitoring, proactive optimization |
 
 ### Business Risks
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| **Customer Adoption** | High | Medium | User training, phased rollout, feedback loops |
-| **Competition** | Medium | Medium | Focus on Vietnamese market, local features |
-| **Regulatory Changes** | Medium | Low | Compliance monitoring, flexible architecture |
-| **Resource Constraints** | High | Medium | Prioritize features, outsource non-core |
+| Risk                     | Impact | Probability | Mitigation                                    |
+| ------------------------ | ------ | ----------- | --------------------------------------------- |
+| **Customer Adoption**    | High   | Medium      | User training, phased rollout, feedback loops |
+| **Competition**          | Medium | Medium      | Focus on Vietnamese market, local features    |
+| **Regulatory Changes**   | Medium | Low         | Compliance monitoring, flexible architecture  |
+| **Resource Constraints** | High   | Medium      | Prioritize features, outsource non-core       |
 
 ---
 
@@ -515,51 +550,58 @@
 ### Team Requirements
 
 #### Phase 2.5 (Current)
+
 - **Backend Developer**: 1 (full-time)
 - **Frontend Developer**: 1 (full-time)
 - **QA Tester**: 0.5 (part-time)
 
 #### Phase 3 (Performance)
+
 - **Backend Developer**: 1 (full-time)
 - **DevOps Engineer**: 0.5 (part-time)
 - **Database Specialist**: 0.5 (consultant)
 
 #### Phase 4 (Advanced)
+
 - **Full-Stack Developer**: 2 (full-time)
 - **Mobile Developer**: 1 (full-time)
 - **AI/ML Engineer**: 0.5 (consultant)
 - **UX/UI Designer**: 0.5 (part-time)
 
 #### Phase 5 (Mobile)
+
 - **Mobile Developer**: 2 (full-time)
 - **Backend Developer**: 1 (full-time)
 - **DevOps Engineer**: 1 (full-time)
 
 ### Budget Estimates
 
-| Phase | Timeline | Team Cost | Infrastructure | Total |
-|-------|----------|-----------|----------------|-------|
-| 2.5 | 2 months | $20k | $2k | $22k |
-| 3 | 3 months | $45k | $5k | $50k |
-| 4 | 4 months | $80k | $10k | $90k |
-| 5 | 6 months | $150k | $20k | $170k |
-| **Total** | **15 months** | **$295k** | **$37k** | **$332k** |
+| Phase     | Timeline      | Team Cost | Infrastructure | Total     |
+| --------- | ------------- | --------- | -------------- | --------- |
+| 2.5       | 2 months      | $20k      | $2k            | $22k      |
+| 3         | 3 months      | $45k      | $5k            | $50k      |
+| 4         | 4 months      | $80k      | $10k           | $90k      |
+| 5         | 6 months      | $150k     | $20k           | $170k     |
+| **Total** | **15 months** | **$295k** | **$37k**       | **$332k** |
 
 ---
 
 ## 🎯 Priority Features (Next 90 Days)
 
 ### Must Have (P0)
+
 1. ✅ **Monthly Statement Automation** - Phase 2.5 completion
 2. 🔄 **Query Caching with Redis** - Phase 3 foundation
 3. 📋 **Customer Portal MVP** - Basic viewing & confirmation
 
 ### Should Have (P1)
+
 4. 📋 **Excel Export for Statements** - Business requirement
 5. 📋 **Advanced Analytics Dashboard** - Revenue forecasting
 6. 📋 **Payment Integration** - Online payment processing
 
 ### Nice to Have (P2)
+
 7. 📋 **Mobile App Prototype** - React Native POC
 8. 📋 **AI Churn Prediction** - Machine learning model
 9. 📋 **Zalo Integration** - Vietnamese messaging
@@ -569,18 +611,21 @@
 ## 📈 Success Criteria
 
 ### Business Metrics
+
 - **Customer Retention**: > 90% annually
 - **Invoice Collection**: < 45 days DSO
 - **Contract Renewal**: > 80% rate
 - **Customer Satisfaction**: > 4.5/5 rating
 
 ### Technical Metrics
+
 - **System Uptime**: > 99.9%
 - **API Response**: < 200ms average
 - **Test Coverage**: > 95% lines
 - **Bug Rate**: < 0.5 per feature
 
 ### User Metrics
+
 - **Portal Adoption**: > 80% of customers
 - **Mobile App Usage**: > 70% of staff
 - **Feature Usage**: > 60% active usage
@@ -591,6 +636,7 @@
 ## 🔄 Dependencies & Prerequisites
 
 ### Phase 2.5 Dependencies
+
 - [x] MonthlyStatement model
 - [x] Plant data structure
 - [ ] Automated generation script
@@ -598,18 +644,21 @@
 - [ ] Export functionality
 
 ### Phase 3 Dependencies
+
 - [ ] Redis server setup
 - [ ] Monitoring tools (Grafana/Prometheus)
 - [ ] Performance baseline metrics
 - [ ] CDN configuration
 
 ### Phase 4 Dependencies
+
 - [ ] Separate customer portal repo
 - [ ] Payment gateway accounts
 - [ ] AI API keys (Gemini)
 - [ ] Mobile app development environment
 
 ### Phase 5 Dependencies
+
 - [ ] React Native expertise
 - [ ] Mobile app design system
 - [ ] Push notification service
@@ -654,6 +703,7 @@ Q4 2026
 ## 🎯 Next Immediate Actions
 
 ### Week 1-2 (Current Sprint)
+
 1. **Complete Monthly Statement Generation**
    - [ ] Write cron job for auto-generation
    - [ ] Test with sample data
@@ -665,6 +715,7 @@ Q4 2026
    - [ ] Create basic statement list view
 
 ### Week 3-4
+
 3. **Export Features**
    - [ ] Excel export with Vietnamese formatting
    - [ ] PDF generation with branding
@@ -676,6 +727,7 @@ Q4 2026
    - [ ] User acceptance testing
 
 ### Month 2
+
 5. **Phase 3 Preparation**
    - [ ] Install Redis
    - [ ] Set up monitoring
