@@ -72,46 +72,49 @@ export async function getCustomers(params: CustomerSearchParams) {
     const codePattern = `%${sanitizedSearch}%`;
 
     // Use raw query for trigram search
+    // Note: Column names match Prisma schema (camelCase stored as-is in DB)
     const customersRaw = await prisma.$queryRaw<
       Array<{
         id: string;
         code: string;
-        company_name: string;
-        company_name_norm: string;
+        companyName: string;
+        companyNameNorm: string | null;
         address: string;
-        address_normalized: string | null;
+        addressNormalized: string | null;
         district: string | null;
         city: string | null;
-        contact_name: string | null;
-        contact_phone: string | null;
-        contact_email: string | null;
-        tax_code: string | null;
+        contactName: string | null;
+        contactPhone: string | null;
+        contactEmail: string | null;
+        taxCode: string | null;
         latitude: number | null;
         longitude: number | null;
         status: string;
-        ai_notes: string | null;
-        created_by_id: string | null;
-        created_at: Date;
-        updated_at: Date;
+        notes: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         similarity: number;
       }>
     >`
-      SELECT c.*,
+      SELECT c.id, c.code, c."companyName", c."companyNameNorm", c.address,
+             c."addressNormalized", c.district, c.city, c."contactName",
+             c."contactPhone", c."contactEmail", c."taxCode", c.latitude,
+             c.longitude, c.status, c.notes, c."createdAt", c."updatedAt",
              GREATEST(
-               similarity(company_name_norm, ${normalized}),
-               similarity(COALESCE(address_normalized, ''), ${normalized}),
-               similarity(code, ${normalized})
+               similarity(COALESCE(c."companyNameNorm", ''), ${normalized}),
+               similarity(COALESCE(c."addressNormalized", ''), ${normalized}),
+               similarity(c.code, ${normalized})
              ) as similarity
       FROM customers c
       WHERE c.status != 'TERMINATED'
         AND (
-          c.company_name_norm % ${normalized}
+          COALESCE(c."companyNameNorm", '') % ${normalized}
           OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
+          OR COALESCE(c."addressNormalized", '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-      ORDER BY similarity DESC, c.company_name ASC
+      ORDER BY similarity DESC, c."companyName" ASC
       LIMIT ${limit} OFFSET ${skip}
     `;
 
@@ -120,9 +123,9 @@ export async function getCustomers(params: CustomerSearchParams) {
       SELECT COUNT(*) as count FROM customers c
       WHERE c.status != 'TERMINATED'
         AND (
-          c.company_name_norm % ${normalized}
+          COALESCE(c."companyNameNorm", '') % ${normalized}
           OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
+          OR COALESCE(c."addressNormalized", '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
@@ -130,27 +133,26 @@ export async function getCustomers(params: CustomerSearchParams) {
 
     const total = Number(countResult[0].count);
 
-    // Map raw results to Prisma model format
+    // Map raw results to consistent format
     const customers = customersRaw.map((c) => ({
       id: c.id,
       code: c.code,
-      companyName: c.company_name,
-      companyNameNorm: c.company_name_norm,
+      companyName: c.companyName,
+      companyNameNorm: c.companyNameNorm,
       address: c.address,
-      addressNorm: c.address_normalized,
+      addressNormalized: c.addressNormalized,
       district: c.district,
       city: c.city,
-      contactName: c.contact_name,
-      contactPhone: c.contact_phone,
-      contactEmail: c.contact_email,
-      taxCode: c.tax_code,
+      contactName: c.contactName,
+      contactPhone: c.contactPhone,
+      contactEmail: c.contactEmail,
+      taxCode: c.taxCode,
       latitude: c.latitude,
       longitude: c.longitude,
       status: c.status,
-      aiNotes: c.ai_notes,
-      createdById: c.created_by_id,
-      createdAt: c.created_at,
-      updatedAt: c.updated_at,
+      notes: c.notes,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
     }));
 
     return {
