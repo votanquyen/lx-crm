@@ -1,6 +1,7 @@
 import { signIn } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import Image from "next/image";
 
 export default async function LoginPage({
   searchParams,
@@ -19,20 +20,15 @@ export default async function LoginPage({
     <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-xl">
       {/* Logo */}
       <div className="text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary-500">
-          <svg
-            className="h-8 w-8 text-white"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-            />
-          </svg>
+        <div className="mx-auto">
+          <Image
+            src="/logo.png"
+            alt="Lộc Xanh"
+            width={200}
+            height={60}
+            className="mx-auto h-16 w-auto"
+            priority
+          />
         </div>
         <h1 className="mt-4 text-2xl font-bold text-gray-900">Lộc Xanh CRM</h1>
         <p className="mt-2 text-sm text-gray-600">
@@ -73,7 +69,7 @@ export default async function LoginPage({
             name="email"
             type="email"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
             placeholder="admin@locxanh.vn"
           />
         </div>
@@ -90,14 +86,14 @@ export default async function LoginPage({
             name="password"
             type="password"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
             placeholder="••••••••"
           />
         </div>
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-medium text-white shadow-xs transition hover:bg-primary-700 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           Đăng nhập
         </button>
@@ -122,7 +118,7 @@ export default async function LoginPage({
       >
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path

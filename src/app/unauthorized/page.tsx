@@ -7,7 +7,7 @@ export default async function UnauthorizedPage() {
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-gradient-to-br from-background to-muted">
+    <div className="flex min-h-screen items-center justify-center p-4 bg-linear-to-br from-background to-muted">
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
           <div className="rounded-full bg-destructive/10 p-6">

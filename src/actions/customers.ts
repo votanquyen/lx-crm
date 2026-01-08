@@ -7,6 +7,7 @@
 import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { requireAuth, requireManager } from "@/lib/auth-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError, ConflictError } from "@/lib/errors";
@@ -472,7 +473,7 @@ export async function getCustomerStats() {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  // Single query with FILTER instead of 5 separate COUNTs
+  // Single query with FILTER - use COUNT(DISTINCT c.id) to avoid counting join rows
   const stats = await prisma.$queryRaw<[{
     total: bigint;
     active: bigint;
@@ -481,10 +482,10 @@ export async function getCustomerStats() {
     with_debt: bigint;
   }]>`
     SELECT
-      COUNT(*) FILTER (WHERE c.status != 'TERMINATED') as total,
-      COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as active,
-      COUNT(*) FILTER (WHERE c.status = 'LEAD') as leads,
-      COUNT(*) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
       COUNT(DISTINCT CASE
         WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
           AND i."outstandingAmount" > 0
@@ -494,19 +495,11 @@ export async function getCustomerStats() {
     LEFT JOIN invoices i ON i."customerId" = c.id
   `;
 
-    return {
-      total: Number(stats[0].total),
-      active: Number(stats[0].active),
-      leads: Number(stats[0].leads),
-      vip: Number(stats[0].vip),
-      withDebt: Number(stats[0].with_debt),
-    };
-  },
-  ["customer-stats"],
-  { revalidate: 60 }
-);
-
-export async function getCustomerStats() {
-  await requireAuth();
-  return getCachedCustomerStats();
+  return {
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    leads: Number(stats[0].leads),
+    vip: Number(stats[0].vip),
+    withDebt: Number(stats[0].with_debt),
+  };
 }

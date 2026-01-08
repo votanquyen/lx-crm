@@ -67,6 +67,7 @@ export async function getPayments(params: PaymentSearchParams) {
           select: {
             id: true,
             invoiceNumber: true,
+            issueDate: true,
             totalAmount: true,
             paidAmount: true,
             customer: {

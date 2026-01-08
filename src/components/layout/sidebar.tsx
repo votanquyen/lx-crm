@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -33,12 +34,12 @@ interface NavItem {
 const navItems: NavItem[] = [
   { title: "Tổng quan", href: "/", icon: LayoutDashboard },
   { title: "Khách hàng", href: "/customers", icon: Users },
+  { title: "Hóa đơn", href: "/invoices", icon: Receipt },
+  { title: "Bảng Kê", href: "/bang-ke", icon: ClipboardList },
+  { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
   { title: "Cây xanh", href: "/plant-types", icon: Leaf },
   { title: "Hợp đồng", href: "/contracts", icon: FileText },
-  { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
-  { title: "Hóa đơn", href: "/invoices", icon: Receipt },
   { title: "Thanh toán", href: "/payments", icon: CreditCard },
-  { title: "Bảng Kê", href: "/bang-ke", icon: ClipboardList },
   { title: "Lịch chăm sóc", href: "/care", icon: Calendar },
   { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },
@@ -61,19 +62,30 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b px-4">
+        <div className="flex h-16 items-center justify-center border-b px-4">
           {!collapsed && (
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Leaf className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-primary">Lộc Xanh</span>
+            <Link href="/" className="flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="Lộc Xanh"
+                width={140}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
           )}
           {collapsed && (
-            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Leaf className="h-5 w-5 text-white" />
-            </div>
+            <Link href="/" className="mx-auto">
+              <Image
+                src="/logo.png"
+                alt="Lộc Xanh"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+                priority
+              />
+            </Link>
           )}
         </div>
 
@@ -92,13 +104,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-lg transition-colors mx-auto",
+                          "flex h-12 w-12 items-center justify-center rounded-lg transition-colors mx-auto",
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                         )}
                       >
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-6 w-6" />
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="right">{item.title}</TooltipContent>
@@ -111,13 +123,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-6 w-6" />
                   <span>{item.title}</span>
                   {item.badge && (
                     <span className="ml-auto rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs">

@@ -34,7 +34,9 @@ export default async function RecordPaymentPage({ params }: PageProps) {
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Ghi nhận thanh toán</h1>
-            <p className="text-muted-foreground">Hóa đơn {invoice.invoiceNumber}</p>
+            <p className="text-muted-foreground">
+              Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-{new Date(invoice.issueDate).getMonth() + 1}
+            </p>
           </div>
         </div>
 
@@ -64,7 +66,9 @@ export default async function RecordPaymentPage({ params }: PageProps) {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ghi nhận thanh toán</h1>
-          <p className="text-muted-foreground">Hóa đơn {invoice.invoiceNumber}</p>
+          <p className="text-muted-foreground">
+            Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-{new Date(invoice.issueDate).getMonth() + 1}
+          </p>
         </div>
       </div>
 

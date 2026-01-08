@@ -111,7 +111,7 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
                       href={`/invoices/${invoice.id}`}
                       className="font-medium hover:underline"
                     >
-                      {invoice.invoiceNumber}
+                      {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
                     </Link>
                     {invoice.contract && (
                       <p className="text-sm text-muted-foreground">

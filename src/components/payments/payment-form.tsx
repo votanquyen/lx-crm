@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -97,7 +98,9 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
         <div className="grid gap-2 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Số hóa đơn:</span>
-            <span className="font-medium">{invoice.invoiceNumber}</span>
+            <span className="font-medium">
+              {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Khách hàng:</span>

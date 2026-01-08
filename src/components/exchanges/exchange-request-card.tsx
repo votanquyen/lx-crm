@@ -40,7 +40,7 @@ export function ExchangeRequestCard({
               <h3 className="font-semibold text-lg truncate">
                 {request.customer.companyName}
               </h3>
-              <span className="text-sm text-gray-500 flex-shrink-0">
+              <span className="text-sm text-gray-500 shrink-0">
                 #{request.customer.code}
               </span>
             </div>
@@ -55,7 +55,7 @@ export function ExchangeRequestCard({
       <CardContent className="space-y-3">
         {/* Customer Info */}
         <div className="flex items-start gap-2 text-sm text-gray-600">
-          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
           <span className="line-clamp-2">
             {request.customer.address}, {request.customer.district}
           </span>
@@ -64,7 +64,7 @@ export function ExchangeRequestCard({
         {/* Plant Details */}
         {request.currentPlant && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Package className="h-4 w-4 flex-shrink-0" />
+            <Package className="h-4 w-4 shrink-0" />
             <span>
               Cây hiện tại: <span className="font-medium">{request.currentPlant}</span>
               {request.quantity > 1 && ` (${request.quantity} cây)`}
@@ -75,7 +75,7 @@ export function ExchangeRequestCard({
         {/* Preferred Date */}
         {request.preferredDate && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="h-4 w-4 flex-shrink-0" />
+            <Calendar className="h-4 w-4 shrink-0" />
             <span>
               Ngày mong muốn:{" "}
               {format(request.preferredDate, "dd/MM/yyyy", { locale: vi })}
