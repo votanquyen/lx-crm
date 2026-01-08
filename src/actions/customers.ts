@@ -24,7 +24,12 @@ import {
 } from "@/lib/validations/customer";
 
 /**
- * Get paginated list of customers with optional search and filters
+ * Get paginated list of customers with optional search and filters.
+ * Uses pg_trgm for Vietnamese fuzzy search when search term provided.
+ *
+ * @param params - Search parameters including pagination, filters, and sorting
+ * @returns Paginated customer list with counts
+ * @throws {AppError} If rate limit exceeded for search queries
  */
 export async function getCustomers(params: CustomerSearchParams) {
   await requireAuth();
@@ -196,7 +201,12 @@ export async function getCustomers(params: CustomerSearchParams) {
 }
 
 /**
- * Get a single customer by ID with related data
+ * Get a single customer by ID with related data.
+ * Includes recent invoices and relation counts.
+ *
+ * @param id - Customer UUID
+ * @returns Customer with invoices and counts
+ * @throws {NotFoundError} If customer not found
  */
 export async function getCustomerById(id: string) {
   await requireAuth();
@@ -261,160 +271,176 @@ async function generateCustomerCode(): Promise<string> {
 }
 
 /**
- * Create a new customer
- * Sanitizes all string inputs before database storage
+ * Create a new customer.
+ * Auto-generates customer code (KH-XXXX), sanitizes inputs, checks duplicates.
+ *
+ * @param input - Customer data matching createCustomerSchema
+ * @returns Newly created customer
+ * @throws {ConflictError} If company name already exists
+ * @throws {AppError} If rate limit exceeded
  */
-export const createCustomer = createAction(
-  createCustomerSchema,
-  async (input) => {
-    const session = await requireAuth();
+export const createCustomer = createAction(createCustomerSchema, async (input) => {
+  const session = await requireAuth();
 
-    // Rate limit mutations
-    await requireRateLimit("customer-create", {
-      max: RATE_LIMITS.MUTATION.limit,
-      windowMs: RATE_LIMITS.MUTATION.window * 1000,
-    });
+  // Rate limit mutations
+  await requireRateLimit("customer-create", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
 
-    // Sanitize string inputs (strips HTML and trims)
-    const companyName = sanitizeText(input.companyName) ?? input.companyName.trim();
-    const address = sanitizeText(input.address) ?? input.address.trim();
-    const contactName = sanitizeText(input.contactName);
-    const contactPhone = sanitizePhone(input.contactPhone);
-    const contactEmail = sanitizeEmail(input.contactEmail);
-    const taxCode = sanitizeText(input.taxCode);
-    const district = sanitizeText(input.district);
-    const city = sanitizeText(input.city) ?? "TP.HCM";
+  // Sanitize string inputs (strips HTML and trims)
+  const companyName = sanitizeText(input.companyName) ?? input.companyName.trim();
+  const address = sanitizeText(input.address) ?? input.address.trim();
+  const contactName = sanitizeText(input.contactName);
+  const contactPhone = sanitizePhone(input.contactPhone);
+  const contactEmail = sanitizeEmail(input.contactEmail);
+  const taxCode = sanitizeText(input.taxCode);
+  const district = sanitizeText(input.district);
+  const city = sanitizeText(input.city) ?? "TP.HCM";
 
-    // Check for duplicate company name
+  // Check for duplicate company name
+  const normalized = normalizeVietnamese(companyName);
+  const existing = await prisma.customer.findFirst({
+    where: {
+      companyNameNorm: normalized,
+      status: { not: "TERMINATED" },
+    },
+  });
+
+  if (existing) {
+    throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
+  }
+
+  // Generate customer code
+  const code = await generateCustomerCode();
+
+  // Create customer with sanitized data
+  const customer = await prisma.customer.create({
+    data: {
+      code,
+      companyName,
+      companyNameNorm: normalized,
+      address,
+      addressNormalized: normalizeVietnamese(address),
+      district,
+      city,
+      contactName,
+      contactPhone,
+      contactEmail,
+      taxCode,
+      tier: input.tier,
+      status: input.status ?? "ACTIVE",
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+    },
+  });
+
+  // Log activity with IP and user agent
+  await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
+
+  revalidatePath("/customers");
+  return customer;
+});
+
+/**
+ * Update an existing customer.
+ * Sanitizes inputs and checks for duplicate company names.
+ *
+ * @param input - Update data with id and fields to update
+ * @returns Updated customer
+ * @throws {NotFoundError} If customer not found
+ * @throws {ConflictError} If new company name already exists
+ * @throws {AppError} If rate limit exceeded
+ */
+export const updateCustomer = createAction(updateCustomerSchema, async (input) => {
+  const session = await requireAuth();
+
+  // Rate limit mutations
+  await requireRateLimit("customer-update", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
+  const { id, ...updateData } = input;
+
+  // Check customer exists
+  const existing = await prisma.customer.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    throw new NotFoundError("Khách hàng");
+  }
+
+  // Sanitize string inputs (strips HTML and trims)
+  const companyName = sanitizeText(updateData.companyName);
+  const address = sanitizeText(updateData.address);
+
+  // Check for duplicate company name (if changing)
+  if (companyName && companyName !== existing.companyName) {
     const normalized = normalizeVietnamese(companyName);
-    const existing = await prisma.customer.findFirst({
+    const duplicate = await prisma.customer.findFirst({
       where: {
         companyNameNorm: normalized,
         status: { not: "TERMINATED" },
+        id: { not: id },
       },
     });
 
-    if (existing) {
+    if (duplicate) {
       throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
     }
-
-    // Generate customer code
-    const code = await generateCustomerCode();
-
-    // Create customer with sanitized data
-    const customer = await prisma.customer.create({
-      data: {
-        code,
-        companyName,
-        companyNameNorm: normalized,
-        address,
-        addressNormalized: normalizeVietnamese(address),
-        district,
-        city,
-        contactName,
-        contactPhone,
-        contactEmail,
-        taxCode,
-        tier: input.tier,
-        status: input.status ?? "ACTIVE",
-        latitude: input.latitude ?? null,
-        longitude: input.longitude ?? null,
-      },
-    });
-
-    // Log activity with IP and user agent
-    await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
-
-    revalidatePath("/customers");
-    return customer;
   }
-);
+
+  // Build update data with sanitized values
+  const data: Prisma.CustomerUpdateInput = {};
+
+  if (companyName) {
+    data.companyName = companyName;
+    data.companyNameNorm = normalizeVietnamese(companyName);
+  }
+  if (address) {
+    data.address = address;
+    data.addressNormalized = normalizeVietnamese(address);
+  }
+  if (updateData.district !== undefined)
+    data.district = sanitizeText(updateData.district) ?? undefined;
+  if (updateData.city !== undefined) data.city = sanitizeText(updateData.city) ?? undefined;
+  if (updateData.contactName !== undefined)
+    data.contactName = sanitizeText(updateData.contactName) ?? undefined;
+  if (updateData.contactPhone !== undefined)
+    data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
+  if (updateData.contactEmail !== undefined)
+    data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
+  if (updateData.taxCode !== undefined)
+    data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
+  if (updateData.tier !== undefined) data.tier = updateData.tier;
+  if (updateData.status !== undefined) data.status = updateData.status;
+  if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
+  if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
+
+  // Update customer
+  const customer = await prisma.customer.update({
+    where: { id },
+    data,
+  });
+
+  // Log activity with IP and user agent
+  await logCustomerAction(session.user.id, "UPDATE", customer.id, existing, customer);
+
+  revalidatePath(`/customers/${id}`);
+  revalidatePath("/customers");
+  return customer;
+});
 
 /**
- * Update an existing customer
- * Sanitizes all string inputs before database storage
- */
-export const updateCustomer = createAction(
-  updateCustomerSchema,
-  async (input) => {
-    const session = await requireAuth();
-
-    // Rate limit mutations
-    await requireRateLimit("customer-update", {
-      max: RATE_LIMITS.MUTATION.limit,
-      windowMs: RATE_LIMITS.MUTATION.window * 1000,
-    });
-
-    const { id, ...updateData } = input;
-
-    // Check customer exists
-    const existing = await prisma.customer.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("Khách hàng");
-    }
-
-    // Sanitize string inputs (strips HTML and trims)
-    const companyName = sanitizeText(updateData.companyName);
-    const address = sanitizeText(updateData.address);
-
-    // Check for duplicate company name (if changing)
-    if (companyName && companyName !== existing.companyName) {
-      const normalized = normalizeVietnamese(companyName);
-      const duplicate = await prisma.customer.findFirst({
-        where: {
-          companyNameNorm: normalized,
-          status: { not: "TERMINATED" },
-          id: { not: id },
-        },
-      });
-
-      if (duplicate) {
-        throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
-      }
-    }
-
-    // Build update data with sanitized values
-    const data: Prisma.CustomerUpdateInput = {};
-
-    if (companyName) {
-      data.companyName = companyName;
-      data.companyNameNorm = normalizeVietnamese(companyName);
-    }
-    if (address) {
-      data.address = address;
-      data.addressNormalized = normalizeVietnamese(address);
-    }
-    if (updateData.district !== undefined) data.district = sanitizeText(updateData.district) ?? undefined;
-    if (updateData.city !== undefined) data.city = sanitizeText(updateData.city) ?? undefined;
-    if (updateData.contactName !== undefined) data.contactName = sanitizeText(updateData.contactName) ?? undefined;
-    if (updateData.contactPhone !== undefined) data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
-    if (updateData.contactEmail !== undefined) data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
-    if (updateData.taxCode !== undefined) data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
-    if (updateData.tier !== undefined) data.tier = updateData.tier;
-    if (updateData.status !== undefined) data.status = updateData.status;
-    if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
-    if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
-
-    // Update customer
-    const customer = await prisma.customer.update({
-      where: { id },
-      data,
-    });
-
-    // Log activity with IP and user agent
-    await logCustomerAction(session.user.id, "UPDATE", customer.id, existing, customer);
-
-    revalidatePath(`/customers/${id}`);
-    revalidatePath("/customers");
-    return customer;
-  }
-);
-
-/**
- * Soft delete a customer (set status to TERMINATED)
+ * Soft delete a customer by setting status to TERMINATED.
+ * Requires ADMIN or MANAGER role.
+ *
+ * @param id - Customer UUID
+ * @returns Success confirmation object
+ * @throws {NotFoundError} If customer not found
+ * @throws {AppError} If customer has active contracts or rate limit exceeded
  */
 export const deleteCustomer = createSimpleAction(async (id: string) => {
   const session = await requireManager(); // Only ADMIN or MANAGER can delete
@@ -474,9 +500,7 @@ const getCachedDistricts = unstable_cache(
       orderBy: { district: "asc" },
     });
 
-    return districts
-      .map((d) => d.district)
-      .filter((d): d is string => d !== null);
+    return districts.map((d) => d.district).filter((d): d is string => d !== null);
   },
   ["districts"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
@@ -496,13 +520,17 @@ export async function getCustomerStats() {
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
   // Single query with FILTER - use COUNT(DISTINCT c.id) to avoid counting join rows
-  const stats = await prisma.$queryRaw<[{
-    total: bigint;
-    active: bigint;
-    leads: bigint;
-    vip: bigint;
-    with_debt: bigint;
-  }]>`
+  const stats = await prisma.$queryRaw<
+    [
+      {
+        total: bigint;
+        active: bigint;
+        leads: bigint;
+        vip: bigint;
+        with_debt: bigint;
+      },
+    ]
+  >`
     SELECT
       COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
