@@ -224,8 +224,8 @@ export default function BangKePage() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Sidebar - Company List */}
-      <div className="bg-card w-80 border-r">
-        <div className="border-b p-4">
+      <div className="bg-card flex w-80 flex-col overflow-hidden border-r">
+        <div className="shrink-0 border-b p-4">
           <h1 className="mb-1 text-2xl font-bold">Bảng Kê</h1>
           <p className="text-muted-foreground text-sm">Cây xanh văn phòng</p>
           <div className="relative mt-4">
@@ -239,7 +239,7 @@ export default function BangKePage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {filteredCustomers.map((customer) => {
             const customerStmts = statements.filter((s) => s.customerId === customer.id);
             const hasUnconfirmed = customerStmts.some((s) => s.needsConfirmation);
@@ -294,9 +294,9 @@ export default function BangKePage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-hidden">
         {selectedCustomerId ? (
-          <div className="p-6">
+          <div className="h-full overflow-y-auto p-6">
             {/* Header with customer name */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold">
