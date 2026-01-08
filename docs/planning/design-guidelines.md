@@ -623,7 +623,7 @@ export function Card({ children, className }: CardProps) {
   return (
     <div className={cn(
       "bg-white rounded-lg border border-gray-200",
-      "shadow-sm hover:shadow-md transition-shadow",
+      "shadow-xs hover:shadow-md transition-shadow",
       className
     )}>
       {children}
@@ -1202,7 +1202,7 @@ const buttonColors = {
 ```typescript
 // ✅ Focus indicators
 export const focusStyles = `
-  focus:outline-none
+  focus:outline-hidden
   focus-visible:ring-2
   focus-visible:ring-primary-500
   focus-visible:ring-offset-2

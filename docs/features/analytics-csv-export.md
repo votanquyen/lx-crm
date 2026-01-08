@@ -347,7 +347,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ```
 
 **Props:**
-- `variant?: "default" | "outline"` - Button variant (default: "outline")
+- `variant?: "default" | "outline-solid"` - Button variant (default: "outline-solid")
 
 **Features:**
 - Dropdown menu
@@ -371,7 +371,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Props:**
 - `type: ExportType` - Export type (required)
 - `label?: string` - Button label (default: "Xuất CSV")
-- `variant?: "default" | "outline" | "ghost"` - Button variant
+- `variant?: "default" | "outline-solid" | "ghost"` - Button variant
 
 **Use Case:** Inline export button for specific report
 
