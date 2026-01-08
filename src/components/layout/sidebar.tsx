@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   CreditCard,
   ClipboardList,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { title: "Cây xanh", href: "/plant-types", icon: Leaf },
   { title: "Hợp đồng", href: "/contracts", icon: FileText },
   { title: "Thanh toán", href: "/payments", icon: CreditCard },
+  { title: "Chi phí", href: "/expenses", icon: Wallet },
   { title: "Lịch chăm sóc", href: "/care", icon: Calendar },
   { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },
@@ -57,7 +59,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen border-r bg-card transition-all duration-300",
+          "bg-card fixed top-0 left-0 z-40 h-screen border-r transition-all duration-300",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -104,7 +106,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          "flex h-12 w-12 items-center justify-center rounded-lg transition-colors mx-auto",
+                          "mx-auto flex h-12 w-12 items-center justify-center rounded-lg transition-colors",
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -132,7 +134,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <Icon className="h-6 w-6" />
                   <span>{item.title}</span>
                   {item.badge && (
-                    <span className="ml-auto rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs">
+                    <span className="bg-primary-foreground/20 ml-auto rounded-full px-2 py-0.5 text-xs">
                       {item.badge}
                     </span>
                   )}
@@ -143,18 +145,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </ScrollArea>
 
         {/* Toggle Button */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+        <div className="absolute right-0 bottom-4 left-0 flex justify-center">
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggle}
             className="h-8 w-8 rounded-full border"
+            aria-label={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
       </aside>

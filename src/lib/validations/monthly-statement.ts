@@ -24,8 +24,13 @@ export const createMonthlyStatementSchema = z.object({
 // Update monthly statement schema
 export const updateMonthlyStatementSchema = z.object({
   id: z.string().cuid("ID bảng kê không hợp lệ"),
+  // Header fields
   contactName: z.string().optional(),
+  // Plants
   plants: z.array(plantItemSchema),
+  // VAT rate
+  vatRate: z.number().min(0).max(20).default(8),
+  // Notes
   notes: z.string().optional(),
   internalNotes: z.string().optional(),
 });
