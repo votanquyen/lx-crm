@@ -1,6 +1,6 @@
 /**
  * Customer Detail Component
- * Shows customer info with tabbed sections
+ * Shows customer info with tabbed sections for all related data
  */
 import React from "react";
 import Link from "next/link";
@@ -15,20 +15,12 @@ import {
   StickyNote,
   ArrowLeft,
   Edit,
-  Trash2,
-  Crown,
-  Star,
   Receipt,
+  CreditCard,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -40,8 +32,34 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { CustomerStatus, CustomerTier, InvoiceStatus } from "@prisma/client";
-import type { Decimal } from "@prisma/client/runtime/library";
+import { CustomerContracts } from "./customer-contracts";
+import { CustomerPlants } from "./customer-plants";
+import { CustomerPayments } from "./customer-payments";
+import { CustomerDebtCard } from "./customer-debt-card";
+import { CustomerStatementPreview } from "./customer-statement-preview";
+import { CustomerNotes } from "./customer-notes";
+import type {
+  CustomerStatus,
+  InvoiceStatus,
+  ContractStatus,
+  PlantStatus,
+  PlantCondition,
+  PaymentMethod,
+  NoteStatus,
+  NoteCategory,
+} from "@prisma/client";
+
+/** Numeric type compatible with Prisma Decimal */
+type NumericValue = number | string | { toString(): string };
+
+interface Payment {
+  id: string;
+  amount: NumericValue;
+  paymentDate: Date;
+  method: PaymentMethod;
+  reference: string | null;
+  notes: string | null;
+}
 
 interface CustomerInvoice {
   id: string;
@@ -49,9 +67,62 @@ interface CustomerInvoice {
   status: InvoiceStatus;
   issueDate: Date;
   dueDate: Date;
-  totalAmount: Decimal;
-  paidAmount: Decimal;
-  outstandingAmount: Decimal;
+  totalAmount: NumericValue;
+  paidAmount: NumericValue;
+  outstandingAmount: NumericValue;
+  payments: Payment[];
+}
+
+interface ContractItem {
+  id: string;
+  quantity: number;
+  plantType: { name: string };
+}
+
+interface Contract {
+  id: string;
+  contractNumber: string;
+  status: ContractStatus;
+  startDate: Date;
+  endDate: Date;
+  monthlyFee: NumericValue;
+  items: ContractItem[];
+  createdBy: { id: string; name: string | null; email: string } | null;
+}
+
+interface CustomerPlant {
+  id: string;
+  quantity: number;
+  location: string | null;
+  position: string | null;
+  condition: PlantCondition;
+  status: PlantStatus;
+  installedAt: Date;
+  lastExchanged: Date | null;
+  plantType: {
+    name: string;
+    scientificName: string | null;
+  };
+}
+
+interface StickyNote {
+  id: string;
+  title: string;
+  content: string;
+  category: NoteCategory;
+  status: NoteStatus;
+  priority: number;
+  createdAt: Date;
+  createdBy: { id: string; name: string | null } | null;
+}
+
+interface MonthlyStatement {
+  id: string;
+  month: number;
+  year: number;
+  needsConfirmation: boolean;
+  confirmedAt: Date | null;
+  total: NumericValue;
 }
 
 interface CustomerDetailProps {
@@ -67,14 +138,15 @@ interface CustomerDetailProps {
     contactEmail: string | null;
     taxCode: string | null;
     status: CustomerStatus;
-    tier: CustomerTier;
     latitude: number | null;
     longitude: number | null;
-    aiNotes: string | null;
     createdAt: Date;
     updatedAt: Date;
-    createdBy: { id: string; name: string | null; email: string } | null;
+    contracts: Contract[];
+    customerPlants: CustomerPlant[];
     invoices: CustomerInvoice[];
+    stickyNotes: StickyNote[];
+    monthlyStatements: MonthlyStatement[];
     _count: {
       customerPlants: number;
       stickyNotes: number;
@@ -97,12 +169,6 @@ const statusConfig: Record<
   TERMINATED: { label: "Đã xóa", variant: "destructive" },
 };
 
-const tierConfig: Record<CustomerTier, { label: string; icon: typeof Crown; color: string }> = {
-  VIP: { label: "VIP", icon: Crown, color: "text-amber-500" },
-  PREMIUM: { label: "Premium", icon: Star, color: "text-purple-500" },
-  STANDARD: { label: "Standard", icon: Star, color: "text-muted-foreground" },
-};
-
 const invoiceStatusConfig: Record<
   InvoiceStatus,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
@@ -119,7 +185,10 @@ const invoiceStatusConfig: Record<
 /** Memoized invoice row to prevent unnecessary re-renders */
 const CustomerInvoiceRow = React.memo(({ invoice }: { invoice: CustomerInvoice }) => {
   const invStatus = invoiceStatusConfig[invoice.status];
-  const isOverdue = invoice.status !== "PAID" && invoice.status !== "CANCELLED" && new Date(invoice.dueDate) < new Date();
+  const isOverdue =
+    invoice.status !== "PAID" &&
+    invoice.status !== "CANCELLED" &&
+    new Date(invoice.dueDate) < new Date();
   const invoiceNo = invoice.invoiceNumber.match(/^(\d+)/)?.[1] ?? invoice.invoiceNumber;
 
   return (
@@ -132,16 +201,16 @@ const CustomerInvoiceRow = React.memo(({ invoice }: { invoice: CustomerInvoice }
       <TableCell>
         <Badge variant={invStatus.variant}>{invStatus.label}</Badge>
         {isOverdue && invoice.status !== "OVERDUE" && (
-          <Badge variant="destructive" className="ml-2">Quá hạn</Badge>
+          <Badge variant="destructive" className="ml-2">
+            Quá hạn
+          </Badge>
         )}
       </TableCell>
       <TableCell>{formatDate(invoice.issueDate)}</TableCell>
       <TableCell className={isOverdue ? "text-destructive font-medium" : ""}>
         {formatDate(invoice.dueDate)}
       </TableCell>
-      <TableCell className="text-right">
-        {Number(invoice.totalAmount).toLocaleString()}đ
-      </TableCell>
+      <TableCell className="text-right">{Number(invoice.totalAmount).toLocaleString()}đ</TableCell>
       <TableCell className="text-right font-medium">
         {Number(invoice.outstandingAmount) > 0 ? (
           <span className="text-orange-600">
@@ -158,8 +227,6 @@ CustomerInvoiceRow.displayName = "CustomerInvoiceRow";
 
 export function CustomerDetail({ customer }: CustomerDetailProps) {
   const status = statusConfig[customer.status];
-  const tier = tierConfig[customer.tier];
-  const TierIcon = tier.icon;
 
   return (
     <div className="space-y-6">
@@ -176,12 +243,8 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
               <h1 className="text-2xl font-bold">{customer.companyName}</h1>
               <Badge variant="outline">{customer.code}</Badge>
               <Badge variant={status.variant}>{status.label}</Badge>
-              <div className={cn("flex items-center gap-1", tier.color)}>
-                <TierIcon className="h-4 w-4" />
-                <span className="text-sm font-medium">{tier.label}</span>
-              </div>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
               <MapPin className="h-4 w-4" />
               <span>
                 {customer.address}
@@ -198,24 +261,13 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
               Chỉnh sửa
             </Link>
           </Button>
-          <Button variant="destructive" size="icon">
-            <Trash2 className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard
-          icon={Leaf}
-          label="Cây xanh"
-          value={customer._count.customerPlants}
-        />
-        <StatCard
-          icon={FileText}
-          label="Hợp đồng"
-          value={customer._count.contracts}
-        />
+        <StatCard icon={Leaf} label="Cây xanh" value={customer._count.customerPlants} />
+        <StatCard icon={FileText} label="Hợp đồng" value={customer._count.contracts} />
         <StatCard
           icon={Receipt}
           label="Hóa đơn"
@@ -228,183 +280,105 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
           value={customer._count.stickyNotes}
           highlight={customer._count.stickyNotes > 0}
         />
-        <StatCard
-          icon={Calendar}
-          label="Lịch chăm sóc"
-          value={customer._count.careSchedules}
-        />
+        <StatCard icon={Calendar} label="Lịch chăm sóc" value={customer._count.careSchedules} />
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex flex-wrap">
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="plants">
-            Cây xanh ({customer._count.customerPlants})
+          <TabsTrigger value="plants">Cây xanh ({customer._count.customerPlants})</TabsTrigger>
+          <TabsTrigger value="contracts">Hợp đồng ({customer._count.contracts})</TabsTrigger>
+          <TabsTrigger value="invoices">Hóa đơn ({customer._count.invoices})</TabsTrigger>
+          <TabsTrigger value="payments">
+            <CreditCard className="mr-1 h-3 w-3" />
+            Thanh toán
           </TabsTrigger>
-          <TabsTrigger value="contracts">
-            Hợp đồng ({customer._count.contracts})
-          </TabsTrigger>
-          <TabsTrigger value="invoices">
-            Hóa đơn ({customer._count.invoices})
-          </TabsTrigger>
-          <TabsTrigger value="notes">
-            Ghi chú ({customer._count.stickyNotes})
-          </TabsTrigger>
+          <TabsTrigger value="notes">Ghi chú ({customer._count.stickyNotes})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Contact Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin liên hệ</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {customer.contactName && (
-                  <InfoRow
-                    icon={Building2}
-                    label="Người liên hệ"
-                    value={customer.contactName}
-                  />
-                )}
-                {customer.contactPhone && (
-                  <InfoRow
-                    icon={Phone}
-                    label="Điện thoại"
-                    value={customer.contactPhone}
-                  />
-                )}
-                {customer.contactEmail && (
-                  <InfoRow
-                    icon={Mail}
-                    label="Email"
-                    value={customer.contactEmail}
-                  />
-                )}
-                {customer.taxCode && (
-                  <InfoRow
-                    icon={FileText}
-                    label="Mã số thuế"
-                    value={customer.taxCode}
-                  />
-                )}
-                {!customer.contactName &&
-                  !customer.contactPhone &&
-                  !customer.contactEmail && (
-                    <p className="text-sm text-muted-foreground">
-                      Chưa có thông tin liên hệ
-                    </p>
-                  )}
-              </CardContent>
-            </Card>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left column - Contact and metadata */}
+            <div className="space-y-6 lg:col-span-2">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Contact Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thông tin liên hệ</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {customer.contactName && (
+                      <InfoRow icon={Building2} label="Người liên hệ" value={customer.contactName} />
+                    )}
+                    {customer.contactPhone && (
+                      <InfoRow icon={Phone} label="Điện thoại" value={customer.contactPhone} />
+                    )}
+                    {customer.contactEmail && (
+                      <InfoRow icon={Mail} label="Email" value={customer.contactEmail} />
+                    )}
+                    {customer.taxCode && (
+                      <InfoRow icon={FileText} label="Mã số thuế" value={customer.taxCode} />
+                    )}
+                    {!customer.contactName && !customer.contactPhone && !customer.contactEmail && (
+                      <p className="text-muted-foreground text-sm">Chưa có thông tin liên hệ</p>
+                    )}
+                  </CardContent>
+                </Card>
 
-            {/* Metadata */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin hệ thống</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <InfoRow
-                  icon={Calendar}
-                  label="Ngày tạo"
-                  value={formatDate(customer.createdAt)}
-                />
-                <InfoRow
-                  icon={Calendar}
-                  label="Cập nhật lần cuối"
-                  value={formatDate(customer.updatedAt)}
-                />
-                {customer.createdBy && (
-                  <InfoRow
-                    icon={Building2}
-                    label="Người tạo"
-                    value={customer.createdBy.name ?? customer.createdBy.email}
-                  />
-                )}
-                {customer.latitude && customer.longitude && (
-                  <InfoRow
-                    icon={MapPin}
-                    label="Tọa độ"
-                    value={`${customer.latitude.toFixed(6)}, ${customer.longitude.toFixed(6)}`}
-                  />
-                )}
-              </CardContent>
-            </Card>
+                {/* Metadata */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Thông tin hệ thống</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <InfoRow icon={Calendar} label="Ngày tạo" value={formatDate(customer.createdAt)} />
+                    <InfoRow
+                      icon={Calendar}
+                      label="Cập nhật lần cuối"
+                      value={formatDate(customer.updatedAt)}
+                    />
+                    {customer.latitude && customer.longitude && (
+                      <InfoRow
+                        icon={MapPin}
+                        label="Tọa độ"
+                        value={`${customer.latitude.toFixed(6)}, ${customer.longitude.toFixed(6)}`}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
 
-            {/* AI Notes (if any) */}
-            {customer.aiNotes && (
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>AI Notes</CardTitle>
-                  <CardDescription>
-                    Tóm tắt được tạo bởi AI từ các ghi chú
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm">{customer.aiNotes}</p>
-                </CardContent>
-              </Card>
-            )}
+            {/* Right column - Debt and Statement */}
+            <div className="space-y-6">
+              <CustomerDebtCard invoices={customer.invoices} />
+              <CustomerStatementPreview
+                statements={customer.monthlyStatements}
+                customerId={customer.id}
+              />
+            </div>
           </div>
         </TabsContent>
 
         <TabsContent value="plants">
-          <Card>
-            <CardHeader>
-              <CardTitle>Danh sách cây xanh</CardTitle>
-              <CardDescription>
-                Các loại cây đang được thuê bởi khách hàng
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {customer._count.customerPlants === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  Khách hàng chưa có cây xanh nào
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  Tính năng đang được phát triển...
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CustomerPlants plants={customer.customerPlants} />
         </TabsContent>
 
         <TabsContent value="contracts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Danh sách hợp đồng</CardTitle>
-              <CardDescription>
-                Lịch sử hợp đồng thuê cây của khách hàng
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {customer._count.contracts === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  Khách hàng chưa có hợp đồng nào
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  Tính năng đang được phát triển...
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CustomerContracts contracts={customer.contracts} />
         </TabsContent>
 
         <TabsContent value="invoices">
           <Card>
             <CardHeader>
               <CardTitle>Danh sách hóa đơn</CardTitle>
-              <CardDescription>
-                Lịch sử thanh toán của khách hàng
-              </CardDescription>
+              <CardDescription>Lịch sử thanh toán của khách hàng</CardDescription>
             </CardHeader>
             <CardContent>
               {customer.invoices.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                <div className="text-muted-foreground py-8 text-center">
+                  <Receipt className="mx-auto mb-2 h-8 w-8 opacity-50" />
                   Khách hàng chưa có hóa đơn nào
                 </div>
               ) : (
@@ -432,26 +406,12 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
           </Card>
         </TabsContent>
 
+        <TabsContent value="payments">
+          <CustomerPayments invoices={customer.invoices} />
+        </TabsContent>
+
         <TabsContent value="notes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ghi chú</CardTitle>
-              <CardDescription>
-                Các ghi chú về khách hàng (có phân tích AI)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {customer._count.stickyNotes === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">
-                  Chưa có ghi chú nào
-                </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  Tính năng đang được phát triển...
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CustomerNotes notes={customer.stickyNotes} />
         </TabsContent>
       </Tabs>
     </div>
@@ -482,7 +442,7 @@ function StatCard({
         </div>
         <div>
           <p className="text-2xl font-bold">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-muted-foreground text-sm">{label}</p>
         </div>
       </CardContent>
     </Card>
@@ -500,9 +460,9 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <Icon className="h-4 w-4 text-muted-foreground" />
+      <Icon className="text-muted-foreground h-4 w-4" />
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-muted-foreground text-xs">{label}</p>
         <p className="text-sm font-medium">{value}</p>
       </div>
     </div>

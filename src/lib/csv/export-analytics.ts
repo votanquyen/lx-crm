@@ -3,10 +3,7 @@
  * Generate CSV exports for various analytics reports
  */
 import { formatCurrencyForExcel } from "@/lib/format";
-import {
-  arrayToCSV,
-  formatDateForCSV,
-} from "./csv-utils";
+import { arrayToCSV, formatDateForCSV } from "./csv-utils";
 
 /**
  * Monthly Revenue CSV Export
@@ -67,7 +64,6 @@ export function generateInvoiceAgingCSV(data: InvoiceAgingData[]): string {
 export interface TopCustomerData {
   code: string;
   companyName: string;
-  tier: string;
   totalRevenue: number;
   activeContracts: number;
   totalInvoices: number;
@@ -84,7 +80,6 @@ export function generateTopCustomersCSV(data: TopCustomerData[]): string {
   return arrayToCSV(formattedData, [
     { key: "code", label: "Mã khách hàng" },
     { key: "companyName", label: "Tên công ty" },
-    { key: "tier", label: "Phân loại" },
     { key: "totalRevenue", label: "Tổng doanh thu (VND)" },
     { key: "activeContracts", label: "Hợp đồng đang hoạt động" },
     { key: "totalInvoices", label: "Tổng số hóa đơn" },
@@ -108,9 +103,7 @@ export interface OverdueInvoiceData {
   daysOverdue: number;
 }
 
-export function generateOverdueInvoicesCSV(
-  data: OverdueInvoiceData[]
-): string {
+export function generateOverdueInvoicesCSV(data: OverdueInvoiceData[]): string {
   const formattedData = data.map((invoice) => ({
     ...invoice,
     issueDate: formatDateForCSV(invoice.issueDate),

@@ -35,7 +35,7 @@ export async function getCustomers(params: CustomerSearchParams) {
   await requireAuth();
 
   const validated = customerSearchSchema.parse(params);
-  const { page, limit, search, status, tier, district, hasDebt, sortBy, sortOrder } = validated;
+  const { page, limit, search, status, district, hasDebt, sortBy, sortOrder } = validated;
 
   // Rate limit search queries (expensive trigram operations)
   if (search && search.trim()) {
@@ -52,7 +52,6 @@ export async function getCustomers(params: CustomerSearchParams) {
     status: status ?? { not: "TERMINATED" },
   };
 
-  if (tier) where.tier = tier;
   if (district) where.district = district;
 
   // Has debt filter (customers with unpaid invoices)
@@ -90,7 +89,6 @@ export async function getCustomers(params: CustomerSearchParams) {
         latitude: number | null;
         longitude: number | null;
         status: string;
-        tier: string;
         ai_notes: string | null;
         created_by_id: string | null;
         created_at: Date;
@@ -112,7 +110,6 @@ export async function getCustomers(params: CustomerSearchParams) {
           OR COALESCE(c.address_normalized, '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
       ORDER BY similarity DESC, c.company_name ASC
       LIMIT ${limit} OFFSET ${skip}
@@ -128,7 +125,6 @@ export async function getCustomers(params: CustomerSearchParams) {
           OR COALESCE(c.address_normalized, '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
     `;
 
@@ -151,7 +147,6 @@ export async function getCustomers(params: CustomerSearchParams) {
       latitude: c.latitude,
       longitude: c.longitude,
       status: c.status,
-      tier: c.tier,
       aiNotes: c.ai_notes,
       createdById: c.created_by_id,
       createdAt: c.created_at,
@@ -202,10 +197,10 @@ export async function getCustomers(params: CustomerSearchParams) {
 
 /**
  * Get a single customer by ID with related data.
- * Includes recent invoices and relation counts.
+ * Includes contracts, plants, invoices with payments, notes, and statements.
  *
  * @param id - Customer UUID
- * @returns Customer with invoices and counts
+ * @returns Customer with all related data and counts
  * @throws {NotFoundError} If customer not found
  */
 export async function getCustomerById(id: string) {
@@ -214,21 +209,44 @@ export async function getCustomerById(id: string) {
   const customer = await prisma.customer.findUnique({
     where: { id },
     include: {
-      // Include recent invoices for customer detail view
+      // Include all contracts with items
+      contracts: {
+        orderBy: { startDate: "desc" },
+        include: {
+          items: {
+            include: { plantType: true },
+          },
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      },
+      // Include all plants
+      customerPlants: {
+        include: { plantType: true },
+        orderBy: { position: "asc" },
+      },
+      // Include recent invoices with payments
       invoices: {
         orderBy: { issueDate: "desc" },
         take: 50,
-        select: {
-          id: true,
-          invoiceNumber: true,
-          status: true,
-          issueDate: true,
-          dueDate: true,
-          totalAmount: true,
-          paidAmount: true,
-          outstandingAmount: true,
+        include: {
+          payments: {
+            orderBy: { paymentDate: "desc" },
+          },
         },
       },
+      // Include sticky notes
+      stickyNotes: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          createdBy: { select: { id: true, name: true } },
+        },
+      },
+      // Include latest monthly statement
+      monthlyStatements: {
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        take: 1,
+      },
+      // Include counts for all relations
       _count: {
         select: {
           customerPlants: true,
@@ -328,7 +346,6 @@ export const createCustomer = createAction(createCustomerSchema, async (input) =
       contactPhone,
       contactEmail,
       taxCode,
-      tier: input.tier,
       status: input.status ?? "ACTIVE",
       latitude: input.latitude ?? null,
       longitude: input.longitude ?? null,
@@ -414,7 +431,6 @@ export const updateCustomer = createAction(updateCustomerSchema, async (input) =
     data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
   if (updateData.taxCode !== undefined)
     data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
-  if (updateData.tier !== undefined) data.tier = updateData.tier;
   if (updateData.status !== undefined) data.status = updateData.status;
   if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
   if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
@@ -526,7 +542,6 @@ export async function getCustomerStats() {
         total: bigint;
         active: bigint;
         leads: bigint;
-        vip: bigint;
         with_debt: bigint;
       },
     ]
@@ -535,7 +550,6 @@ export async function getCustomerStats() {
       COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
       COUNT(DISTINCT CASE
         WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
           AND i."outstandingAmount" > 0
@@ -549,7 +563,6 @@ export async function getCustomerStats() {
     total: Number(stats[0].total),
     active: Number(stats[0].active),
     leads: Number(stats[0].leads),
-    vip: Number(stats[0].vip),
     withDebt: Number(stats[0].with_debt),
   };
 }

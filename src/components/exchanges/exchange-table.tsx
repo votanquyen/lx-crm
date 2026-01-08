@@ -3,6 +3,7 @@
  */
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -52,11 +53,13 @@ type ExchangeRequest = {
     companyName: string;
     address: string;
     district: string | null;
-    tier: string;
   };
 };
 
-const statusConfig: Record<ExchangeStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  ExchangeStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   PENDING: { label: "Chờ duyệt", variant: "outline" },
   SCHEDULED: { label: "Đã lên lịch", variant: "default" },
   IN_PROGRESS: { label: "Đang thực hiện", variant: "secondary" },
@@ -78,7 +81,7 @@ interface ExchangeTableProps {
   onComplete?: (id: string) => void;
 }
 
-export function ExchangeTable({
+export const ExchangeTable = memo(function ExchangeTable({
   requests,
   onApprove,
   onCancel,
@@ -103,8 +106,8 @@ export function ExchangeTable({
         <TableBody>
           {requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                <RefreshCw className="mx-auto h-8 w-8 mb-2 opacity-50" />
+              <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
+                <RefreshCw className="mx-auto mb-2 h-8 w-8 opacity-50" />
                 Chưa có yêu cầu đổi cây nào
               </TableCell>
             </TableRow>
@@ -118,7 +121,7 @@ export function ExchangeTable({
                 <TableRow key={request.id}>
                   <TableCell>
                     <div className="flex items-start gap-2">
-                      <Building2 className="h-4 w-4 mt-1 text-muted-foreground" />
+                      <Building2 className="text-muted-foreground mt-1 h-4 w-4" />
                       <div>
                         <Link
                           href={`/customers/${request.customer.id}`}
@@ -126,7 +129,7 @@ export function ExchangeTable({
                         >
                           {request.customer.companyName}
                         </Link>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {request.customer.code} • {request.customer.district}
                         </p>
                       </div>
@@ -134,21 +137,17 @@ export function ExchangeTable({
                   </TableCell>
                   <TableCell>
                     <div className={`flex items-center gap-1 ${urgency.color}`}>
-                      {request.priority === "URGENT" && (
-                        <AlertTriangle className="h-4 w-4" />
-                      )}
+                      {request.priority === "URGENT" && <AlertTriangle className="h-4 w-4" />}
                       {urgency.label}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
                   </TableCell>
-                  <TableCell className="text-center font-medium">
-                    {plantCount}
-                  </TableCell>
+                  <TableCell className="text-center font-medium">{plantCount}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <Clock className="text-muted-foreground h-4 w-4" />
                       {request.preferredDate
                         ? format(new Date(request.preferredDate), "dd/MM/yyyy", { locale: vi })
                         : format(new Date(request.createdAt), "dd/MM/yyyy", { locale: vi })}
@@ -208,4 +207,4 @@ export function ExchangeTable({
       </Table>
     </div>
   );
-}
+});
