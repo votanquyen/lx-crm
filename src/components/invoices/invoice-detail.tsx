@@ -179,7 +179,9 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{invoice.invoiceNumber}</h1>
+            <h1 className="text-2xl font-bold">
+              {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
+            </h1>
             <Badge variant={status.variant}>{status.label}</Badge>
             {isOverdue && <Badge variant="destructive">Quá hạn</Badge>}
           </div>

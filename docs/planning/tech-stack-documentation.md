@@ -4,7 +4,7 @@ Comprehensive documentation reference for Lộc Xanh CRM tech stack.
 
 ---
 
-## Next.js 15
+## Next.js 16
 
 ### Official Documentation
 - **Main Docs**: https://nextjs.org/docs
@@ -325,7 +325,7 @@ export default config
 <div className="flex items-center justify-center min-h-screen">
 
 // Card component
-<div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+<div className="rounded-lg border bg-card text-card-foreground shadow-xs p-6">
 
 // Button states
 <button className="bg-primary hover:bg-primary/90 active:scale-95 transition-all">
@@ -535,4 +535,4 @@ src/
 
 ---
 
-**Last Updated**: December 2025
+**Last Updated**: January 2026

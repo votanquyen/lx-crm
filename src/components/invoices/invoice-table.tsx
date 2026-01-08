@@ -214,15 +214,106 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
               </TableCell>
             </TableRow>
           ) : (
-            invoices.map((invoice) => (
-              <InvoiceRow
-                key={invoice.id}
-                invoice={invoice}
-                onSend={handleSend}
-                onCancel={handleCancel}
-                onRecordPayment={handleRecordPayment}
-              />
-            ))
+            invoices.map((invoice) => {
+              const status = statusConfig[invoice.status];
+              const overdue = isOverdue(invoice.dueDate, invoice.status);
+
+              return (
+                <TableRow key={invoice.id}>
+                  <TableCell>
+                    <Link
+                      href={`/invoices/${invoice.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
+                    </Link>
+                    {invoice.contract && (
+                      <p className="text-sm text-muted-foreground">
+                        HĐ: {invoice.contract.contractNumber}
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/customers/${invoice.customer.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {invoice.customer.companyName}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {invoice.customer.code}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                    {overdue && invoice.status !== "OVERDUE" && (
+                      <Badge variant="destructive" className="ml-2">
+                        Quá hạn
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className={overdue ? "text-destructive font-medium" : ""}>
+                      {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(invoice.totalAmount)}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {invoice.outstandingAmount > 0 ? (
+                      <span className="text-orange-600">
+                        {formatCurrency(invoice.outstandingAmount)}
+                      </span>
+                    ) : (
+                      <span className="text-green-600">0</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/invoices/${invoice.id}`}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Xem chi tiết
+                          </Link>
+                        </DropdownMenuItem>
+                        {invoice.status === "DRAFT" && onSend && (
+                          <DropdownMenuItem onClick={() => onSend(invoice.id)}>
+                            <Send className="mr-2 h-4 w-4" />
+                            Gửi hóa đơn
+                          </DropdownMenuItem>
+                        )}
+                        {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) &&
+                          onRecordPayment && (
+                            <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Ghi nhận thanh toán
+                            </DropdownMenuItem>
+                          )}
+                        <DropdownMenuSeparator />
+                        {invoice.status !== "CANCELLED" &&
+                          invoice._count.payments === 0 &&
+                          onCancel && (
+                            <DropdownMenuItem
+                              onClick={() => onCancel(invoice.id)}
+                              className="text-destructive"
+                            >
+                              <XCircle className="mr-2 h-4 w-4" />
+                              Hủy hóa đơn
+                            </DropdownMenuItem>
+                          )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>

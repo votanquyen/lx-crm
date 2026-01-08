@@ -48,7 +48,7 @@ export function AppShell({ children, user }: AppShellProps) {
           sidebarCollapsed && "lg:pl-16"
         )}
       >
-        <div className="container mx-auto p-6">{children}</div>
+        <div className="p-6">{children}</div>
       </main>
     </div>
   );

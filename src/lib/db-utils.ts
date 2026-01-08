@@ -2,7 +2,11 @@
  * Database Utility Functions (Server-only)
  * These utilities use Prisma Decimal type and should ONLY be imported in server components
  */
-import { Decimal } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
+
+// Re-export Decimal for convenience
+const Decimal = Prisma.Decimal;
+type Decimal = Prisma.Decimal;
 
 // ============================================
 // DECIMAL UTILITIES (for Prisma Decimal type)

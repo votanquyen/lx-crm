@@ -21,28 +21,26 @@ import {
 } from "@/lib/validations/contract";
 
 /**
- * Generate next invoice number (INV-YYYYMM-XXXX)
+ * Generate next invoice number (simple sequential: 1, 2, 3...)
+ * Format: Just number (e.g., 752)
+ * Date is stored separately in issueDate field
  */
 async function generateInvoiceNumber(): Promise<string> {
-  const now = new Date();
-  const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const prefix = `INV-${yearMonth}-`;
-
   const lastInvoice = await prisma.invoice.findFirst({
-    where: { invoiceNumber: { startsWith: prefix } },
-    orderBy: { invoiceNumber: "desc" },
+    orderBy: { createdAt: "desc" },
     select: { invoiceNumber: true },
   });
 
   let nextNumber = 1;
   if (lastInvoice?.invoiceNumber) {
-    const match = lastInvoice.invoiceNumber.match(/-(\d{4})$/);
-    if (match?.[1]) {
-      nextNumber = parseInt(match[1], 10) + 1;
+    // Handle both old format (INV-YYYYMM-XXXX) and new format (number only)
+    const numericMatch = lastInvoice.invoiceNumber.match(/(\d+)$/);
+    if (numericMatch?.[1]) {
+      nextNumber = parseInt(numericMatch[1], 10) + 1;
     }
   }
 
-  return `${prefix}${String(nextNumber).padStart(4, "0")}`;
+  return String(nextNumber);
 }
 
 /**

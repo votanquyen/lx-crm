@@ -26,14 +26,14 @@ Hệ thống Quản lý Khách hàng & Cho thuê Cây xanh - **74% Hoàn thành*
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **Frontend** | Next.js 16, React 19, TypeScript | Modern React with App Router |
+| **Frontend** | Next.js 16.1, React 19, TypeScript | Modern React with App Router |
 | **Styling** | TailwindCSS 3, shadcn/ui | Utility-first + component library |
 | **Backend** | Next.js Server Actions | Full-stack type safety |
 | **Database** | PostgreSQL 17 + PostGIS 3.5 | Geospatial + trigram search |
 | **ORM** | Prisma 6.1 | Type-safe database client |
 | **Auth** | NextAuth.js 5 (Google OAuth + Credentials) | RBAC (ADMIN/MANAGER/STAFF/ACCOUNTANT/VIEWER) |
 | **Validation** | Zod 4.2 | Runtime validation + TypeScript inference |
-| **State** | Zustand 5.0, TanStack Query 5.9 | Client state + server state management |
+| **State** | Zustand 5.0, TanStack Query 5.90 | Client state + server state management |
 | **Storage** | MinIO S3-compatible | File uploads with presigned URLs |
 | **Maps** | Google Maps API + React Leaflet | Geocoding + route visualization |
 | **PDF** | jsPDF + autotable (Webpack) | Vietnamese font support |

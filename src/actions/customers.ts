@@ -7,6 +7,7 @@
 import { revalidatePath, unstable_cache } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { requireAuth, requireManager } from "@/lib/auth-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError, ConflictError } from "@/lib/errors";
@@ -490,44 +491,37 @@ export async function getDistricts() {
  * Get customer stats for dashboard
  * Cached for 1 minute to improve performance
  */
-const getCachedCustomerStats = unstable_cache(
-  async () => {
-    // Use COUNT(DISTINCT c.id) to avoid inflated counts from LEFT JOIN
-    // The LEFT JOIN creates multiple rows per customer (one per invoice)
-    const stats = await prisma.$queryRaw<[{
-      total: bigint;
-      active: bigint;
-      leads: bigint;
-      vip: bigint;
-      with_debt: bigint;
-    }]>`
-      SELECT
-        COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
-        COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
-        COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
-        COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
-        COUNT(DISTINCT CASE
-          WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
-            AND i."outstandingAmount" > 0
-          THEN c.id
-        END) as with_debt
-      FROM customers c
-      LEFT JOIN invoices i ON i."customerId" = c.id
-    `;
-
-    return {
-      total: Number(stats[0].total),
-      active: Number(stats[0].active),
-      leads: Number(stats[0].leads),
-      vip: Number(stats[0].vip),
-      withDebt: Number(stats[0].with_debt),
-    };
-  },
-  ["customer-stats"],
-  { revalidate: CACHE_TTL.STATS }
-);
-
 export async function getCustomerStats() {
-  await requireAuth();
-  return getCachedCustomerStats();
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+
+  // Single query with FILTER - use COUNT(DISTINCT c.id) to avoid counting join rows
+  const stats = await prisma.$queryRaw<[{
+    total: bigint;
+    active: bigint;
+    leads: bigint;
+    vip: bigint;
+    with_debt: bigint;
+  }]>`
+    SELECT
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
+      COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
+      COUNT(DISTINCT CASE
+        WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
+          AND i."outstandingAmount" > 0
+        THEN c.id
+      END) as with_debt
+    FROM customers c
+    LEFT JOIN invoices i ON i."customerId" = c.id
+  `;
+
+  return {
+    total: Number(stats[0].total),
+    active: Number(stats[0].active),
+    leads: Number(stats[0].leads),
+    vip: Number(stats[0].vip),
+    withDebt: Number(stats[0].with_debt),
+  };
 }

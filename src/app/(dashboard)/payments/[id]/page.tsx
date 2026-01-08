@@ -174,7 +174,9 @@ export default async function PaymentDetailPage({ params }: PageProps) {
                 className="block space-y-3 hover:bg-muted/50 p-3 rounded-lg transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{payment.invoice.invoiceNumber}</span>
+                  <span className="font-semibold">
+                    {payment.invoice.invoiceNumber}/{new Date(payment.invoice.issueDate).getDate()}-{new Date(payment.invoice.issueDate).getMonth() + 1}
+                  </span>
                   <Badge>{payment.invoice.status}</Badge>
                 </div>
 
