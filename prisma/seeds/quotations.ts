@@ -77,8 +77,16 @@ export async function seedQuotations() {
       status: "ACCEPTED" as QuotationStatus,
       validDays: 30,
       items: [
-        { plantTypeId: plantTypes[5] ? plantTypes[5].id : plantTypes[0]!.id, quantity: 6, discountRate: 0 },
-        { plantTypeId: plantTypes[6] ? plantTypes[6].id : plantTypes[1]!.id, quantity: 3, discountRate: 0 },
+        {
+          plantTypeId: plantTypes[5] ? plantTypes[5].id : plantTypes[0]!.id,
+          quantity: 6,
+          discountRate: 0,
+        },
+        {
+          plantTypeId: plantTypes[6] ? plantTypes[6].id : plantTypes[1]!.id,
+          quantity: 3,
+          discountRate: 0,
+        },
       ],
       discountRate: 10,
       vatRate: 10,
@@ -91,7 +99,11 @@ export async function seedQuotations() {
       status: "REJECTED" as QuotationStatus,
       validDays: 15,
       items: [
-        { plantTypeId: plantTypes[7] ? plantTypes[7].id : plantTypes[2]!.id, quantity: 10, discountRate: 0 },
+        {
+          plantTypeId: plantTypes[7] ? plantTypes[7].id : plantTypes[2]!.id,
+          quantity: 10,
+          discountRate: 0,
+        },
       ],
       discountRate: 0,
       vatRate: 10,
@@ -159,7 +171,10 @@ export async function seedQuotations() {
           title: quotationData.title,
           description: quotationData.description,
           validFrom,
-          validUntil: quotationData.status === "EXPIRED" ? new Date(now.getTime() - 24 * 60 * 60 * 1000) : validUntil,
+          validUntil:
+            quotationData.status === "EXPIRED"
+              ? new Date(now.getTime() - 24 * 60 * 60 * 1000)
+              : validUntil,
           status: quotationData.status,
           subtotal: totals.subtotal,
           discountRate: quotationData.discountRate,
@@ -168,11 +183,14 @@ export async function seedQuotations() {
           vatAmount: totals.vatAmount,
           totalAmount: totals.totalAmount,
           proposedDuration: quotationData.proposedDuration || null,
-          proposedMonthlyFee: quotationData.proposedDuration ? totals.totalAmount / quotationData.proposedDuration : null,
+          proposedMonthlyFee: quotationData.proposedDuration
+            ? totals.totalAmount / quotationData.proposedDuration
+            : null,
           proposedDeposit: quotationData.proposedDuration ? totals.totalAmount : null,
           rejectionReason: quotationData.rejectionReason || null,
           responseDate: ["ACCEPTED", "REJECTED"].includes(quotationData.status) ? now : null,
-          termsConditions: "- Giá đã bao gồm VAT 10%\n- Thanh toán theo tháng\n- Miễn phí bảo trì và thay thế cây trong thời gian hợp đồng\n- Hợp đồng có hiệu lực khi đã thanh toán tiền cọc",
+          termsConditions:
+            "- Giá đã bao gồm VAT 10%\n- Thanh toán theo tháng\n- Miễn phí bảo trì và thay thế cây trong thời gian hợp đồng\n- Hợp đồng có hiệu lực khi đã thanh toán tiền cọc",
           items: {
             create: itemsWithPrices.map((item) => ({
               plantTypeId: item.plantTypeId,

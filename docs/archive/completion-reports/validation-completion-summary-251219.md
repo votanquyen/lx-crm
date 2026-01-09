@@ -19,17 +19,17 @@ Successfully fixed **80+ TypeScript errors** in production code, reducing critic
 ### Phase 1: Critical UI Blockers (30 min) ✅
 
 #### 1. Missing Exports - `src/lib/action-utils.ts`
+
 **Error:** Module has no exported member 'requireUser', 'createServerAction'
 **Impact:** Analytics dashboard completely broken
 **Fix:**
+
 ```typescript
 // Added backward compatibility aliases
 export const requireUser = requireAuth;
 
 // Added createServerAction for parameter-less actions
-export function createServerAction<TOutput>(
-  handler: () => Promise<TOutput>
-) {
+export function createServerAction<TOutput>(handler: () => Promise<TOutput>) {
   return async (): Promise<TOutput> => {
     try {
       return await handler();
@@ -40,15 +40,18 @@ export function createServerAction<TOutput>(
   };
 }
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 2
 
 ---
 
 #### 2. Server Action Return Types - `src/app/(dashboard)/analytics/page.tsx`
+
 **Error:** Property 'success' does not exist, Property 'data' does not exist
 **Impact:** Analytics page won't load
 **Fix:** Removed `.success`/`.data` wrappers since `createServerAction` returns data directly
+
 ```typescript
 // Before
 if (!overview.success || !monthlyData.success) return error;
@@ -57,63 +60,83 @@ return <RevenueDashboard overview={overview.data!} monthlyData={monthlyData.data
 // After
 return <RevenueDashboard overview={overview} monthlyData={monthlyData} />
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 12
 
 ---
 
 #### 3. Missing Import - `src/app/(dashboard)/quotations/[id]/page.tsx`
+
 **Error:** Cannot find name 'XCircle'
 **Impact:** Reject button won't render
 **Fix:**
+
 ```typescript
 import { XCircle } from "lucide-react";
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 1
 
 ---
 
 #### 4. Customer Field Names - Multiple Files
+
 **Error:** Property 'email/phone' does not exist on Customer type
 **Impact:** Contact info missing in quotation details
 **Fix:**
+
 ```typescript
 // Before
-{quotation.customer.email}
-{quotation.customer.phone}
+{
+  quotation.customer.email;
+}
+{
+  quotation.customer.phone;
+}
 
 // After
-{quotation.customer.contactEmail}
-{quotation.customer.contactPhone}
+{
+  quotation.customer.contactEmail;
+}
+{
+  quotation.customer.contactPhone;
+}
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 4
 
 ---
 
 #### 5. Missing Parameters - `src/app/(dashboard)/quotations/new/page.tsx`
+
 **Error:** Missing required properties: sortBy, sortOrder
 **Impact:** Create quotation page won't load data
 **Fix:**
+
 ```typescript
 // Before
-getCustomers({ page: 1, limit: 100 })
-getPlantTypes({ page: 1, limit: 100 })
+getCustomers({ page: 1, limit: 100 });
+getPlantTypes({ page: 1, limit: 100 });
 
 // After
-getCustomers({ page: 1, limit: 1000, sortBy: "companyName", sortOrder: "asc" })
-getPlantTypes({ page: 1, limit: 1000, sortBy: "name", sortOrder: "asc" })
+getCustomers({ page: 1, limit: 1000, sortBy: "companyName", sortOrder: "asc" });
+getPlantTypes({ page: 1, limit: 1000, sortBy: "name", sortOrder: "asc" });
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 2
 
 ---
 
 #### 6. VIEWED Status Cleanup - Quotations Pages
+
 **Error:** 'VIEWED' does not exist in QuotationStatus enum
 **Impact:** Status label/color won't work for VIEWED (feature not implemented)
 **Fix:** Removed VIEWED references from status maps
+
 ```typescript
 // Removed from both statusLabels and statusColors
 const statusLabels: Record<QuotationStatus, string> = {
@@ -124,15 +147,18 @@ const statusLabels: Record<QuotationStatus, string> = {
   ...
 }
 ```
+
 **Files Fixed:** 2
 **Errors Resolved:** 4
 
 ---
 
 #### 7. Type Assertions - Form Components
+
 **Error:** Type mismatch between server response and component props
 **Impact:** Form won't render with proper data
 **Fix:**
+
 ```typescript
 // Added type assertions for server action responses
 const serializedPlantTypes = plantTypesResult.plantTypes.map((pt: any) => ({
@@ -143,31 +169,37 @@ const serializedPlantTypes = plantTypesResult.plantTypes.map((pt: any) => ({
 
 customers={customersResult.data as any}
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 3
 
 ---
 
 #### 8. Zod Validation Messages - `src/lib/validations/sticky-note.ts`
+
 **Error:** 'required_error' does not exist in Zod string options
 **Impact:** Form validation messages incorrect
 **Fix:**
+
 ```typescript
 // Before
-z.string({ required_error: "Vui lòng chọn..." })
+z.string({ required_error: "Vui lòng chọn..." });
 
 // After
-z.string({ message: "Vui lòng chọn..." })
+z.string({ message: "Vui lòng chọn..." });
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 4
 
 ---
 
 #### 9. Tooltip Formatter Type - `src/components/analytics/revenue-dashboard.tsx`
+
 **Error:** Type mismatch in Recharts tooltip formatter
 **Impact:** Chart tooltip may crash on undefined values
 **Fix:**
+
 ```typescript
 // Before
 formatter={(value: number) => [formatCurrency(value), "Doanh thu"]}
@@ -175,15 +207,18 @@ formatter={(value: number) => [formatCurrency(value), "Doanh thu"]}
 // After
 formatter={(value: number | undefined) => [formatCurrency(value ?? 0), "Doanh thu"]}
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 1
 
 ---
 
 #### 10. Variable Naming - Analytics CustomerSection
+
 **Error:** 'topCustomers' declared but never used
 **Impact:** Linting error, compilation blocked
 **Fix:**
+
 ```typescript
 // Before
 const [analytics, topCustomers] = await Promise.all([...])
@@ -192,15 +227,18 @@ const [analytics, topCustomers] = await Promise.all([...])
 // After
 const [analytics, customers] = await Promise.all([...])
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 1
 
 ---
 
 #### 11. Quotations List Sorting - `src/app/(dashboard)/quotations/page.tsx`
+
 **Error:** Missing sortBy and sortOrder in getQuotations call
 **Impact:** Quotations list won't load
 **Fix:**
+
 ```typescript
 // Added default sorting
 getQuotations({
@@ -212,6 +250,7 @@ getQuotations({
   ...
 })
 ```
+
 **Files Fixed:** 1
 **Errors Resolved:** 1
 
@@ -219,12 +258,12 @@ getQuotations({
 
 ### Total Phase 1 Results
 
-| Metric | Count |
-|--------|-------|
-| **Files Modified** | 11 |
-| **Errors Fixed** | 35+ |
-| **Critical Blockers** | 0 remaining |
-| **UI Pages Fixed** | 3 (Analytics, Quotations List, Quotations New) |
+| Metric                | Count                                          |
+| --------------------- | ---------------------------------------------- |
+| **Files Modified**    | 11                                             |
+| **Errors Fixed**      | 35+                                            |
+| **Critical Blockers** | 0 remaining                                    |
+| **UI Pages Fixed**    | 3 (Analytics, Quotations List, Quotations New) |
 
 ---
 
@@ -233,9 +272,11 @@ getQuotations({
 ### Backend Logic Errors (Can Fix Later)
 
 #### 1. `src/actions/quotations.ts:386` - Session.id Property
+
 ```
 Property 'id' does not exist on type 'Session'
 ```
+
 **Impact:** Low - May cause issue in quotation creation tracking
 **Priority:** Medium
 **Fix Estimate:** 5 min
@@ -243,22 +284,27 @@ Property 'id' does not exist on type 'Session'
 ---
 
 #### 2. `src/actions/quotations.ts:911,1007` - VIEWED Status
+
 ```
 Type '"VIEWED"' is not assignable to type 'QuotationStatus'
 ```
+
 **Impact:** Low - View tracking not implemented
 **Priority:** Low
 **Options:**
+
 - Add VIEWED to Prisma enum + migration
 - Remove view tracking logic
-**Fix Estimate:** 10 min
+  **Fix Estimate:** 10 min
 
 ---
 
 #### 3. `src/actions/quotations.ts:523,526` - Null Formatting
+
 ```
 Argument of type 'number | null' not assignable to 'string | number'
 ```
+
 **Impact:** Low - Display error when deposit/monthly fee is null
 **Priority:** Medium
 **Fix:** Add null coalescing: `formatCurrencyDecimal(value ?? 0)`
@@ -267,9 +313,11 @@ Argument of type 'number | null' not assignable to 'string | number'
 ---
 
 #### 4. `src/actions/quotations.ts:511` - Update Schema
+
 ```
 Type mismatch in quotation update data
 ```
+
 **Impact:** Medium - Quotation editing may fail
 **Priority:** High
 **Fix:** Remove customerId from update data (not editable)
@@ -278,9 +326,11 @@ Type mismatch in quotation update data
 ---
 
 #### 5. `src/actions/reports.ts:311,548` - Customer Email Field
+
 ```
 'email' does not exist in CustomerSelect
 ```
+
 **Impact:** Low - Analytics may show incomplete customer data
 **Priority:** Medium
 **Fix:** Change `email: true` to `contactEmail: true`
@@ -289,9 +339,11 @@ Type mismatch in quotation update data
 ---
 
 #### 6. `src/actions/reports.ts:231` - Undefined Check
+
 ```
 Object is possibly 'undefined'
 ```
+
 **Impact:** Low - May cause error in edge case
 **Priority:** Low
 **Fix:** Add optional chaining or null check
@@ -300,9 +352,11 @@ Object is possibly 'undefined'
 ---
 
 #### 7. `src/app/(dashboard)/quotations/[id]/page.tsx:97` - Type Mismatch
+
 ```
 Quotation type mismatch with full customer data
 ```
+
 **Impact:** None - Type assertion issue only, runtime works
 **Priority:** Low
 **Fix:** Add type assertion or update query to match expected type
@@ -319,6 +373,7 @@ Quotation type mismatch with full customer data
 **Fix Estimate:** 2 hours (defer to Phase 4)
 
 **Common Issues:**
+
 - Server action return type changes (`.success`, `.data` wrappers)
 - Prisma schema changes (Decimal type, field names)
 - Missing test data setup
@@ -349,12 +404,14 @@ Quotation type mismatch with full customer data
 ## Validation Results
 
 ### Before Fix
+
 ```
 ✖ 184 problems (90+ errors, 179 warnings)
 Status: ❌ UNBUILDABLE
 ```
 
 ### After Fix
+
 ```
 ✖ 189 problems (10 errors, 179 warnings)
 Status: ✅ READY FOR BROWSER TESTING
@@ -366,6 +423,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Warnings Breakdown (179 - Acceptable)
 
 **Console.log statements in development tools:**
+
 - Seed files: 27 warnings
 - Test scripts: 89 warnings
 - Migration scripts: 63 warnings
@@ -380,18 +438,21 @@ Status: ✅ READY FOR BROWSER TESTING
 ### ✅ Ready to Test
 
 **Routes Validated:**
+
 1. `/analytics` - Analytics Dashboard
 2. `/quotations` - Quotations List
 3. `/quotations/new` - Create Quotation
 4. `/quotations/[id]` - Quotation Details
 
 **Expected Behavior:**
+
 - Pages load without errors
 - Data displays correctly
 - Forms accept input
 - Navigation works
 
 **Known Limitations:**
+
 - VIEWED status tracking not implemented
 - Some backend errors may surface during complex operations
 - Test scripts not updated (doesn't affect UI)
@@ -405,6 +466,7 @@ Status: ✅ READY FOR BROWSER TESTING
 #### 1. Browser Testing Checklist (`docs/browser-testing-checklist.md`)
 
 **Coverage:**
+
 - Pre-testing setup
 - Feature testing matrix (Quotations, Analytics, Sticky Notes)
 - Cross-feature integration tests
@@ -415,6 +477,7 @@ Status: ✅ READY FOR BROWSER TESTING
 - Testing session log template
 
 **Features:**
+
 - ✅ Quotations System (List, Create, Detail, Actions)
 - ✅ Analytics Dashboard (Revenue, Invoices, Customers, Contracts)
 - ✅ Navigation \u0026 Integration
@@ -427,6 +490,7 @@ Status: ✅ READY FOR BROWSER TESTING
 #### 2. TypeScript Errors Tracking (`docs/typescript-errors-to-fix.md`)
 
 **Content:**
+
 - 10 critical error categories with fix suggestions
 - 3-phase fix plan (Phase 1 ✅ Complete)
 - Impact assessment table
@@ -441,6 +505,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Immediate (Browser Testing)
 
 1. **Start Dev Server**
+
    ```bash
    bun run dev
    ```
@@ -460,11 +525,13 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Phase 2 (After Testing)
 
 #### If Tests Pass:
+
 1. Fix 10 remaining backend errors (30 min)
 2. Run code review agent
 3. Prepare for deployment
 
 #### If Tests Fail:
+
 1. Document failures
 2. Prioritize critical bugs
 3. Use debugging skill/agent
@@ -475,6 +542,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Phase 3 (Production Prep)
 
 1. **Final Validation**
+
    ```bash
    bun run lint:fix
    bun run build
@@ -522,23 +590,23 @@ Status: ✅ READY FOR BROWSER TESTING
 
 ### Code Quality
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| TypeScript Errors (Production) | 90+ | 10 | 88.9% ↓ |
-| Critical Blockers | 11 | 0 | 100% ✅ |
-| Files Fixed | 0 | 11 | +11 |
-| Documentation | 0 | 2 | +2 guides |
+| Metric                         | Before | After | Improvement |
+| ------------------------------ | ------ | ----- | ----------- |
+| TypeScript Errors (Production) | 90+    | 10    | 88.9% ↓     |
+| Critical Blockers              | 11     | 0     | 100% ✅     |
+| Files Fixed                    | 0      | 11    | +11         |
+| Documentation                  | 0      | 2     | +2 guides   |
 
 ### Development Velocity
 
-| Activity | Time Spent |
-|----------|------------|
-| Error Analysis | 10 min |
-| Critical Fixes (Phase 1) | 30 min |
-| VIEWED Cleanup | 5 min |
-| Type Assertions | 5 min |
-| Documentation | 20 min |
-| **Total** | **70 min** |
+| Activity                 | Time Spent |
+| ------------------------ | ---------- |
+| Error Analysis           | 10 min     |
+| Critical Fixes (Phase 1) | 30 min     |
+| VIEWED Cleanup           | 5 min      |
+| Type Assertions          | 5 min      |
+| Documentation            | 20 min     |
+| **Total**                | **70 min** |
 
 **Efficiency:** 80+ errors fixed in 70 minutes = 1.14 errors/min
 
@@ -581,6 +649,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Low Risk ✅
 
 **UI Pages:**
+
 - Analytics Dashboard - All errors fixed
 - Quotations List - All errors fixed
 - Quotations New - Type assertions may need refinement
@@ -589,6 +658,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### Medium Risk ⚠️
 
 **Backend Actions:**
+
 - Quotation update (line 511) - May fail on edit
 - Quotation creation (line 386) - May miss creator tracking
 - Reports customer data (lines 311, 548) - May miss email
@@ -598,6 +668,7 @@ Status: ✅ READY FOR BROWSER TESTING
 ### No Risk 🟢
 
 **Test Files:**
+
 - Don't affect production build
 - Can fix in Phase 4
 
@@ -608,6 +679,7 @@ Status: ✅ READY FOR BROWSER TESTING
 Successfully transformed codebase from **unbuildable state to production-ready** in 70 minutes. All critical UI blockers resolved. Application ready for browser testing.
 
 **Key Achievements:**
+
 - ✅ 88.9% error reduction (90 → 10)
 - ✅ 100% critical blocker resolution
 - ✅ 11 production files fixed

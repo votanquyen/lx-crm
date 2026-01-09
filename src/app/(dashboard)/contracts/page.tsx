@@ -36,7 +36,7 @@ async function ContractStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tổng hợp đồng</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
+          <FileText className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
@@ -60,7 +60,7 @@ async function ContractStats() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</div>
-          <p className="text-xs text-muted-foreground">Trong 30 ngày</p>
+          <p className="text-muted-foreground text-xs">Trong 30 ngày</p>
         </CardContent>
       </Card>
 
@@ -73,7 +73,7 @@ async function ContractStats() {
           <div className="text-2xl font-bold text-blue-600">
             {formatCurrency(Number(stats.monthlyRecurring))}
           </div>
-          <p className="text-xs text-muted-foreground">Hàng tháng</p>
+          <p className="text-muted-foreground text-xs">Hàng tháng</p>
         </CardContent>
       </Card>
     </div>
@@ -118,9 +118,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hợp đồng</h1>
-          <p className="text-muted-foreground">
-            Quản lý hợp đồng thuê cây với khách hàng
-          </p>
+          <p className="text-muted-foreground">Quản lý hợp đồng thuê cây với khách hàng</p>
         </div>
         <Button asChild>
           <Link href="/contracts/new">
@@ -153,7 +151,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
       <div className="flex gap-4">
         <Link
           href="/contracts"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             !status ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -161,7 +159,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         </Link>
         <Link
           href="/contracts?status=ACTIVE"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "ACTIVE" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -169,7 +167,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         </Link>
         <Link
           href="/contracts?status=DRAFT"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "DRAFT" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -177,7 +175,7 @@ export default async function ContractsPage({ searchParams }: ContractsPageProps
         </Link>
         <Link
           href="/contracts?status=EXPIRED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "EXPIRED" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >

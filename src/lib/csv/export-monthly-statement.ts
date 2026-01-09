@@ -11,8 +11,7 @@ import { arrayToCSV, formatDateForCSV } from "./csv-utils";
  * Export monthly statement to CSV format (Excel compatible)
  */
 export function generateMonthlyStatementCSV(statement: StatementDTO): string {
-  const { customer, periodStart, periodEnd, contactName, plants } =
-    statement;
+  const { customer, periodStart, periodEnd, contactName, plants } = statement;
 
   // Company header (3 lines)
   const companyHeader = [
@@ -71,11 +70,7 @@ export function generateMonthlyStatementCSV(statement: StatementDTO): string {
 /**
  * Generate filename for monthly statement export
  */
-export function getStatementFilename(
-  companyName: string,
-  year: number,
-  month: number
-): string {
+export function getStatementFilename(companyName: string, year: number, month: number): string {
   const safeCompanyName = companyName
     .replace(/[^a-zA-Z0-9]/g, "-")
     .replace(/-+/g, "-")
@@ -100,9 +95,7 @@ export interface StatementSummary {
   confirmedAt: string | null;
 }
 
-export function generateStatementsSummaryCSV(
-  statements: StatementSummary[]
-): string {
+export function generateStatementsSummaryCSV(statements: StatementSummary[]): string {
   const formattedData = statements.map((stmt) => ({
     ...stmt,
     needsConfirmation: stmt.needsConfirmation ? "Chưa xác nhận" : "Đã xác nhận",

@@ -225,6 +225,8 @@ export const updateMonthlyStatement = createAction(
     const {
       id,
       contactName,
+      periodStart,
+      periodEnd,
       plants,
       vatRate = 8,
       notes,
@@ -252,6 +254,8 @@ export const updateMonthlyStatement = createAction(
       where: { id },
       data: {
         contactName,
+        ...(periodStart && { periodStart: new Date(periodStart) }),
+        ...(periodEnd && { periodEnd: new Date(periodEnd) }),
         plants: plants as unknown as Prisma.InputJsonValue,
         subtotal,
         vatRate,
@@ -480,6 +484,7 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       code: true,
       companyName: true,
       shortName: true,
+      address: true,
       district: true,
       contactName: true,
     },
@@ -502,4 +507,25 @@ export const getUnconfirmedCount = createSimpleAction(async () => {
   });
 
   return count;
+});
+
+/**
+ * Get available years with statement data
+ */
+export const getAvailableYears = createSimpleAction(async () => {
+  const result = await prisma.monthlyStatement.findMany({
+    select: { year: true },
+    distinct: ["year"],
+    orderBy: { year: "desc" },
+  });
+
+  const years = result.map((r) => r.year);
+
+  // Always include current year even if no data
+  const currentYear = new Date().getFullYear();
+  if (!years.includes(currentYear)) {
+    years.unshift(currentYear);
+  }
+
+  return years.sort((a, b) => b - a);
 });

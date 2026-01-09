@@ -9,12 +9,14 @@
 ## Quick Start (5 Minutes)
 
 **Pre-Setup Checklist:**
+
 - [ ] MinIO server accessible (external host or VPS)
 - [ ] Domain or IP for MinIO (`minio.yourserver.com`)
 - [ ] SSL certificate (Let's Encrypt recommended)
 - [ ] Firewall ports open (9000, 9001)
 
 **Setup Steps:**
+
 1. Install MinIO server OR use S3InterData provider
 2. Configure systemd service (self-hosted) OR get credentials (S3InterData)
 3. Create bucket: `locxanh-photos`
@@ -30,6 +32,7 @@
 ### Configuration
 
 **Credentials (Production):**
+
 ```bash
 MINIO_ENDPOINT=https://api.node02.s3interdata.com
 MINIO_USE_SSL=true
@@ -43,12 +46,14 @@ MINIO_PUBLIC_URL=https://api.node02.s3interdata.com/s3-10552-36074-storage-defau
 ### Set Bucket Policy
 
 **Script:** `scripts/set-bucket-policy.ts`
+
 ```bash
 bun add @aws-sdk/s3-request-presigner
 bun run scripts/set-bucket-policy.ts
 ```
 
 **Policy Applied:**
+
 ```json
 {
   "Version": "2012-10-17",
@@ -66,12 +71,12 @@ bun run scripts/set-bucket-policy.ts
 
 ### Performance Metrics
 
-| Metric | Value |
-|--------|-------|
-| Upload Speed | 8-9 MB/s |
-| Time to Upload 5MB | ~0.6s |
-| Connection Latency | <100ms |
-| Public URL Access | <200ms |
+| Metric             | Value    |
+| ------------------ | -------- |
+| Upload Speed       | 8-9 MB/s |
+| Time to Upload 5MB | ~0.6s    |
+| Connection Latency | <100ms   |
+| Public URL Access  | <200ms   |
 
 ---
 
@@ -80,6 +85,7 @@ bun run scripts/set-bucket-policy.ts
 ### Step 1: Install MinIO Server
 
 **On Ubuntu/Debian:**
+
 ```bash
 # Download MinIO binary
 wget https://dl.min.io/server/minio/release/linux-amd64/minio
@@ -93,6 +99,7 @@ sudo chown minio-user:minio-user /mnt/data/minio
 ```
 
 **On Windows:**
+
 ```powershell
 # Download from https://dl.min.io/server/minio/release/windows-amd64/minio.exe
 # Move to C:\minio\minio.exe
@@ -101,6 +108,7 @@ sudo chown minio-user:minio-user /mnt/data/minio
 ### Step 2: Configure MinIO
 
 **Create environment file:** `/etc/default/minio`
+
 ```bash
 # MinIO root credentials
 MINIO_ROOT_USER=minioadmin
@@ -117,6 +125,7 @@ MINIO_BROWSER_REDIRECT_URL="https://console.minio.yourserver.com"
 ### Step 3: Create Systemd Service
 
 **File:** `/etc/systemd/system/minio.service`
+
 ```ini
 [Unit]
 Description=MinIO
@@ -170,6 +179,7 @@ sudo journalctl -u minio.service -f
 ### Step 5: Configure Nginx Reverse Proxy (HTTPS)
 
 **File:** `/etc/nginx/sites-available/minio`
+
 ```nginx
 # MinIO API
 server {
@@ -253,6 +263,7 @@ server {
 ```
 
 **Enable site:**
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/minio /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -278,8 +289,9 @@ sudo systemctl enable certbot.timer
 ## Option 3: Docker Compose (Development)
 
 **File:** `docker-compose.minio.yml`
+
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   minio:
@@ -287,8 +299,8 @@ services:
     container_name: minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"  # API
-      - "9001:9001"  # Console
+      - "9000:9000" # API
+      - "9001:9001" # Console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin-change-this
@@ -310,6 +322,7 @@ networks:
 ```
 
 **Start:**
+
 ```bash
 docker-compose -f docker-compose.minio.yml up -d
 ```
@@ -323,6 +336,7 @@ docker-compose -f docker-compose.minio.yml up -d
 Open browser: `https://console.minio.yourserver.com`
 
 Login:
+
 - Username: `minioadmin`
 - Password: `minioadmin-change-this`
 
@@ -335,6 +349,7 @@ Login:
 ### Step 3: Set Bucket Policy (Public Read)
 
 **Policy JSON:**
+
 ```json
 {
   "Version": "2012-10-17",
@@ -344,18 +359,15 @@ Login:
       "Principal": {
         "AWS": ["*"]
       },
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::locxanh-photos/*"
-      ]
+      "Action": ["s3:GetObject"],
+      "Resource": ["arn:aws:s3:::locxanh-photos/*"]
     }
   ]
 }
 ```
 
 **Apply via Console:**
+
 1. Click bucket `locxanh-photos`
 2. Go to **Access** tab
 3. Click **Add Access Rule**
@@ -363,6 +375,7 @@ Login:
 5. Access: **readonly** or **readwrite**
 
 **Apply via mc CLI:**
+
 ```bash
 # Install mc
 wget https://dl.min.io/client/mc/release/linux-amd64/mc
@@ -379,6 +392,7 @@ mc anonymous set download myminio/locxanh-photos
 ### Step 4: Configure CORS
 
 **CORS Rules (via Console):**
+
 1. Bucket → **Settings** → **CORS**
 2. Add rule:
 
@@ -398,6 +412,7 @@ mc anonymous set download myminio/locxanh-photos
 ```
 
 **Via mc CLI:**
+
 ```bash
 # Create cors.json
 cat > cors.json << EOF
@@ -420,12 +435,14 @@ mc cors set myminio/locxanh-photos cors.json
 ### Step 5: Create Access Keys
 
 **Via Console:**
+
 1. **Identity** → **Service Accounts**
 2. Click **Create Service Account**
 3. Copy Access Key and Secret Key
 4. Save to `.env` file
 
 **Via mc CLI:**
+
 ```bash
 mc admin user add myminio locxanh-app
 mc admin policy attach myminio readwrite --user locxanh-app
@@ -438,6 +455,7 @@ mc admin policy attach myminio readwrite --user locxanh-app
 ### Environment Variables
 
 **File:** `.env`
+
 ```bash
 # MinIO S3 Configuration
 MINIO_ENDPOINT=https://minio.yourserver.com
@@ -454,6 +472,7 @@ MINIO_PUBLIC_URL=https://minio.yourserver.com/locxanh-photos
 ### Test Connection
 
 **Script:** `scripts/test-minio-connection.ts`
+
 ```typescript
 import { S3Client, ListBucketsCommand } from "@aws-sdk/client-s3";
 
@@ -474,7 +493,10 @@ async function testConnection() {
     const response = await client.send(command);
 
     console.log("✅ MinIO connection successful!");
-    console.log("Buckets:", response.Buckets?.map(b => b.Name));
+    console.log(
+      "Buckets:",
+      response.Buckets?.map((b) => b.Name)
+    );
   } catch (error) {
     console.error("❌ MinIO connection failed:", error);
   }
@@ -484,6 +506,7 @@ testConnection();
 ```
 
 **Run:**
+
 ```bash
 bun run scripts/test-minio-connection.ts
 ```
@@ -511,6 +534,7 @@ Photo displays in care detail page
 ```
 
 **Example URL:**
+
 ```
 https://api.node02.s3interdata.com/s3-10552-36074-storage-default/care/1766136600327-i8s56s-care-test.jpg
 ```
@@ -552,9 +576,9 @@ const handlePhotoUpload = async (file: File) => {
 
 ```tsx
 // In care detail page
-{schedule.photoUrls?.map((url, index) => (
-  <img key={index} src={url} alt={`Photo ${index + 1}`} />
-))}
+{
+  schedule.photoUrls?.map((url, index) => <img key={index} src={url} alt={`Photo ${index + 1}`} />);
+}
 ```
 
 ---
@@ -562,6 +586,7 @@ const handlePhotoUpload = async (file: File) => {
 ## Troubleshooting
 
 ### Connection Refused
+
 ```bash
 # Check MinIO is running
 sudo systemctl status minio.service
@@ -575,6 +600,7 @@ sudo ufw allow 9001/tcp
 ```
 
 ### CORS Errors
+
 ```bash
 # Verify CORS configuration
 mc cors get myminio/locxanh-photos
@@ -584,6 +610,7 @@ mc cors set myminio/locxanh-photos cors.json
 ```
 
 ### SSL Certificate Issues
+
 ```bash
 # Verify certificate
 curl -v https://minio.yourserver.com
@@ -596,6 +623,7 @@ sudo nginx -t
 ```
 
 ### Upload Fails
+
 ```bash
 # Check bucket policy
 mc policy get myminio/locxanh-photos
@@ -609,6 +637,7 @@ client_max_body_size 100M;
 ```
 
 ### Access Denied
+
 ```bash
 # Verify credentials
 mc alias ls
@@ -625,6 +654,7 @@ mc admin policy info myminio readwrite
 ## Security Best Practices
 
 ### 1. Change Default Credentials
+
 ```bash
 # Update in /etc/default/minio
 MINIO_ROOT_USER=admin-custom
@@ -632,21 +662,25 @@ MINIO_ROOT_PASSWORD=strong-password-here
 ```
 
 ### 2. Use Service Accounts
+
 - Create separate service account for app
 - Don't use root credentials in app
 - Rotate keys regularly
 
 ### 3. Enable HTTPS Only
+
 - Use SSL certificates (Let's Encrypt)
 - Redirect HTTP to HTTPS
 - Set `MINIO_USE_SSL=true`
 
 ### 4. Restrict Bucket Access
+
 - Public read-only for photos
 - Write access via API only
 - Use presigned URLs for sensitive files
 
 ### 5. Monitor Storage
+
 ```bash
 # Check disk usage
 mc admin info myminio
@@ -660,6 +694,7 @@ mc admin bucket quota myminio/locxanh-photos --size 10GB
 ## Performance Optimization
 
 ### 1. Enable Caching (Nginx)
+
 ```nginx
 location / {
     proxy_cache minio_cache;
@@ -670,11 +705,13 @@ location / {
 ```
 
 ### 2. Use CDN
+
 - CloudFlare in front of MinIO
 - Cache static assets
 - DDoS protection
 
 ### 3. Compression
+
 ```nginx
 gzip on;
 gzip_types image/jpeg image/png;
@@ -686,6 +723,7 @@ gzip_min_length 1000;
 ## Monitoring
 
 ### Check Health
+
 ```bash
 # Health check endpoint
 curl https://minio.yourserver.com/minio/health/live
@@ -695,6 +733,7 @@ curl https://minio.yourserver.com/minio/v2/metrics/cluster
 ```
 
 ### Logs
+
 ```bash
 # MinIO logs
 sudo journalctl -u minio.service -f
@@ -711,6 +750,7 @@ sudo tail -f /var/log/nginx/error.log
 ## Testing Checklist
 
 ### Server Tests
+
 - [ ] MinIO service running
 - [ ] Nginx reverse proxy working
 - [ ] SSL certificate valid
@@ -718,6 +758,7 @@ sudo tail -f /var/log/nginx/error.log
 - [ ] Console accessible
 
 ### Application Tests
+
 - [ ] Connection test passes: `bun run scripts/test-minio-upload.ts`
 - [ ] Upload test passes
 - [ ] Public URL accessible
@@ -726,6 +767,7 @@ sudo tail -f /var/log/nginx/error.log
 - [ ] Large file upload works (5MB tested at 8-9 MB/s)
 
 ### Browser Tests
+
 - [ ] Photo upload from care form
 - [ ] Photo preview works
 - [ ] Photo displays in detail view
@@ -741,6 +783,7 @@ sudo tail -f /var/log/nginx/error.log
 **Bucket URL:** `https://minio.yourserver.com/locxanh-photos`
 
 **Systemd Commands:**
+
 ```bash
 sudo systemctl status minio    # Check status
 sudo systemctl start minio     # Start service
@@ -750,6 +793,7 @@ sudo journalctl -u minio -f    # View logs
 ```
 
 **mc CLI Commands:**
+
 ```bash
 mc ls myminio/locxanh-photos                    # List files
 mc cp photo.jpg myminio/locxanh-photos/         # Upload file

@@ -36,9 +36,7 @@ export default async function NewQuotationPage() {
       <Card>
         <CardHeader>
           <CardTitle>Thông tin báo giá</CardTitle>
-          <CardDescription>
-            Điền thông tin báo giá và chọn sản phẩm
-          </CardDescription>
+          <CardDescription>Điền thông tin báo giá và chọn sản phẩm</CardDescription>
         </CardHeader>
         <CardContent>
           <QuotationForm

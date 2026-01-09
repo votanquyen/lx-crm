@@ -9,7 +9,7 @@ import { getCustomers, getDistricts, getCustomerStats } from "@/actions/customer
 import { CustomerSearch, CustomerFilters, CustomerTable } from "@/components/customers";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
 
 interface PageProps {
   searchParams: Promise<{
@@ -17,7 +17,6 @@ interface PageProps {
     limit?: string;
     search?: string;
     status?: CustomerStatus;
-    tier?: CustomerTier;
     district?: string;
     hasDebt?: string;
   }>;
@@ -35,7 +34,6 @@ export default async function CustomersPage({ searchParams }: PageProps) {
       limit,
       search: params.search,
       status: params.status,
-      tier: params.tier,
       district: params.district,
       hasDebt: params.hasDebt === "true",
     }),
@@ -72,11 +70,10 @@ export default async function CustomersPage({ searchParams }: PageProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Tổng cộng" value={stats.total} />
         <StatCard title="Hoạt động" value={stats.active} variant="success" />
         <StatCard title="Tiềm năng" value={stats.leads} variant="info" />
-        <StatCard title="VIP" value={stats.vip} variant="warning" />
         <StatCard title="Còn nợ" value={stats.withDebt} variant="danger" />
       </div>
 
@@ -91,23 +88,24 @@ export default async function CustomersPage({ searchParams }: PageProps) {
       {/* Table */}
       <Suspense fallback={<TableSkeleton />}>
         <CustomerTable
-          customers={customersResult.data as Array<{
-            id: string;
-            code: string;
-            companyName: string;
-            address: string;
-            district: string | null;
-            contactName: string | null;
-            contactPhone: string | null;
-            contactEmail: string | null;
-            status: CustomerStatus;
-            tier: CustomerTier;
-            _count?: {
-              customerPlants: number;
-              stickyNotes: number;
-              contracts: number;
-            };
-          }>}
+          customers={
+            customersResult.data as Array<{
+              id: string;
+              code: string;
+              companyName: string;
+              address: string;
+              district: string | null;
+              contactName: string | null;
+              contactPhone: string | null;
+              contactEmail: string | null;
+              status: CustomerStatus;
+              _count?: {
+                customerPlants: number;
+                stickyNotes: number;
+                contracts: number;
+              };
+            }>
+          }
           pagination={customersResult.pagination}
         />
       </Suspense>
@@ -134,7 +132,7 @@ function StatCard({
 
   return (
     <div className={`rounded-lg border p-4 ${variantClasses[variant]}`}>
-      <p className="text-sm text-muted-foreground">{title}</p>
+      <p className="text-muted-foreground text-sm">{title}</p>
       <p className="text-2xl font-bold">{value}</p>
     </div>
   );

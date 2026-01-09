@@ -93,7 +93,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
       {/* Invoice Info */}
-      <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+      <div className="bg-muted/50 space-y-2 rounded-lg border p-4">
         <h3 className="font-semibold">Thông tin hóa đơn</h3>
         <div className="grid gap-2 text-sm">
           <div className="flex justify-between">
@@ -116,9 +116,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
           </div>
           <div className="flex justify-between border-t pt-2">
             <span className="text-muted-foreground font-semibold">Còn lại:</span>
-            <span className="font-bold text-orange-600">
-              {remainingBalance.toLocaleString()}đ
-            </span>
+            <span className="font-bold text-orange-600">{remainingBalance.toLocaleString()}đ</span>
           </div>
         </div>
       </div>
@@ -142,7 +140,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
             {form.formState.errors.amount && (
               <p className="text-sm text-red-500">{form.formState.errors.amount.message}</p>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Tối đa: {remainingBalance.toLocaleString()}đ
             </p>
           </div>
@@ -206,12 +204,20 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="bankName">Ngân hàng</Label>
-              <Input id="bankName" {...form.register("bankName")} placeholder="Vietcombank, BIDV..." />
+              <Input
+                id="bankName"
+                {...form.register("bankName")}
+                placeholder="Vietcombank, BIDV..."
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="accountNumber">Số tài khoản</Label>
-              <Input id="accountNumber" {...form.register("accountNumber")} placeholder="0123456789" />
+              <Input
+                id="accountNumber"
+                {...form.register("accountNumber")}
+                placeholder="0123456789"
+              />
             </div>
           </div>
 
@@ -280,7 +286,12 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {payment ? "Cập nhật thanh toán" : "Ghi nhận thanh toán"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          disabled={isSubmitting}
+        >
           Hủy
         </Button>
       </div>

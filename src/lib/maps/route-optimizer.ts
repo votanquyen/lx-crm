@@ -132,11 +132,7 @@ function parseDirectionsResponse(
   const lastStop = stops[stops.length - 1]!;
   const reorderedStops: Stop[] = hasStartLocation
     ? stops
-    : [
-        firstStop,
-        ...waypointOrder.map((index: number) => stops[index + 1]!),
-        lastStop,
-      ];
+    : [firstStop, ...waypointOrder.map((index: number) => stops[index + 1]!), lastStop];
 
   // Calculate waypoints with ETAs
   const waypoints = [];

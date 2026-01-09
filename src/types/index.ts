@@ -25,7 +25,6 @@ export type {
 export {
   UserRole,
   CustomerStatus,
-  CustomerTier,
   ContractStatus,
   InvoiceStatus,
   PaymentMethod,
@@ -33,7 +32,6 @@ export {
   ExchangeStatus,
   ExchangePriority,
   NoteStatus,
-  
   NoteCategory,
   PlantStatus,
 } from "@prisma/client";

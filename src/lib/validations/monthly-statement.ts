@@ -26,10 +26,13 @@ export const updateMonthlyStatementSchema = z.object({
   id: z.string().cuid("ID bảng kê không hợp lệ"),
   // Header fields
   contactName: z.string().optional(),
+  // Period dates (Đợt)
+  periodStart: z.string().datetime().optional(),
+  periodEnd: z.string().datetime().optional(),
   // Plants
   plants: z.array(plantItemSchema),
-  // VAT rate
-  vatRate: z.number().min(0).max(20).default(8),
+  // VAT rate (fixed options: 5, 8, 10)
+  vatRate: z.union([z.literal(5), z.literal(8), z.literal(10)]).default(8),
   // Notes
   notes: z.string().optional(),
   internalNotes: z.string().optional(),

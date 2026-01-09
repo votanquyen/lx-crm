@@ -9,11 +9,13 @@ This project uses **Prisma Migrate** for database schema version control. Migrat
 ⚠️ **CRITICAL:** Initial migration needs to be generated!
 
 **Current State:**
+
 - ❌ No migrations directory exists
 - ❌ Using `prisma db push` (development only, unsafe for production)
 - ✅ Complete schema in `prisma/schema.prisma`
 
 **Required Action:**
+
 ```bash
 # Generate initial migration (requires PostgreSQL running)
 pnpm prisma migrate dev --name init
@@ -26,6 +28,7 @@ pnpm prisma migrate dev --name init
 ### 1. PostgreSQL 17 with PostGIS 3.5
 
 **Using Docker (Recommended):**
+
 ```bash
 # Start database
 docker compose up -d db
@@ -38,6 +41,7 @@ docker compose logs db
 ```
 
 **Manual Installation:**
+
 ```bash
 # Ubuntu/Debian
 sudo apt install postgresql-17 postgresql-17-postgis-3
@@ -53,6 +57,7 @@ brew install postgresql@17 postgis
 ### 2. Environment Variables
 
 Ensure `.env` contains:
+
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/locxanh?schema=public"
 ```
@@ -64,6 +69,7 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/locxanh?schema=publi
 ### Creating First Migration (Initial Setup)
 
 **Step 1: Ensure database is running**
+
 ```bash
 # Docker
 docker compose up -d db
@@ -73,16 +79,19 @@ pg_isready -h localhost -p 5432 -U postgres
 ```
 
 **Step 2: Generate initial migration**
+
 ```bash
 pnpm prisma migrate dev --name init
 ```
 
 This will:
+
 1. Create `prisma/migrations/YYYYMMDDHHMMSS_init/migration.sql`
 2. Apply migration to development database
 3. Generate Prisma Client with latest schema
 
 **Step 3: Review generated SQL**
+
 ```bash
 # Linux/macOS
 cat prisma/migrations/*/migration.sql
@@ -92,6 +101,7 @@ type prisma\migrations\*\migration.sql
 ```
 
 **Step 4: Commit migration**
+
 ```bash
 git add prisma/migrations
 git commit -m "feat(db): add initial Prisma migration"
@@ -100,6 +110,7 @@ git commit -m "feat(db): add initial Prisma migration"
 ### Making Schema Changes
 
 **Workflow:**
+
 1. Modify `prisma/schema.prisma`
 2. Generate migration: `pnpm prisma migrate dev --name descriptive_name`
 3. Review generated SQL
@@ -107,6 +118,7 @@ git commit -m "feat(db): add initial Prisma migration"
 5. Commit migration files
 
 **Example: Adding a new field**
+
 ```prisma
 // prisma/schema.prisma
 model Customer {
@@ -131,28 +143,28 @@ pnpm prisma migrate dev --name add_customer_tax_id
 
 ### Development
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `pnpm prisma migrate dev` | Create & apply migration | Schema changes in development |
-| `pnpm prisma migrate dev --name <name>` | Create named migration | Schema changes (recommended) |
-| `pnpm prisma migrate dev --create-only` | Create migration without applying | Review SQL before applying |
-| `pnpm prisma db push` | Sync schema without migration | **ONLY for prototyping** |
+| Command                                 | Purpose                           | When to Use                   |
+| --------------------------------------- | --------------------------------- | ----------------------------- |
+| `pnpm prisma migrate dev`               | Create & apply migration          | Schema changes in development |
+| `pnpm prisma migrate dev --name <name>` | Create named migration            | Schema changes (recommended)  |
+| `pnpm prisma migrate dev --create-only` | Create migration without applying | Review SQL before applying    |
+| `pnpm prisma db push`                   | Sync schema without migration     | **ONLY for prototyping**      |
 
 ### Production
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `pnpm prisma migrate deploy` | Apply pending migrations | Production deployments |
-| `pnpm prisma migrate status` | Check migration status | Verify production state |
+| Command                                        | Purpose                   | When to Use                 |
+| ---------------------------------------------- | ------------------------- | --------------------------- |
+| `pnpm prisma migrate deploy`                   | Apply pending migrations  | Production deployments      |
+| `pnpm prisma migrate status`                   | Check migration status    | Verify production state     |
 | `pnpm prisma migrate resolve --applied <name>` | Mark migration as applied | Resolve migration conflicts |
 
 ### Utilities
 
-| Command | Purpose |
-|---------|---------|
+| Command                     | Purpose                                   |
+| --------------------------- | ----------------------------------------- |
 | `pnpm prisma migrate reset` | Drop database, apply all migrations, seed |
-| `pnpm prisma migrate diff` | Compare database with schema |
-| `pnpm prisma db seed` | Run seed script |
+| `pnpm prisma migrate diff`  | Compare database with schema              |
+| `pnpm prisma db seed`       | Run seed script                           |
 
 ---
 
@@ -161,6 +173,7 @@ pnpm prisma migrate dev --name add_customer_tax_id
 ### Vercel Deployment
 
 Add to build command in `package.json`:
+
 ```json
 {
   "scripts": {
@@ -170,6 +183,7 @@ Add to build command in `package.json`:
 ```
 
 **Vercel Configuration:**
+
 1. Set `DATABASE_URL` in environment variables
 2. Deploy will automatically run migrations
 3. Verify with: `pnpm prisma migrate status`
@@ -197,6 +211,7 @@ pnpm prisma db seed
 ### ✅ DO
 
 1. **Always use descriptive migration names**
+
    ```bash
    # Good
    pnpm prisma migrate dev --name add_customer_loyalty_points
@@ -213,6 +228,7 @@ pnpm prisma db seed
    - Ensure foreign keys are correct
 
 3. **Test migrations on staging before production**
+
    ```bash
    # Staging environment
    DATABASE_URL="postgresql://staging..." pnpm prisma migrate deploy
@@ -235,6 +251,7 @@ pnpm prisma db seed
    - Create new migration to fix issues
 
 2. **Never use `db push` in production**
+
    ```bash
    # Development only!
    pnpm prisma db push
@@ -323,6 +340,7 @@ pm2 restart locxanh
 ### Scenario 4: Rollback Migration (Emergency)
 
 **Option A: Restore from backup**
+
 ```bash
 # 1. Restore database from backup
 psql -h localhost -U postgres locxanh < backup_before_migration.sql
@@ -334,6 +352,7 @@ pnpm prisma migrate resolve --rolled-back <migration_name>
 ```
 
 **Option B: Manual rollback**
+
 ```bash
 # 1. Manually reverse SQL changes
 psql -h localhost -U postgres locxanh
@@ -354,6 +373,7 @@ pnpm prisma db pull
 **Cause:** Someone used `db push` or made manual changes
 
 **Solution:**
+
 ```bash
 # Option 1: Reset and reapply (development only)
 pnpm prisma migrate reset
@@ -367,6 +387,7 @@ pnpm prisma migrate resolve --applied <migration_name>
 **Cause:** Database state conflicts with migration
 
 **Solution:**
+
 ```bash
 # 1. Check database state
 pnpm prisma migrate status
@@ -386,6 +407,7 @@ pnpm prisma migrate resolve --applied <migration_name>
 **Cause:** Wrong database credentials or database not running
 
 **Solution:**
+
 ```bash
 # Check database is running
 docker compose ps
@@ -404,6 +426,7 @@ docker compose up -d db
 Our schema requires PostgreSQL extensions. These are automatically created by the initial migration.
 
 **Required Extensions:**
+
 ```sql
 -- PostGIS (spatial data)
 CREATE EXTENSION IF NOT EXISTS postgis VERSION '3.5.0';
@@ -416,6 +439,7 @@ CREATE EXTENSION IF NOT EXISTS unaccent;
 ```
 
 **Verify extensions:**
+
 ```sql
 SELECT * FROM pg_extension;
 ```
@@ -437,6 +461,7 @@ prisma/
 ```
 
 **Migration Naming Convention:**
+
 ```
 YYYYMMDDHHMMSS_descriptive_name
 │              │
@@ -458,6 +483,7 @@ pnpm prisma db seed
 ```
 
 **Seed script creates:**
+
 - Admin user
 - Sample plant types
 - Sample customers

@@ -30,6 +30,7 @@
 ### Core Principles
 
 **1. Vietnamese-First**
+
 - All user-facing text in Vietnamese
 - Currency: Vietnamese Dong (₫) with proper formatting
 - Dates: DD/MM/YYYY format
@@ -37,12 +38,14 @@
 - Addresses: Vietnamese address hierarchy
 
 **2. Clarity Over Decoration**
+
 - Every element must serve a purpose
 - White space is a design element, not wasted space
 - Clear visual hierarchy
 - Consistent patterns across all screens
 
 **3. Accessibility First**
+
 - WCAG 2.1 AA compliance
 - Keyboard navigation support
 - Screen reader compatibility
@@ -50,12 +53,14 @@
 - Focus indicators on all interactive elements
 
 **4. Performance-Centric**
+
 - Fast initial load (< 2 seconds)
 - Smooth interactions (60fps)
 - Optimized images and assets
 - Lazy loading for heavy content
 
 **5. Mobile-Responsive**
+
 - Mobile-first approach
 - Touch-friendly targets (min 44x44px)
 - Responsive breakpoints: 320px, 768px, 1024px, 1280px
@@ -68,6 +73,7 @@
 ### Text & Content
 
 **User-Facing Messages:**
+
 ```typescript
 // ✅ Correct - Vietnamese
 export const MESSAGES = {
@@ -182,16 +188,16 @@ export function formatAddress(
 ```css
 :root {
   /* Brand Colors */
-  --primary-50: #f0fdf4;   /* Lightest */
+  --primary-50: #f0fdf4; /* Lightest */
   --primary-100: #dcfce7;
   --primary-200: #bbf7d0;
   --primary-300: #86efac;
   --primary-400: #4ade80;
-  --primary-500: #22c55e;  /* Main brand */
+  --primary-500: #22c55e; /* Main brand */
   --primary-600: #16a34a;
   --primary-700: #15803d;
   --primary-800: #166534;
-  --primary-900: #14532d;  /* Darkest */
+  --primary-900: #14532d; /* Darkest */
 
   /* Secondary - Plant Green */
   --secondary-500: #10b981;
@@ -279,8 +285,8 @@ const buttonVariants = {
 ```css
 :root {
   /* Primary - System fonts for performance */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-               "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* Vietnamese support */
   --font-vietnamese: "SF Pro VN", "Segoe UI", system-ui, sans-serif;
@@ -297,14 +303,14 @@ const buttonVariants = {
   /* Base: 16px (1rem) */
 
   /* Text sizes */
-  --text-xs: 0.75rem;    /* 12px */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.125rem;   /* 18px */
-  --text-xl: 1.25rem;    /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
 
   /* Line heights */
   --leading-none: 1;
@@ -390,6 +396,7 @@ src/components/
 ### Component Pattern
 
 **Standard Component Template:**
+
 ```typescript
 // ✅ Standard component structure
 import * as React from "react";
@@ -550,21 +557,41 @@ export function CustomerForm() {
 }
 
 /* Responsive columns */
-.grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
-.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-1 {
+  grid-template-columns: repeat(1, 1fr);
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 @media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .md\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .lg\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-  .lg\:grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .lg\:grid-cols-6 {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 ```
 
@@ -573,23 +600,24 @@ export function CustomerForm() {
 ```css
 :root {
   /* 4px base unit */
-  --space-1: 0.25rem;  /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
-  --space-16: 4rem;    /* 64px */
-  --space-20: 5rem;    /* 80px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
 }
 ```
 
 ### Common Layout Patterns
 
 **Dashboard Layout:**
+
 ```typescript
 // ✅ Dashboard with sidebar
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -617,6 +645,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 ```
 
 **Card Layout:**
+
 ```typescript
 // ✅ Card component
 export function Card({ children, className }: CardProps) {
@@ -778,19 +807,11 @@ export const customerSchema = z.object({
     .nullable()
     .or(z.literal("")),
 
-  address: z
-    .string()
-    .min(1, "Địa chỉ không được để trống")
-    .max(500, "Địa chỉ tối đa 500 ký tự"),
+  address: z.string().min(1, "Địa chỉ không được để trống").max(500, "Địa chỉ tối đa 500 ký tự"),
 
   tier: z.enum(["STANDARD", "PREMIUM", "VIP"]).default("STANDARD"),
 
-  floorCount: z
-    .number()
-    .int()
-    .positive("Số tầng phải lớn hơn 0")
-    .optional()
-    .nullable(),
+  floorCount: z.number().int().positive("Số tầng phải lớn hơn 0").optional().nullable(),
 });
 ```
 
@@ -1184,16 +1205,16 @@ export function LoadingButton({
 // ✅ Ensure minimum 4.5:1 contrast ratio
 // Primary text on white background
 const textColors = {
-  primary: "text-gray-900",    // 15.9:1
-  secondary: "text-gray-700",  // 7.0:1
-  tertiary: "text-gray-500",   // 4.6:1 (minimum)
+  primary: "text-gray-900", // 15.9:1
+  secondary: "text-gray-700", // 7.0:1
+  tertiary: "text-gray-500", // 4.6:1 (minimum)
 } as const;
 
 // On colored backgrounds
 const buttonColors = {
-  primary: "bg-primary-600 text-white",  // 5.7:1
-  secondary: "bg-gray-600 text-white",   // 5.7:1
-  error: "bg-error-600 text-white",      // 5.7:1
+  primary: "bg-primary-600 text-white", // 5.7:1
+  secondary: "bg-gray-600 text-white", // 5.7:1
+  error: "bg-error-600 text-white", // 5.7:1
 } as const;
 ```
 
@@ -1519,6 +1540,7 @@ CustomerCard.displayName = "CustomerCard";
 ### Component Library
 
 **Available Components (from shadcn/ui):**
+
 - Button
 - Input
 - Textarea
@@ -1544,6 +1566,7 @@ CustomerCard.displayName = "CustomerCard";
 - Date Picker
 
 **Custom Components:**
+
 - Data Table (with sorting/filtering)
 - Search Bar (with debouncing)
 - Pagination
@@ -1675,9 +1698,9 @@ export default function CustomerListPage() {
 
 ## Changelog
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-22 | 1.0.0 | Initial design guidelines with Vietnamese-first principles, component patterns, and accessibility standards |
+| Date       | Version | Changes                                                                                                     |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| 2025-12-22 | 1.0.0   | Initial design guidelines with Vietnamese-first principles, component patterns, and accessibility standards |
 
 ---
 

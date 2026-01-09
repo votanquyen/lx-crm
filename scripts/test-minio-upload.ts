@@ -234,7 +234,7 @@ async function testLargeFileUpload() {
 
     log.success("Large file upload successful");
     log.info(`Time taken: ${(duration / 1000).toFixed(2)}s`);
-    log.info(`Speed: ${((size / 1024 / 1024) / (duration / 1000)).toFixed(2)} MB/s`);
+    log.info(`Speed: ${(size / 1024 / 1024 / (duration / 1000)).toFixed(2)} MB/s`);
     log.info(`URL: ${url}`);
 
     return true;

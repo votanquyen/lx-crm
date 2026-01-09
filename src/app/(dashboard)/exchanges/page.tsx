@@ -28,7 +28,7 @@ async function ExchangeStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tổng yêu cầu</CardTitle>
-          <RefreshCw className="h-4 w-4 text-muted-foreground" />
+          <RefreshCw className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
@@ -106,9 +106,7 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Yêu cầu đổi cây</h1>
-          <p className="text-muted-foreground">
-            Quản lý yêu cầu đổi/thay thế cây từ khách hàng
-          </p>
+          <p className="text-muted-foreground">Quản lý yêu cầu đổi/thay thế cây từ khách hàng</p>
         </div>
         <Button asChild>
           <Link href="/exchanges/new">
@@ -138,10 +136,10 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
       </Suspense>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         <Link
           href="/exchanges"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             !status && !priority ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -149,15 +147,15 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
         </Link>
         <Link
           href="/exchanges?status=PENDING"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "PENDING" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
           Chờ duyệt
         </Link>
         <Link
-          href="/exchanges?status=APPROVED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          href="/exchanges?status=SCHEDULED"
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "SCHEDULED" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -165,7 +163,7 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
         </Link>
         <Link
           href="/exchanges?priority=URGENT"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             priority === "URGENT" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >

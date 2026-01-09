@@ -10,8 +10,8 @@
  *   0 - Success (non-blocking, allows continuation)
  */
 
-import fs from 'fs';
-import os from 'os';
+import fs from "fs";
+import os from "os";
 
 /**
  * Check if reminder was recently injected by scanning transcript
@@ -23,15 +23,16 @@ function wasRecentlyInjected(transcriptPath) {
       return false;
     }
 
-    const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-    const lines = transcript.split('\n');
+    const transcript = fs.readFileSync(transcriptPath, "utf-8");
+    const lines = transcript.split("\n");
 
     // Check last 50 lines for reminder marker
     const recentLines = lines.slice(-50);
-    const wasInjected = recentLines.some(line => line.includes('**[IMPORTANT]** Consider Modularization'));
+    const wasInjected = recentLines.some((line) =>
+      line.includes("**[IMPORTANT]** Consider Modularization")
+    );
 
     return wasInjected;
-
   } catch (error) {
     // If we can't read transcript, assume not injected (fail-open)
     return false;
@@ -44,7 +45,7 @@ function wasRecentlyInjected(transcriptPath) {
 async function main() {
   try {
     // Read hook payload from stdin
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    const stdin = fs.readFileSync(0, "utf-8").trim();
 
     if (!stdin) {
       process.exit(0);
@@ -100,11 +101,10 @@ async function main() {
       `- After modularization, continue with main task`,
       `- When not to modularize: Markdown files, plain text files, bash scripts, configuration files, environment variables files, etc.`,
       `- IMPORTANT: Include these considerations when prompting subagents to perform tasks.`,
-    ].join('\n');
+    ].join("\n");
 
     console.log(reminder);
     process.exit(0);
-
   } catch (error) {
     // Fail-open: log error but allow operation to continue
     console.error(`Dev rules hook error: ${error.message}`);

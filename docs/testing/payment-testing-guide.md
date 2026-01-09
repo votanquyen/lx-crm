@@ -9,19 +9,23 @@
 ## Prerequisites
 
 ### 1. Development Server
+
 ```bash
 # Server should be running at http://localhost:3000
 pnpm dev
 ```
 
 ### 2. Database Setup
+
 Ensure PostgreSQL database is running with:
+
 - ✅ Customers seeded
 - ✅ Contracts seeded
 - ✅ Invoices seeded
 - ⚠️ Payments (will be created during testing)
 
 ### 3. Authentication
+
 You must be logged in with an authenticated user account.
 
 ---
@@ -33,6 +37,7 @@ You must be logged in with an authenticated user account.
 **URL:** http://localhost:3000/payments
 
 **Expected:**
+
 - Page loads without errors
 - Shows "Thanh toán" heading
 - Displays 4 statistics cards:
@@ -46,6 +51,7 @@ You must be logged in with an authenticated user account.
 - Displays payment history section
 
 **What to Check:**
+
 - [ ] Page renders without console errors
 - [ ] Statistics cards show correct numbers
 - [ ] Payment method filter has 6 options + "All"
@@ -54,6 +60,7 @@ You must be logged in with an authenticated user account.
 - [ ] Each card shows: invoice number, customer, amount, date, method badge, verification badge
 
 **Console Check:**
+
 ```js
 // Open DevTools (F12) and check for errors
 // Should see no red errors
@@ -66,11 +73,13 @@ You must be logged in with an authenticated user account.
 **URL:** http://localhost:3000/payments/[payment-id]
 
 **Steps:**
+
 1. Go to payment list page
 2. Click on any payment card
 3. Should navigate to detail page
 
 **Expected:**
+
 - Page shows "Chi tiết thanh toán" heading
 - Left column displays:
   - Payment info card with amount (green, large)
@@ -91,6 +100,7 @@ You must be logged in with an authenticated user account.
   - Xác minh (Verify) button
 
 **What to Check:**
+
 - [ ] All payment information displays correctly
 - [ ] Bank transfer shows: transaction ref, bank name, account
 - [ ] Cash payment shows: receiver name, receipt number
@@ -106,11 +116,13 @@ You must be logged in with an authenticated user account.
 **URL:** http://localhost:3000/invoices/[invoice-id]/record-payment
 
 **Steps:**
+
 1. Navigate to an invoice detail page
 2. Click "Ghi nhận thanh toán" button
 3. Should go to record payment page
 
 **Expected:**
+
 - Page shows "Ghi nhận thanh toán" heading
 - Invoice summary box displays:
   - Invoice number
@@ -123,8 +135,8 @@ You must be logged in with an authenticated user account.
   - Payment date (defaults to today, max = today)
   - Payment method dropdown (6 options)
 - Conditional fields based on payment method:
-  - **Bank Transfer:** transaction ref*, bank name, account number, account name
-  - **Cash:** receiver name*, receipt number
+  - **Bank Transfer:** transaction ref\*, bank name, account number, account name
+  - **Cash:** receiver name\*, receipt number
 - Additional fields:
   - Notes (textarea)
   - Receipt URL
@@ -133,6 +145,7 @@ You must be logged in with an authenticated user account.
   - "Hủy" (cancel)
 
 **What to Check:**
+
 - [ ] Invoice summary shows correct data
 - [ ] Remaining balance calculated correctly
 - [ ] Amount field defaults to remaining balance
@@ -140,47 +153,54 @@ You must be logged in with an authenticated user account.
 - [ ] Payment date cannot be future date
 - [ ] Payment method defaults to "Chuyển khoản ngân hàng"
 - [ ] Conditional fields appear/disappear based on method
-- [ ] Bank transfer requires transaction ref (*)
-- [ ] Cash requires receiver name (*)
+- [ ] Bank transfer requires transaction ref (\*)
+- [ ] Cash requires receiver name (\*)
 
 ---
 
 ### Test 4: Submit Payment (Validation) ✓
 
 **Steps:**
+
 1. Go to record payment page
 2. Try submitting with invalid data
 
 **Test Cases:**
 
 #### 4.1: Empty Amount
+
 - Clear amount field
 - Click submit
 - Expected: Error "Số tiền thanh toán là bắt buộc"
 
 #### 4.2: Amount Exceeds Remaining
+
 - Enter amount > remaining balance
 - Click submit
 - Expected: Error "Số tiền thanh toán vượt quá số tiền còn lại"
 
 #### 4.3: Future Payment Date
+
 - Set date to tomorrow
 - Click submit
 - Expected: Error "Ngày thanh toán không thể trong tương lai"
 
 #### 4.4: Bank Transfer Without Ref
+
 - Select "Chuyển khoản ngân hàng"
 - Clear bank ref field
 - Click submit
 - Expected: Error "Số giao dịch ngân hàng là bắt buộc"
 
 #### 4.5: Cash Without Receiver
+
 - Select "Tiền mặt"
 - Clear receiver field
 - Click submit
 - Expected: Error "Người nhận tiền là bắt buộc"
 
 **What to Check:**
+
 - [ ] All validation errors display correctly
 - [ ] Error messages in Vietnamese
 - [ ] Form doesn't submit with invalid data
@@ -191,6 +211,7 @@ You must be logged in with an authenticated user account.
 ### Test 5: Submit Payment (Success) ✓
 
 **Steps:**
+
 1. Fill valid payment data:
    - Amount: 5,000,000đ
    - Date: Today
@@ -201,6 +222,7 @@ You must be logged in with an authenticated user account.
 2. Click "Ghi nhận thanh toán"
 
 **Expected:**
+
 - Success toast: "Ghi nhận thanh toán thành công!"
 - Redirects to invoice detail page
 - Invoice page shows updated:
@@ -212,6 +234,7 @@ You must be logged in with an authenticated user account.
 - New payment appears in payment history section
 
 **What to Check:**
+
 - [ ] Toast notification appears
 - [ ] Redirects correctly
 - [ ] Invoice balances updated
@@ -226,27 +249,32 @@ You must be logged in with an authenticated user account.
 **URL:** http://localhost:3000/payments
 
 **Steps:**
+
 1. Select payment method filter: "Chuyển khoản"
 2. Page should reload showing only bank transfer payments
 
 **Test Filters:**
 
 #### 6.1: Payment Method Filter
+
 - Select "Chuyển khoản" → Only bank transfers shown
 - Select "Tiền mặt" → Only cash payments shown
 - Select "MoMo" → Only MoMo payments shown
 - Select "Tất cả" → All payments shown
 
 #### 6.2: Verification Status Filter
+
 - Select "Đã xác minh" → Only verified payments
 - Select "Chưa xác minh" → Only unverified payments
 - Select "Tất cả" → All payments
 
 #### 6.3: Combined Filters
+
 - Select "Chuyển khoản" + "Chưa xác minh"
 - Should show only unverified bank transfers
 
 **What to Check:**
+
 - [ ] Filters work correctly
 - [ ] Page reloads with filtered results
 - [ ] URL contains filter parameters
@@ -260,11 +288,13 @@ You must be logged in with an authenticated user account.
 **Prerequisites:** Need > 20 payments
 
 **Steps:**
+
 1. Create 25+ payments via seed or manual entry
 2. Go to payment list page
 3. Should see pagination buttons
 
 **Expected:**
+
 - Shows first 20 payments
 - Pagination buttons at bottom
 - Page numbers: 1, 2, etc.
@@ -272,6 +302,7 @@ You must be logged in with an authenticated user account.
 - Clicking page 2 shows next 20 payments
 
 **What to Check:**
+
 - [ ] Pagination appears when > 20 payments
 - [ ] Page size is 20 (configurable)
 - [ ] Page navigation works
@@ -283,16 +314,19 @@ You must be logged in with an authenticated user account.
 ### Test 8: Fully Paid Invoice Protection ✓
 
 **Steps:**
+
 1. Find an invoice with status = PAID
 2. Navigate to `/invoices/[id]/record-payment`
 
 **Expected:**
+
 - Shows "Hóa đơn đã thanh toán đầy đủ" message
 - Payment form NOT displayed
 - "Quay lại hóa đơn" button shown
 - Cannot record additional payment
 
 **What to Check:**
+
 - [ ] Protection message displays
 - [ ] Form not accessible
 - [ ] Back button works
@@ -305,12 +339,14 @@ You must be logged in with an authenticated user account.
 **Prerequisites:** Logged in as MANAGER or ADMIN role
 
 **Steps:**
+
 1. Go to unverified payment detail page
 2. Click "Xác minh" button
 3. Add verification notes
 4. Submit
 
 **Expected:**
+
 - Verification form/modal appears
 - Notes field available
 - Submit marks payment as verified
@@ -323,6 +359,7 @@ You must be logged in with an authenticated user account.
 - Cannot edit verified payment
 
 **What to Check:**
+
 - [ ] Verify button appears (manager only)
 - [ ] Verification modal/form works
 - [ ] Payment marked as verified
@@ -338,12 +375,14 @@ You must be logged in with an authenticated user account.
 **Test Full Payment Flow:**
 
 #### Initial State
+
 - Invoice: INV-001
 - Total: 10,000,000đ
 - Paid: 0đ
 - Status: SENT
 
 #### Step 1: Partial Payment
+
 - Record payment: 3,000,000đ
 - Expected:
   - Paid: 3,000,000đ
@@ -351,6 +390,7 @@ You must be logged in with an authenticated user account.
   - Status: PARTIAL
 
 #### Step 2: Another Partial
+
 - Record payment: 2,000,000đ
 - Expected:
   - Paid: 5,000,000đ
@@ -358,6 +398,7 @@ You must be logged in with an authenticated user account.
   - Status: PARTIAL
 
 #### Step 3: Final Payment
+
 - Record payment: 5,000,000đ
 - Expected:
   - Paid: 10,000,000đ
@@ -365,6 +406,7 @@ You must be logged in with an authenticated user account.
   - Status: PAID
 
 **What to Check:**
+
 - [ ] Status transitions correctly
 - [ ] Balances always accurate
 - [ ] Cannot record payment on PAID invoice
@@ -375,10 +417,12 @@ You must be logged in with an authenticated user account.
 ## Known Issues & Limitations
 
 ### Non-Critical (Development Only)
+
 - Seed file TypeScript warnings (expected)
 - Console.log warnings in development
 
 ### Expected Behavior
+
 - Payment dates cannot be future
 - Cannot overpay invoices
 - Verified payments cannot be edited/deleted
@@ -401,6 +445,7 @@ You must be logged in with an authenticated user account.
 ## Troubleshooting
 
 ### Server Won't Start
+
 ```bash
 # Kill existing processes
 taskkill //F //IM node.exe
@@ -411,6 +456,7 @@ pnpm dev
 ```
 
 ### Database Errors
+
 ```bash
 # Reset database
 pnpm db:push
@@ -419,6 +465,7 @@ pnpm db:seed
 ```
 
 ### Console Errors
+
 - Check browser DevTools (F12)
 - Check terminal for server errors
 - Verify .env file exists with DATABASE_URL
@@ -459,10 +506,10 @@ pnpm db:seed
 - [ ] Test 9: Payment verification
 - [ ] Test 10: Status transitions
 
-**Tester:** _______________
-**Date:** _______________
+**Tester:** ******\_\_\_******
+**Date:** ******\_\_\_******
 **Environment:** Development
-**Browser:** _______________
+**Browser:** ******\_\_\_******
 **Result:** ⬜ Pass ⬜ Fail
 
 ---

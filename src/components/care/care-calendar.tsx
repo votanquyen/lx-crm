@@ -77,8 +77,9 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
               <Button variant="ghost" size="icon" onClick={handlePrevWeek}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <div className="text-sm font-medium min-w-[200px] text-center">
-                {format(weekStart, "dd/MM", { locale: vi })} - {format(weekEnd, "dd/MM/yyyy", { locale: vi })}
+              <div className="min-w-[200px] text-center text-sm font-medium">
+                {format(weekStart, "dd/MM", { locale: vi })} -{" "}
+                {format(weekEnd, "dd/MM/yyyy", { locale: vi })}
               </div>
               <Button variant="ghost" size="icon" onClick={handleNextWeek}>
                 <ChevronRight className="h-4 w-4" />
@@ -96,13 +97,11 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
             return (
               <div
                 key={day.toISOString()}
-                className={`text-center p-2 border-b-2 ${
+                className={`border-b-2 p-2 text-center ${
                   isToday ? "border-blue-500 font-semibold" : "border-gray-200"
                 }`}
               >
-                <div className="text-sm text-gray-600">
-                  {format(day, "EEE", { locale: vi })}
-                </div>
+                <div className="text-sm text-gray-600">{format(day, "EEE", { locale: vi })}</div>
                 <div className={`text-lg ${isToday ? "text-blue-600" : ""}`}>
                   {format(day, "dd")}
                 </div>
@@ -116,7 +115,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
             return (
               <div
                 key={date.toISOString()}
-                className={`min-h-[200px] border rounded-lg p-2 ${
+                className={`min-h-[200px] rounded-lg border p-2 ${
                   isToday ? "border-blue-300 bg-blue-50" : "border-gray-200"
                 }`}
               >
@@ -125,10 +124,10 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full mb-2"
+                    className="mb-2 w-full"
                     onClick={() => onCreateSchedule(date)}
                   >
-                    <Plus className="h-3 w-3 mr-1" />
+                    <Plus className="mr-1 h-3 w-3" />
                     Thêm
                   </Button>
                 )}
@@ -136,38 +135,34 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
                 {/* Schedules List */}
                 <div className="space-y-1">
                   {daySchedules.length === 0 ? (
-                    <div className="text-xs text-gray-400 text-center py-4">
-                      Không có lịch
-                    </div>
+                    <div className="py-4 text-center text-xs text-gray-400">Không có lịch</div>
                   ) : (
                     daySchedules.map((schedule) => (
                       <button
                         key={schedule.id}
                         onClick={() => onViewSchedule?.(schedule)}
-                        className="w-full text-left p-2 rounded border border-gray-200 hover:bg-gray-50 transition-colors"
+                        className="w-full rounded border border-gray-200 p-2 text-left transition-colors hover:bg-gray-50"
                       >
                         {/* Time Slot */}
                         {schedule.timeSlot && (
-                          <div className="text-xs font-medium text-gray-700 mb-1">
+                          <div className="mb-1 text-xs font-medium text-gray-700">
                             {schedule.timeSlot}
                           </div>
                         )}
 
                         {/* Customer */}
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="truncate text-sm font-medium text-gray-900">
                           {schedule.customer.companyName}
                         </div>
 
                         {/* Address */}
-                        <div className="text-xs text-gray-600 truncate">
+                        <div className="truncate text-xs text-gray-600">
                           {schedule.customer.district}
                         </div>
 
                         {/* Staff */}
                         {schedule.staff && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            👤 {schedule.staff.name}
-                          </div>
+                          <div className="mt-1 text-xs text-gray-500">👤 {schedule.staff.name}</div>
                         )}
 
                         {/* Status Badge */}
@@ -182,7 +177,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
 
                         {/* Plant Count */}
                         {schedule.plantCount && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="mt-1 text-xs text-gray-500">
                             🌿 {schedule.plantCount} cây
                           </div>
                         )}
@@ -196,7 +191,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
         </div>
 
         {/* Summary Stats */}
-        <div className="mt-4 grid grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+        <div className="mt-4 grid grid-cols-4 gap-4 rounded-lg bg-gray-50 p-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-blue-600">{schedules.length}</div>
             <div className="text-xs text-gray-600">Tổng lịch</div>

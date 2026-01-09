@@ -37,8 +37,7 @@ const plantTypesData = [
     code: "PT",
     name: "Cây Phát Tài",
     category: "Indoor",
-    description:
-      "Cây phong thủy mang lại may mắn, tài lộc. Lá to màu xanh đậm, thân to khỏe.",
+    description: "Cây phong thủy mang lại may mắn, tài lộc. Lá to màu xanh đậm, thân to khỏe.",
     sizeSpec: "Cao 1.2-1.5m, Chậu 35cm",
     heightMin: 120,
     heightMax: 150,
@@ -77,8 +76,7 @@ const plantTypesData = [
     lightRequirement: "Ánh sáng yếu đến trung bình",
     temperatureRange: "18-25°C",
     careLevel: "Medium" as const,
-    careInstructions:
-      "Giữ đất ẩm đều, không để khô. Phun sương lên lá. Tránh gió lạnh trực tiếp.",
+    careInstructions: "Giữ đất ẩm đều, không để khô. Phun sương lên lá. Tránh gió lạnh trực tiếp.",
     imageUrl: null,
     thumbnailUrl: null,
     isActive: true,
@@ -127,8 +125,7 @@ const plantTypesData = [
     lightRequirement: "Ánh sáng yếu đến trung bình",
     temperatureRange: "18-28°C",
     careLevel: "Easy" as const,
-    careInstructions:
-      "Chịu bóng rất tốt. Tưới ít, tránh úng nước. Lau lá định kỳ để giữ bóng.",
+    careInstructions: "Chịu bóng rất tốt. Tưới ít, tránh úng nước. Lau lá định kỳ để giữ bóng.",
     imageUrl: null,
     thumbnailUrl: null,
     isActive: true,
@@ -177,8 +174,7 @@ const plantTypesData = [
     lightRequirement: "Ánh sáng trung bình",
     temperatureRange: "20-28°C",
     careLevel: "Easy" as const,
-    careInstructions:
-      "Giữ đất ẩm vừa phải. Tránh nắng gắt. Phun sương lên lá khi trời khô.",
+    careInstructions: "Giữ đất ẩm vừa phải. Tránh nắng gắt. Phun sương lên lá khi trời khô.",
     imageUrl: null,
     thumbnailUrl: null,
     isActive: true,
@@ -212,8 +208,7 @@ const plantTypesData = [
     code: "SN",
     name: "Cây Sen Đá",
     category: "Indoor",
-    description:
-      "Cây mọng nước nhỏ xinh, nhiều màu sắc. Dễ trồng, phù hợp trang trí bàn làm việc.",
+    description: "Cây mọng nước nhỏ xinh, nhiều màu sắc. Dễ trồng, phù hợp trang trí bàn làm việc.",
     sizeSpec: "Cao 10-15cm, Chậu 12cm",
     heightMin: 10,
     heightMax: 15,
@@ -237,8 +232,7 @@ const plantTypesData = [
     code: "BD",
     name: "Cây Bạch Đàn",
     category: "Outdoor",
-    description:
-      "Cây thơm mát, lá có tinh dầu. Phù hợp trồng ngoài trời, tạo bóng mát.",
+    description: "Cây thơm mát, lá có tinh dầu. Phù hợp trồng ngoài trời, tạo bóng mát.",
     sizeSpec: "Cao 1.5-2.0m, Chậu 50cm",
     heightMin: 150,
     heightMax: 200,

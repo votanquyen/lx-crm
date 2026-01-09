@@ -11,10 +11,10 @@ import {
   getCustomersForStatements,
   getMonthlyStatement,
   confirmMonthlyStatement,
+  getAvailableYears,
 } from "@/actions/monthly-statements";
 import type { StatementListItem, StatementDTO } from "@/types/monthly-statement";
 import { formatCurrency } from "@/lib/format";
-import { getMonthShort } from "@/lib/statement-utils";
 import {
   Table,
   TableBody,
@@ -31,6 +31,7 @@ interface CustomerForStatement {
   code: string | null;
   companyName: string;
   shortName: string | null;
+  address: string | null;
   district: string | null;
   contactName: string | null;
 }
@@ -42,6 +43,7 @@ export default function BangKePage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [customers, setCustomers] = useState<CustomerForStatement[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
   const [currentStatementDetail, setCurrentStatementDetail] = useState<StatementDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -73,9 +75,15 @@ export default function BangKePage() {
 
   async function loadCustomers() {
     try {
-      const result = await getCustomersForStatements({});
-      if (result.success && result.data) {
-        setCustomers(result.data);
+      const [customersResult, yearsResult] = await Promise.all([
+        getCustomersForStatements({}),
+        getAvailableYears({}),
+      ]);
+      if (customersResult.success && customersResult.data) {
+        setCustomers(customersResult.data);
+      }
+      if (yearsResult.success && yearsResult.data) {
+        setAvailableYears(yearsResult.data);
       }
     } catch (error) {
       console.error("Failed to load customers:", error);
@@ -214,10 +222,6 @@ export default function BangKePage() {
 
   const currentStatement = customerStatements.find((s) => s.month === selectedMonth);
 
-  // Years selector (current - 2 to current + 1)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 4 }, (_, i) => currentYear - 2 + i);
-
   // Months array
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
@@ -298,80 +302,92 @@ export default function BangKePage() {
         {selectedCustomerId ? (
           <div className="h-full overflow-y-auto p-6">
             {/* Header with customer name */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold">
-                {customers.find((c) => c.id === selectedCustomerId)?.companyName}
-              </h2>
-              <p className="text-muted-foreground text-sm">
-                {customers.find((c) => c.id === selectedCustomerId)?.district}
-              </p>
-            </div>
+            {(() => {
+              const customer = customers.find((c) => c.id === selectedCustomerId);
+              return (
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold">{customer?.companyName}</h2>
+                  {customer?.address && (
+                    <p className="text-muted-foreground text-sm">{customer.address}</p>
+                  )}
+                  <p className="text-muted-foreground text-sm">
+                    {customer?.district}
+                    {customer?.contactName && ` • Liên hệ: ${customer.contactName}`}
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Year & Month Selector */}
-            <div className="mb-6 flex items-center gap-4">
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-background rounded-md border px-4 py-2"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
+            <div className="mb-6 space-y-4">
+              {/* Year and Actions Row */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="bg-background rounded-md border px-4 py-2 font-medium"
+                >
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      Năm {year}
+                    </option>
+                  ))}
+                </select>
 
-              <div className="flex flex-wrap gap-1">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditMode(true)}
+                    disabled={!currentStatementDetail || isEditMode}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Sửa</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    disabled={!currentStatementDetail}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Excel</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPDF}
+                    disabled={!currentStatementDetail}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">In</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Month Grid */}
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12">
                 {months.map((month) => {
                   const stmt = customerStatements.find((s) => s.month === month);
                   const isSelected = selectedMonth === month;
                   const needsConfirm = stmt?.needsConfirmation;
+                  const hasData = !!stmt;
 
                   return (
                     <Button
                       key={month}
-                      variant={isSelected ? "default" : "outline"}
+                      variant={isSelected ? "default" : hasData ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => setSelectedMonth(month)}
-                      className={`relative ${needsConfirm ? "border-amber-500" : ""}`}
+                      className={`relative h-10 w-full ${needsConfirm ? "ring-2 ring-amber-500 ring-offset-1" : ""} ${!hasData && !isSelected ? "text-muted-foreground" : ""}`}
                     >
-                      {getMonthShort(month)}
+                      Tháng {month}
                       {needsConfirm && (
-                        <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-amber-500" />
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
                       )}
                     </Button>
                   );
                 })}
-              </div>
-
-              <div className="ml-auto flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditMode(true)}
-                  disabled={!currentStatementDetail || isEditMode}
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Sửa
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportCSV}
-                  disabled={!currentStatementDetail}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Xuất Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportPDF}
-                  disabled={!currentStatementDetail}
-                >
-                  <Printer className="mr-2 h-4 w-4" />
-                  In
-                </Button>
               </div>
             </div>
 
@@ -410,9 +426,13 @@ export default function BangKePage() {
                           </Badge>
                         )}
                       </CardTitle>
-                      <p className="text-muted-foreground mt-1 text-sm">
-                        {currentStatement.plantCount} loại cây
-                      </p>
+                      {currentStatementDetail && (
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          Đợt:{" "}
+                          {new Date(currentStatementDetail.periodStart).toLocaleDateString("vi-VN")} →{" "}
+                          {new Date(currentStatementDetail.periodEnd).toLocaleDateString("vi-VN")}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="text-primary text-2xl font-bold">
@@ -504,13 +524,6 @@ export default function BangKePage() {
                             {formatCurrency(currentStatementDetail.total)}
                           </span>
                         </div>
-                      </div>
-
-                      {/* Period Display */}
-                      <div className="text-muted-foreground mt-4 text-xs">
-                        Kỳ:{" "}
-                        {new Date(currentStatementDetail.periodStart).toLocaleDateString("vi-VN")} →{" "}
-                        {new Date(currentStatementDetail.periodEnd).toLocaleDateString("vi-VN")}
                       </div>
                     </div>
                   ) : (

@@ -23,9 +23,7 @@ const createNoteSchema = z.object({
   customerId: z.string().cuid(),
   content: z.string().min(1, "Nội dung không được để trống").max(2000),
   priority: z.number().int().min(1).max(10).optional(),
-  category: z
-    .enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"])
-    .optional(),
+  category: z.enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"]).optional(),
 });
 
 /**
@@ -36,9 +34,7 @@ const updateNoteSchema = z.object({
   content: z.string().min(1).max(2000).optional(),
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CANCELLED"]).optional(),
   priority: z.number().int().min(1).max(10).optional(),
-  category: z
-    .enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"])
-    .optional(),
+  category: z.enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"]).optional(),
 });
 
 /**
@@ -68,11 +64,7 @@ export async function getCustomerNotes(
         select: { id: true, name: true, email: true, image: true },
       },
     },
-    orderBy: [
-      { priority: "desc" },
-      { status: "asc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ priority: "desc" }, { status: "asc" }, { createdAt: "desc" }],
     take: options?.limit,
   });
 
@@ -162,7 +154,7 @@ async function analyzeNoteAsync(
         where: { id: noteId },
         data: {
           category: analysis.category as NoteCategory,
-          priority: typeof analysis.priority === 'number' ? analysis.priority : 5,
+          priority: typeof analysis.priority === "number" ? analysis.priority : 5,
           aiAnalysis: analysis as unknown as Prisma.JsonObject,
           aiSuggestions: analysis.suggestions as unknown as Prisma.JsonArray,
         },
@@ -205,8 +197,8 @@ export const updateStickyNote = createAction(updateNoteSchema, async (input) => 
 
   // Re-analyze if content changed
   if (updateData.content && updateData.content !== existing.content) {
-    analyzeNoteAsync(id, updateData.content, existing.customer).catch(
-      (err) => console.error("Re-analysis failed:", err)
+    analyzeNoteAsync(id, updateData.content, existing.customer).catch((err) =>
+      console.error("Re-analysis failed:", err)
     );
   }
 
@@ -244,19 +236,23 @@ export const deleteStickyNote = createSimpleAction(async (id: string) => {
 const getCachedNoteStats = unstable_cache(
   async () => {
     // Single query with FILTER instead of separate queries
-    const stats = await prisma.$queryRaw<[{
-      total: bigint;
-      open: bigint;
-      urgent_priority: bigint;
-      general: bigint;
-      urgent: bigint;
-      complaint: bigint;
-      request: bigint;
-      feedback: bigint;
-      exchange: bigint;
-      care: bigint;
-      payment: bigint;
-    }]>`
+    const stats = await prisma.$queryRaw<
+      [
+        {
+          total: bigint;
+          open: bigint;
+          urgent_priority: bigint;
+          general: bigint;
+          urgent: bigint;
+          complaint: bigint;
+          request: bigint;
+          feedback: bigint;
+          exchange: bigint;
+          care: bigint;
+          payment: bigint;
+        },
+      ]
+    >`
       SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status IN ('OPEN', 'IN_PROGRESS')) as open,
@@ -314,10 +310,7 @@ export async function getRecentNotes(limit: number = 10) {
         select: { id: true, name: true },
       },
     },
-    orderBy: [
-      { priority: "desc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
     take: limit,
   });
 

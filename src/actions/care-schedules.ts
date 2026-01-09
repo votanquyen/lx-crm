@@ -352,30 +352,28 @@ export const completeCare = createAction(completeCareSchema, async (input) => {
 /**
  * Skip care schedule
  */
-export const skipCareSchedule = createSimpleAction(
-  async (data: { id: string; reason: string }) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const skipCareSchedule = createSimpleAction(async (data: { id: string; reason: string }) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    const schedule = await prisma.careSchedule.findUnique({ where: { id: data.id } });
-    if (!schedule) throw new NotFoundError("Lịch chăm sóc");
+  const schedule = await prisma.careSchedule.findUnique({ where: { id: data.id } });
+  if (!schedule) throw new NotFoundError("Lịch chăm sóc");
 
-    if (schedule.status === "COMPLETED") {
-      throw new AppError("Không thể bỏ qua lịch đã hoàn thành", "INVALID_STATUS");
-    }
-
-    const updated = await prisma.careSchedule.update({
-      where: { id: data.id },
-      data: {
-        status: "SKIPPED",
-        notes: `${schedule.notes || ""}\n[Bỏ qua: ${data.reason}]`,
-      },
-    });
-
-    revalidatePath("/care");
-    return updated;
+  if (schedule.status === "COMPLETED") {
+    throw new AppError("Không thể bỏ qua lịch đã hoàn thành", "INVALID_STATUS");
   }
-);
+
+  const updated = await prisma.careSchedule.update({
+    where: { id: data.id },
+    data: {
+      status: "SKIPPED",
+      notes: `${schedule.notes || ""}\n[Bỏ qua: ${data.reason}]`,
+    },
+  });
+
+  revalidatePath("/care");
+  return updated;
+});
 
 /**
  * Get care statistics for dashboard
@@ -388,13 +386,17 @@ const getCachedCareStats = unstable_cache(
     const tomorrow = new Date(today.getTime() + 86400000);
 
     // Single query with FILTER instead of 5 separate COUNTs
-    const stats = await prisma.$queryRaw<[{
-      total: bigint;
-      scheduled: bigint;
-      completed: bigint;
-      today_count: bigint;
-      in_progress: bigint;
-    }]>`
+    const stats = await prisma.$queryRaw<
+      [
+        {
+          total: bigint;
+          scheduled: bigint;
+          completed: bigint;
+          today_count: bigint;
+          in_progress: bigint;
+        },
+      ]
+    >`
       SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'SCHEDULED') as scheduled,
@@ -435,13 +437,17 @@ export async function getCareStats(dateFrom?: Date, dateTo?: Date) {
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today.getTime() + 86400000);
 
-      const stats = await prisma.$queryRaw<[{
-        total: bigint;
-        scheduled: bigint;
-        completed: bigint;
-        today_count: bigint;
-        in_progress: bigint;
-      }]>`
+      const stats = await prisma.$queryRaw<
+        [
+          {
+            total: bigint;
+            scheduled: bigint;
+            completed: bigint;
+            today_count: bigint;
+            in_progress: bigint;
+          },
+        ]
+      >`
         SELECT
           COUNT(*) FILTER (WHERE TRUE ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as total,
           COUNT(*) FILTER (WHERE status = 'SCHEDULED' ${dateFrom ? Prisma.sql`AND "scheduledDate" >= ${dateFrom}` : Prisma.empty} ${dateTo ? Prisma.sql`AND "scheduledDate" <= ${dateTo}` : Prisma.empty}) as scheduled,

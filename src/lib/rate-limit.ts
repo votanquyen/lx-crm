@@ -33,7 +33,8 @@ export async function rateLimit(
   key: string,
   options: RateLimitOptions = {}
 ): Promise<RateLimitResult> {
-  const { windowMs = RATE_LIMITS.DEFAULT_WINDOW_MS, max = RATE_LIMITS.DEFAULT_MAX_REQUESTS } = options;
+  const { windowMs = RATE_LIMITS.DEFAULT_WINDOW_MS, max = RATE_LIMITS.DEFAULT_MAX_REQUESTS } =
+    options;
 
   const headerList = await headers();
   const ip = headerList.get("x-forwarded-for") ?? "unknown";
@@ -74,10 +75,7 @@ export class RateLimitError extends Error {
  * @param options - Rate limit configuration
  * @throws RateLimitError if rate limit exceeded
  */
-export async function requireRateLimit(
-  key: string,
-  options: RateLimitOptions = {}
-): Promise<void> {
+export async function requireRateLimit(key: string, options: RateLimitOptions = {}): Promise<void> {
   const result = await rateLimit(key, options);
   if (!result.success) {
     throw new RateLimitError();

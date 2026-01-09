@@ -4,6 +4,7 @@
  */
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -25,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatCurrency } from "@/lib/format";
 import type { ContractStatus } from "@prisma/client";
 
 type Contract = {
@@ -44,7 +46,10 @@ type Contract = {
   _count: { invoices: number };
 };
 
-const statusConfig: Record<ContractStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  ContractStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   NEGOTIATING: { label: "Đang đàm phán", variant: "outline" },
@@ -62,14 +67,12 @@ interface ContractTableProps {
   onRenew?: (id: string) => void;
 }
 
-export function ContractTable({ contracts, onActivate, onCancel, onRenew }: ContractTableProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
-
+export const ContractTable = memo(function ContractTable({
+  contracts,
+  onActivate,
+  onCancel,
+  onRenew,
+}: ContractTableProps) {
   const getTotalPlants = (items: { quantity: number }[]) => {
     return items.reduce((sum, item) => sum + item.quantity, 0);
   };
@@ -98,8 +101,8 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
         <TableBody>
           {contracts.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                <FileText className="mx-auto h-8 w-8 mb-2 opacity-50" />
+              <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
+                <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
                 Chưa có hợp đồng nào
               </TableCell>
             </TableRow>
@@ -107,7 +110,8 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
             contracts.map((contract) => {
               const status = statusConfig[contract.status];
               const daysRemaining = getDaysRemaining(contract.endDate);
-              const isExpiringSoon = contract.status === "ACTIVE" && daysRemaining <= 30 && daysRemaining > 0;
+              const isExpiringSoon =
+                contract.status === "ACTIVE" && daysRemaining <= 30 && daysRemaining > 0;
 
               return (
                 <TableRow key={contract.id}>
@@ -127,9 +131,7 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
                       >
                         {contract.customer.companyName}
                       </Link>
-                      <p className="text-sm text-muted-foreground">
-                        {contract.customer.code}
-                      </p>
+                      <p className="text-muted-foreground text-sm">{contract.customer.code}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -150,9 +152,7 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
                   <TableCell className="text-right font-medium">
                     {formatCurrency(contract.monthlyAmount)}
                   </TableCell>
-                  <TableCell className="text-center">
-                    {getTotalPlants(contract.items)}
-                  </TableCell>
+                  <TableCell className="text-center">{getTotalPlants(contract.items)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -200,4 +200,4 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
       </Table>
     </div>
   );
-}
+});

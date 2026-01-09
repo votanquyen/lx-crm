@@ -11,7 +11,10 @@ import { CareStatus } from "@prisma/client";
 export const createCareScheduleSchema = z.object({
   customerId: z.string().cuid("ID khách hàng không hợp lệ"),
   scheduledDate: z.coerce.date(),
-  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/, "Thời gian phải có định dạng HH:mm").optional(),
+  scheduledTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, "Thời gian phải có định dạng HH:mm")
+    .optional(),
   staffId: z.string().cuid().optional(),
   notes: z.string().max(1000).optional(),
 });
@@ -22,7 +25,10 @@ export const createCareScheduleSchema = z.object({
 export const updateCareScheduleSchema = z.object({
   id: z.string().cuid(),
   scheduledDate: z.coerce.date().optional(),
-  scheduledTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  scheduledTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .optional(),
   staffId: z.string().cuid().optional().nullable(),
   status: z.nativeEnum(CareStatus).optional(),
   notes: z.string().max(1000).optional(),

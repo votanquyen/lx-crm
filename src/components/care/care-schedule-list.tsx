@@ -52,7 +52,14 @@ type CareSchedule = {
   } | null;
 };
 
-const statusConfig: Record<CareStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof CheckCircle }> = {
+const statusConfig: Record<
+  CareStatus,
+  {
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+    icon: typeof CheckCircle;
+  }
+> = {
   SCHEDULED: { label: "Đã lên lịch", variant: "outline", icon: Calendar },
   IN_PROGRESS: { label: "Đang thực hiện", variant: "default", icon: Play },
   COMPLETED: { label: "Hoàn thành", variant: "secondary", icon: CheckCircle },
@@ -77,8 +84,8 @@ export function CareScheduleList({
   return (
     <div className="space-y-4">
       {schedules.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
+        <div className="text-muted-foreground py-12 text-center">
+          <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
           <p>Không có lịch chăm sóc nào</p>
         </div>
       ) : (
@@ -95,7 +102,7 @@ export function CareScheduleList({
                       <StatusIcon className="mr-1 h-3 w-3" />
                       {status.label}
                     </Badge>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {format(new Date(schedule.scheduledDate), "EEEE, dd/MM/yyyy", {
                         locale: vi,
                       })}
@@ -137,16 +144,13 @@ export function CareScheduleList({
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <CardTitle className="text-base mb-2">
-                      <Link
-                        href={`/customers/${schedule.customer.id}`}
-                        className="hover:underline"
-                      >
+                    <CardTitle className="mb-2 text-base">
+                      <Link href={`/customers/${schedule.customer.id}`} className="hover:underline">
                         {schedule.customer.companyName}
                       </Link>
                     </CardTitle>
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div className="text-muted-foreground flex items-start gap-2 text-sm">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                       <span>
                         {schedule.customer.address}
                         {schedule.customer.district && `, ${schedule.customer.district}`}
@@ -161,25 +165,21 @@ export function CareScheduleList({
                       </div>
                     )}
                     {schedule.checkInTime && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4" />
-                        <span>
-                          Check-in: {format(new Date(schedule.checkInTime), "HH:mm")}
-                        </span>
+                        <span>Check-in: {format(new Date(schedule.checkInTime), "HH:mm")}</span>
                       </div>
                     )}
                     {schedule.checkOutTime && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4" />
-                        <span>
-                          Check-out: {format(new Date(schedule.checkOutTime), "HH:mm")}
-                        </span>
+                        <span>Check-out: {format(new Date(schedule.checkOutTime), "HH:mm")}</span>
                       </div>
                     )}
                   </div>
                 </div>
                 {schedule.notes && (
-                  <p className="mt-3 text-sm text-muted-foreground border-t pt-3">
+                  <p className="text-muted-foreground mt-3 border-t pt-3 text-sm">
                     {schedule.notes}
                   </p>
                 )}

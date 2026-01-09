@@ -11,7 +11,7 @@
 export function stripHtml(input: string): string {
   return input
     .replace(/<[^>]*>/g, "") // Remove HTML tags
-    .replace(/&lt;/g, "<")   // Decode common entities
+    .replace(/&lt;/g, "<") // Decode common entities
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')

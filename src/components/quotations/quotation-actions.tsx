@@ -57,7 +57,12 @@ interface QuotationActionsProps {
       contactPhone?: string | null;
       contactEmail?: string | null;
     };
-    items: (QuotationItem & { plantType: Pick<PlantType, "id" | "code" | "name" | "description" | "imageUrl" | "rentalPrice" | "category"> })[];
+    items: (QuotationItem & {
+      plantType: Pick<
+        PlantType,
+        "id" | "code" | "name" | "description" | "imageUrl" | "rentalPrice" | "category"
+      >;
+    })[];
     createdBy: Pick<User, "id" | "name" | "email"> | null;
   };
 }
@@ -167,11 +172,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
 
         {/* Send - Only for DRAFT */}
         {quotation.status === "DRAFT" && (
-          <Button
-            size="sm"
-            onClick={handleSend}
-            disabled={isLoading}
-          >
+          <Button size="sm" onClick={handleSend} disabled={isLoading}>
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -184,12 +185,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
         {/* Accept/Reject - Only for SENT/VIEWED */}
         {["SENT", "VIEWED"].includes(quotation.status) && (
           <>
-            <Button
-              size="sm"
-              variant="default"
-              onClick={handleAccept}
-              disabled={isLoading}
-            >
+            <Button size="sm" variant="default" onClick={handleAccept} disabled={isLoading}>
               {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -211,11 +207,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
 
         {/* Convert - Only for ACCEPTED */}
         {quotation.status === "ACCEPTED" && !quotation.convertedToContractId && (
-          <Button
-            size="sm"
-            onClick={handleConvert}
-            disabled={isLoading}
-          >
+          <Button size="sm" onClick={handleConvert} disabled={isLoading}>
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -259,8 +251,8 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa báo giá</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa báo giá {quotation.quoteNumber}? Hành
-              động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa báo giá {quotation.quoteNumber}? Hành động này không thể
+              hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -49,11 +49,7 @@ function formatCSVCell(value: unknown): string {
   }
 
   // If contains comma, newline, or quote, wrap in quotes and escape quotes
-  if (
-    stringValue.includes(",") ||
-    stringValue.includes("\n") ||
-    stringValue.includes('"')
-  ) {
+  if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
 

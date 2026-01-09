@@ -148,6 +148,7 @@ locxanh.vn/
 **Models**: 15 core models with 40+ indexes
 
 #### Key Models
+
 ```prisma
 // User & Authentication
 model User { ... }
@@ -172,6 +173,7 @@ model ActivityLog { ... }        // Audit trail
 ```
 
 **Database Features**:
+
 - **Extensions**: postgis, pg_trgm, unaccent
 - **Indexes**: 40+ for performance
 - **Views**: 6 complex aggregations
@@ -182,6 +184,7 @@ model ActivityLog { ... }        // Audit trail
 **Pattern**: Full-stack type safety with Zod validation
 
 #### Core Actions
+
 ```typescript
 // customers.ts - Vietnamese fuzzy search
 export async function getCustomers(params: CustomerSearchParams) {
@@ -205,13 +208,11 @@ export async function getRevenueOverview() {
 ```
 
 **Validation Pattern**:
+
 ```typescript
-export const createCustomer = createAction(
-  createCustomerSchema,
-  async (input) => {
-    // Auth check → Duplicate detection → Geocoding → DB Insert
-  }
-);
+export const createCustomer = createAction(createCustomerSchema, async (input) => {
+  // Auth check → Duplicate detection → Geocoding → DB Insert
+});
 ```
 
 ### 3. Frontend Components (`src/components/`)
@@ -219,6 +220,7 @@ export const createCustomer = createAction(
 **Architecture**: Reusable, type-safe components with shadcn/ui
 
 #### Component Categories
+
 - **UI Components**: 30+ shadcn/ui components (button, card, table, dialog, etc.)
 - **Analytics**: Dynamic imports with loading skeletons
 - **Forms**: React Hook Form + Zod validation
@@ -227,6 +229,7 @@ export const createCustomer = createAction(
 - **PDF Export**: jsPDF with Vietnamese font support
 
 #### Performance Optimizations
+
 ```typescript
 // Dynamic imports for heavy components
 const RevenueDashboard = dynamic(
@@ -243,6 +246,7 @@ const RevenueDashboard = dynamic(
 ### 4. Authentication & Security (`src/lib/`)
 
 **NextAuth.js 5 Configuration**:
+
 ```typescript
 // auth.ts - Provider setup
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -261,6 +265,7 @@ export async function requireManager() {
 ```
 
 **RBAC Levels**:
+
 1. **ADMIN**: Full system access
 2. **MANAGER**: Can delete customers, view all
 3. **STAFF**: Create/edit records, view assigned
@@ -270,6 +275,7 @@ export async function requireManager() {
 ### 5. Validation Layer (`src/lib/validations/`)
 
 **Zod Schemas with Vietnamese Messages**:
+
 ```typescript
 // customer.ts
 export const customerSchema = z.object({
@@ -284,6 +290,7 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 ```
 
 **Validation Features**:
+
 - Vietnamese error messages
 - Phone number validation (0XX XXX XXXX)
 - Email validation
@@ -293,6 +300,7 @@ export type CustomerInput = z.infer<typeof customerSchema>;
 ### 6. Utilities & Helpers (`src/lib/`)
 
 #### Core Utilities
+
 ```typescript
 // utils.ts - General utilities
 export function normalizeVietnamese(str: string): string {
@@ -319,6 +327,7 @@ export function createAction(schema, handler) {
 ## 🎯 Key Technical Patterns
 
 ### 1. Vietnamese-First Design
+
 ```typescript
 // Search normalization
 const normalized = normalizeVietnamese("Công Ty TNHH ABC");
@@ -332,6 +341,7 @@ new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" })
 ```
 
 ### 2. Performance Optimization
+
 ```typescript
 // Raw SQL aggregation (vs 5 separate queries)
 const stats = await prisma.$queryRaw`
@@ -351,6 +361,7 @@ await redis.setex(cacheKey, 3600, JSON.stringify(data));
 ```
 
 ### 3. Type Safety Chain
+
 ```typescript
 // Database Schema → Prisma Types → Zod Schema → TypeScript Types
 model Customer { ... }           // Prisma Client type
@@ -359,6 +370,7 @@ CustomerInput                    // TypeScript type
 ```
 
 ### 4. Server Actions Pattern
+
 ```typescript
 // 1. Authentication
 await requireAuth();
@@ -384,6 +396,7 @@ return result;
 ## 📊 Code Statistics
 
 ### File Count
+
 - **Total Files**: ~150
 - **Components**: 50+
 - **Server Actions**: 10 modules
@@ -392,12 +405,14 @@ return result;
 - **Tests**: 121 test cases
 
 ### Lines of Code (Estimated)
+
 - **TypeScript**: ~15,000 lines
 - **SQL (Migrations)**: ~2,000 lines
 - **Configuration**: ~500 lines
 - **Documentation**: ~3,000 lines
 
 ### Test Coverage
+
 - **Lines**: 97.5%
 - **Functions**: 94.55%
 - **Branches**: 92.3%
@@ -408,12 +423,14 @@ return result;
 ## 🔗 Integration Points
 
 ### External Services
+
 1. **Google Maps API**: Geocoding, distance calculations
 2. **Google OAuth**: Authentication provider
 3. **MinIO/S3**: File storage with presigned URLs
 4. **Gemini API**: AI note analysis (optional)
 
 ### Internal Systems
+
 1. **PostgreSQL**: Primary data store
 2. **Redis**: Ready for caching (future)
 3. **Email**: Invoice delivery (future)
@@ -424,6 +441,7 @@ return result;
 ## 🚀 Development Workflow
 
 ### Code Quality Gates
+
 ```bash
 # Before commit
 pnpm run validate        # Typecheck + lint + format
@@ -436,6 +454,7 @@ pnpm run format          # Prettier formatting
 ```
 
 ### Git Workflow
+
 ```bash
 # Feature development
 git checkout dev
@@ -452,21 +471,25 @@ git push -u origin feat/new-feature
 ## 📝 Configuration Files
 
 ### Next.js (`next.config.js`)
+
 - Webpack config for Vietnamese PDF fonts
 - Image optimization settings
 - Security headers
 
 ### TypeScript (`tsconfig.json`)
+
 - Strict mode enabled
 - Path aliases configured
 - Type checking for Server Actions
 
 ### TailwindCSS (`tailwind.config.js`)
+
 - shadcn/ui theme integration
 - Vietnamese font families
 - Custom color palette
 
 ### ESLint (`eslint.config.js`)
+
 - TypeScript strict rules
 - React hooks rules
 - Import ordering
@@ -476,6 +499,7 @@ git push -u origin feat/new-feature
 ## 🎯 Key Files to Understand
 
 ### Must-Read Files
+
 1. **`prisma/schema.prisma`** - Complete database structure
 2. **`src/lib/auth.ts`** - Authentication configuration
 3. **`src/actions/customers.ts`** - Server Actions pattern example
@@ -483,6 +507,7 @@ git push -u origin feat/new-feature
 5. **`src/app/(dashboard)/page.tsx`** - Dashboard architecture
 
 ### Architecture Files
+
 1. **`src/lib/prisma.ts`** - Database client singleton
 2. **`src/lib/errors.ts`** - Error handling system
 3. **`src/lib/action-utils.ts`** - Server action wrappers
@@ -493,6 +518,7 @@ git push -u origin feat/new-feature
 ## 🔄 Common Patterns
 
 ### 1. Form Handling
+
 ```typescript
 // Component
 <form action={createCustomer}>
@@ -508,6 +534,7 @@ export const createCustomer = createAction(
 ```
 
 ### 2. Data Fetching
+
 ```typescript
 // Server Component with Suspense
 async function CustomerList() {
@@ -522,6 +549,7 @@ async function CustomerList() {
 ```
 
 ### 3. Error Handling
+
 ```typescript
 try {
   await updateCustomer(input);

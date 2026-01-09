@@ -8,10 +8,7 @@ import type { PlantItem, StatementPeriod } from "@/types/monthly-statement";
  * calculateStatementPeriod(2025, 7)
  * // Returns: { periodStart: Date(2025-06-24), periodEnd: Date(2025-07-23) }
  */
-export function calculateStatementPeriod(
-  year: number,
-  month: number
-): StatementPeriod {
+export function calculateStatementPeriod(year: number, month: number): StatementPeriod {
   // Calculate previous month
   const prevMonth = month === 1 ? 12 : month - 1;
   const prevYear = month === 1 ? year - 1 : year;
@@ -76,10 +73,7 @@ export function validatePlantItem(item: unknown): item is PlantItem {
  * Format period label for display
  * @example "24/06/2025 → 23/07/2025"
  */
-export function formatPeriodLabel(
-  periodStart: Date,
-  periodEnd: Date
-): string {
+export function formatPeriodLabel(periodStart: Date, periodEnd: Date): string {
   const formatDate = (date: Date) => {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -93,10 +87,7 @@ export function formatPeriodLabel(
 /**
  * Get previous month/year
  */
-export function getPreviousMonth(
-  year: number,
-  month: number
-): { year: number; month: number } {
+export function getPreviousMonth(year: number, month: number): { year: number; month: number } {
   if (month === 1) {
     return { year: year - 1, month: 12 };
   }
@@ -106,10 +97,7 @@ export function getPreviousMonth(
 /**
  * Get next month/year
  */
-export function getNextMonth(
-  year: number,
-  month: number
-): { year: number; month: number } {
+export function getNextMonth(year: number, month: number): { year: number; month: number } {
   if (month === 12) {
     return { year: year + 1, month: 1 };
   }
@@ -119,10 +107,7 @@ export function getNextMonth(
 /**
  * Calculate plant item total
  */
-export function calculatePlantTotal(
-  quantity: number,
-  unitPrice: number
-): number {
+export function calculatePlantTotal(quantity: number, unitPrice: number): number {
   return quantity * unitPrice;
 }
 
@@ -154,10 +139,10 @@ export function formatMonthLabel(month: number): string {
 
 /**
  * Get month short label
- * @example getMonthShort(7) => "T7"
+ * @example getMonthShort(7) => "Tháng 7"
  */
 export function getMonthShort(month: number): string {
-  return `T${month}`;
+  return `Tháng ${month}`;
 }
 
 /**

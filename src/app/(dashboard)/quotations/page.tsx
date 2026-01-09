@@ -3,21 +3,9 @@
  * View and manage all quotations with filtering and statistics
  */
 import Link from "next/link";
-import {
-  FileText,
-  Send,
-  CheckCircle,
-  Clock,
-  Plus,
-} from "lucide-react";
+import { FileText, Send, CheckCircle, Clock, Plus } from "lucide-react";
 import { getQuotations, getQuotationStats } from "@/actions/quotations";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrencyDecimal } from "@/lib/db-utils";
@@ -44,10 +32,7 @@ const statusLabels: Record<QuotationStatus, string> = {
   CONVERTED: "Đã chuyển đổi",
 };
 
-const statusColors: Record<
-  QuotationStatus,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
+const statusColors: Record<QuotationStatus, "default" | "secondary" | "destructive" | "outline"> = {
   DRAFT: "secondary",
   SENT: "default",
   ACCEPTED: "default",
@@ -82,8 +67,7 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Báo giá</h1>
           <p className="text-muted-foreground">
-            Quản lý báo giá cho khách hàng (
-            {quotationsResult.pagination.total} báo giá)
+            Quản lý báo giá cho khách hàng ({quotationsResult.pagination.total} báo giá)
           </p>
         </div>
         <Button asChild>
@@ -129,20 +113,14 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Danh sách báo giá</CardTitle>
-          <CardDescription>
-            Xem và quản lý tất cả các báo giá của bạn
-          </CardDescription>
+          <CardDescription>Xem và quản lý tất cả các báo giá của bạn</CardDescription>
         </CardHeader>
         <CardContent>
           {quotationsResult.quotations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <FileText className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">
-                Chưa có báo giá nào
-              </h3>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Tạo báo giá đầu tiên để bắt đầu
-              </p>
+              <FileText className="text-muted-foreground mb-4 h-12 w-12" />
+              <h3 className="mb-2 text-lg font-semibold">Chưa có báo giá nào</h3>
+              <p className="text-muted-foreground mb-4 text-sm">Tạo báo giá đầu tiên để bắt đầu</p>
               <Button asChild>
                 <Link href="/quotations/new">
                   <Plus className="mr-2 h-4 w-4" />
@@ -159,7 +137,7 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
               {/* Pagination */}
               {quotationsResult.pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Trang {quotationsResult.pagination.page} /{" "}
                     {quotationsResult.pagination.totalPages}
                   </p>
@@ -170,9 +148,7 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
                       asChild
                       disabled={quotationsResult.pagination.page === 1}
                     >
-                      <Link
-                        href={`/quotations?page=${quotationsResult.pagination.page - 1}`}
-                      >
+                      <Link href={`/quotations?page=${quotationsResult.pagination.page - 1}`}>
                         Trước
                       </Link>
                     </Button>
@@ -181,13 +157,10 @@ export default async function QuotationsPage({ searchParams }: PageProps) {
                       size="sm"
                       asChild
                       disabled={
-                        quotationsResult.pagination.page ===
-                        quotationsResult.pagination.totalPages
+                        quotationsResult.pagination.page === quotationsResult.pagination.totalPages
                       }
                     >
-                      <Link
-                        href={`/quotations?page=${quotationsResult.pagination.page + 1}`}
-                      >
+                      <Link href={`/quotations?page=${quotationsResult.pagination.page + 1}`}>
                         Sau
                       </Link>
                     </Button>
@@ -214,13 +187,7 @@ interface StatCardProps {
   variant?: "default" | "success" | "warning" | "info";
 }
 
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  description,
-  variant = "default",
-}: StatCardProps) {
+function StatCard({ title, value, icon: Icon, description, variant = "default" }: StatCardProps) {
   const colors = {
     default: "text-primary",
     success: "text-green-600",
@@ -236,9 +203,7 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </CardContent>
     </Card>
   );
@@ -251,48 +216,35 @@ interface QuotationCardProps {
 function QuotationCard({ quotation }: QuotationCardProps) {
   const isExpiringSoon =
     quotation.status === "SENT" &&
-    new Date(quotation.validUntil) <
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    new Date(quotation.validUntil) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   return (
     <Link
       href={`/quotations/${quotation.id}`}
-      className="block rounded-lg border p-4 transition-colors hover:bg-muted/50"
+      className="hover:bg-muted/50 block rounded-lg border p-4 transition-colors"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Left side - Main info */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">{quotation.quoteNumber}</h3>
-            <Badge variant={statusColors[quotation.status]}>
-              {statusLabels[quotation.status]}
-            </Badge>
-            {isExpiringSoon && (
-              <Badge variant="destructive">Sắp hết hạn</Badge>
-            )}
+            <Badge variant={statusColors[quotation.status]}>{statusLabels[quotation.status]}</Badge>
+            {isExpiringSoon && <Badge variant="destructive">Sắp hết hạn</Badge>}
           </div>
-          <p className="text-sm text-muted-foreground">
-            {quotation.customer.companyName}
-          </p>
-          {quotation.title && (
-            <p className="text-sm font-medium">{quotation.title}</p>
-          )}
+          <p className="text-muted-foreground text-sm">{quotation.customer.companyName}</p>
+          {quotation.title && <p className="text-sm font-medium">{quotation.title}</p>}
         </div>
 
         {/* Right side - Amount and dates */}
         <div className="flex flex-col items-end gap-1">
-          <p className="text-lg font-bold">
-            {formatCurrencyDecimal(quotation.totalAmount)}
-          </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-lg font-bold">{formatCurrencyDecimal(quotation.totalAmount)}</p>
+          <p className="text-muted-foreground text-xs">
             Hiệu lực:{" "}
             {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
               locale: vi,
             })}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {quotation.items.length} sản phẩm
-          </p>
+          <p className="text-muted-foreground text-xs">{quotation.items.length} sản phẩm</p>
         </div>
       </div>
     </Link>

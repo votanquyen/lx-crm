@@ -49,24 +49,24 @@ export function CustomerSearch({ defaultValue = "" }: CustomerSearchProps) {
   }, [router, searchParams]);
 
   return (
-    <div className="relative flex-1 max-w-sm">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="relative max-w-sm flex-1">
+      <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
       <Input
         id="customer-search"
         type="search"
         placeholder="Tìm khách hàng..."
-        className="pl-9 pr-9"
+        className="pr-9 pl-9"
         defaultValue={defaultValue}
         onChange={(e) => handleSearch(e.target.value)}
       />
       {isPending && (
-        <Loader2 className="absolute right-9 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground absolute top-1/2 right-9 h-4 w-4 -translate-y-1/2 animate-spin" />
       )}
       {defaultValue && !isPending && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+          className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
           onClick={handleClear}
         >
           <X className="h-4 w-4" />

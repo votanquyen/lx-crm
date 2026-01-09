@@ -50,7 +50,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
 
   return (
     <div className="flex items-center justify-between px-2 py-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <span>
           Hiển thị {start}-{end} / {total} kết quả
         </span>
@@ -69,7 +69,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-muted-foreground text-sm">
           Trang {page} / {totalPages}
         </div>
         <div className="flex items-center gap-1">

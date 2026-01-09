@@ -32,6 +32,7 @@ PENDING → IN_PROGRESS → COMPLETED
 ### 3. Execution Workflow
 
 **Step 1: Start Schedule**
+
 - Manager approves schedule (status: APPROVED)
 - Driver clicks "Thực hiện" button
 - System changes status to IN_PROGRESS
@@ -39,6 +40,7 @@ PENDING → IN_PROGRESS → COMPLETED
 - Start timestamp recorded
 
 **Step 2: Complete Each Stop**
+
 - Driver arrives at location
 - Records arrival time (manual or "Bây giờ" button)
 - Records start time when work begins
@@ -52,6 +54,7 @@ PENDING → IN_PROGRESS → COMPLETED
 - Submits completion
 
 **Step 3: Skip Stops (if needed)**
+
 - If stop cannot be completed
 - Driver clicks "Bỏ qua" button
 - Enters reason (minimum 10 characters)
@@ -59,6 +62,7 @@ PENDING → IN_PROGRESS → COMPLETED
 - Reason logged for review
 
 **Step 4: Complete Schedule**
+
 - When all stops completed or skipped
 - Driver clicks "Hoàn thành lịch trình"
 - System calculates actual duration
@@ -72,11 +76,13 @@ PENDING → IN_PROGRESS → COMPLETED
 ### Files Created
 
 **1. Server Actions**
+
 ```
 src/actions/daily-schedules.ts (extended)
 ```
 
 **New Actions:**
+
 - `startScheduleExecution(scheduleId)` - Start schedule
 - `completeStop(stopData)` - Complete a stop
 - `skipStop(stopId, reason)` - Skip a stop
@@ -84,11 +90,13 @@ src/actions/daily-schedules.ts (extended)
 - `getScheduleForExecution(scheduleId)` - Fetch schedule
 
 **2. UI Component**
+
 ```
 src/components/exchanges/schedule-tracker.tsx
 ```
 
 **Features:**
+
 - Progress bar (completed/total stops)
 - Stop cards with customer details
 - Manual time entry with "Bây giờ" quick-fill
@@ -97,11 +105,13 @@ src/components/exchanges/schedule-tracker.tsx
 - Complete/Skip actions
 
 **3. Page**
+
 ```
 src/app/(dashboard)/exchanges/execute/[id]/page.tsx
 ```
 
 **Sections:**
+
 - Schedule header with date
 - Schedule info (stops, plants, duration)
 - Start button (APPROVED status)
@@ -109,11 +119,13 @@ src/app/(dashboard)/exchanges/execute/[id]/page.tsx
 - Completion summary (COMPLETED status)
 
 **4. UI Integration**
+
 ```
 src/components/exchanges/daily-schedule-builder.tsx (modified)
 ```
 
 **Added:**
+
 - "Thực hiện" button when status = APPROVED
 - "Tiếp tục" button when status = IN_PROGRESS
 - Links to execution page
@@ -125,16 +137,19 @@ src/components/exchanges/daily-schedule-builder.tsx (modified)
 ### Driver Workflow
 
 **1. Access Schedule**
+
 - Go to "Lịch trình hàng ngày"
 - Select today's approved schedule
 - Click "Thực hiện" button
 
 **2. Start Execution**
+
 - Review schedule info
 - Click "Bắt đầu thực hiện lịch trình"
 - System starts tracking
 
 **3. Complete Each Stop**
+
 - Click "Bắt đầu" on first stop
 - Fill in times (or use "Bây giờ" buttons):
   - Arrival time
@@ -153,11 +168,13 @@ src/components/exchanges/daily-schedule-builder.tsx (modified)
 - Click "Hoàn thành" to complete stop
 
 **4. Skip Stops (if needed)**
+
 - Click "Bỏ qua" button
 - Enter reason in popup
 - Confirm skip
 
 **5. Complete Schedule**
+
 - After all stops done
 - Click "Hoàn thành lịch trình"
 - Confirm completion
@@ -169,19 +186,22 @@ src/components/exchanges/daily-schedule-builder.tsx (modified)
 ### Data Captured Per Stop
 
 **Timestamps:**
+
 ```typescript
-arrivedAt: DateTime
-startedAt: DateTime
-completedAt: DateTime
+arrivedAt: DateTime;
+startedAt: DateTime;
+completedAt: DateTime;
 ```
 
 **Plant Counts:**
+
 ```typescript
-actualPlantsRemoved: number
-actualPlantsInstalled: number
+actualPlantsRemoved: number;
+actualPlantsInstalled: number;
 ```
 
 **Staff Report (JSON):**
+
 ```json
 {
   "actualPlantsRemoved": 3,
@@ -194,19 +214,22 @@ actualPlantsInstalled: number
 ```
 
 **Photos:**
+
 ```json
 ["https://s3.../photo1.jpg", "https://s3.../photo2.jpg"]
 ```
 
 **Verification:**
+
 ```typescript
-customerVerified: boolean
-verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
+customerVerified: boolean;
+verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM";
 ```
 
 ### Validation Rules
 
 **Complete Stop:**
+
 - All 3 timestamps required (arrived, started, completed)
 - Plant counts ≥ 0
 - Issues max 500 chars
@@ -214,10 +237,12 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 - Photo URLs must be valid URLs
 
 **Skip Stop:**
+
 - Reason required
 - Reason min 10 chars, max 500 chars
 
 **Complete Schedule:**
+
 - Schedule must be IN_PROGRESS
 - All stops must be COMPLETED or CANCELLED
 - At least 1 stop must be COMPLETED
@@ -231,20 +256,26 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 **Description:** Start execution of approved schedule
 
 **Parameters:**
+
 - `scheduleId: string` - Schedule ID
 
 **Validation:**
+
 - Must be APPROVED status
 - User must be authenticated
 
 **Updates:**
+
 - Schedule status → IN_PROGRESS
 - Schedule startedAt → now
 - All exchanges → IN_PROGRESS
 
 **Returns:**
+
 ```typescript
-{ success: true }
+{
+  success: true;
+}
 ```
 
 ---
@@ -254,6 +285,7 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 **Description:** Mark a stop as completed with details
 
 **Input Schema:**
+
 ```typescript
 {
   stopId: string;
@@ -271,19 +303,24 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 ```
 
 **Validation:**
+
 - All timestamps required
 - Stop must not already be COMPLETED
 - Plant counts must be non-negative
 
 **Updates:**
+
 - Stop status → COMPLETED
 - Timestamps saved
 - Staff report JSON created
 - Photos saved
 
 **Returns:**
+
 ```typescript
-{ success: true }
+{
+  success: true;
+}
 ```
 
 ---
@@ -293,6 +330,7 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 **Description:** Skip a stop with reason
 
 **Input Schema:**
+
 ```typescript
 {
   stopId: string;
@@ -301,13 +339,17 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 ```
 
 **Updates:**
+
 - Stop status → CANCELLED
 - Skip reason saved
 - Skip approved by current user
 
 **Returns:**
+
 ```typescript
-{ success: true }
+{
+  success: true;
+}
 ```
 
 ---
@@ -317,14 +359,17 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 **Description:** Complete entire schedule
 
 **Validation:**
+
 - Schedule must be IN_PROGRESS
 - All stops must be COMPLETED or CANCELLED
 - At least 1 stop must be COMPLETED
 
 **Calculations:**
+
 - Actual duration = now - startedAt (minutes)
 
 **Updates:**
+
 - Schedule status → COMPLETED
 - Schedule completedAt → now
 - Schedule actualDurationMins calculated
@@ -332,8 +377,11 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 - Activity log created
 
 **Returns:**
+
 ```typescript
-{ success: true }
+{
+  success: true;
+}
 ```
 
 ---
@@ -343,6 +391,7 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 **Description:** Fetch schedule with full details
 
 **Returns:**
+
 ```typescript
 {
   id: string;
@@ -370,8 +419,9 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
       address: string;
       district: string;
       contactPhone: string;
-    };
-  }[];
+    }
+  }
+  [];
 }
 ```
 
@@ -382,6 +432,7 @@ verificationMethod: "PHOTO" | "SIGNATURE" | "SMS_CONFIRM"
 ### ScheduleTracker Component
 
 **Props:**
+
 ```typescript
 interface ScheduleTrackerProps {
   schedule: ScheduleWithDetails;
@@ -389,6 +440,7 @@ interface ScheduleTrackerProps {
 ```
 
 **Features:**
+
 - Progress bar with completion percentage
 - Stop cards with status badges
 - Expandable completion forms
@@ -397,6 +449,7 @@ interface ScheduleTrackerProps {
 - Complete/Skip actions
 
 **Status Badges:**
+
 - PENDING: Gray (Chờ)
 - IN_PROGRESS: Blue (Đang thực hiện)
 - COMPLETED: Green (Hoàn thành)
@@ -409,6 +462,7 @@ interface ScheduleTrackerProps {
 **Integration:** MinIO S3 via `uploadCarePhoto()`
 
 **Features:**
+
 - Multiple photo upload
 - Up to 30MB per photo
 - Progress indicator
@@ -416,6 +470,7 @@ interface ScheduleTrackerProps {
 - Direct S3 upload
 
 **Workflow:**
+
 1. User selects photos
 2. File input triggers upload
 3. Each photo uploaded to S3
@@ -427,14 +482,16 @@ interface ScheduleTrackerProps {
 ## Progress Tracking
 
 **Calculation:**
+
 ```typescript
-const completedCount = exchanges.filter(e => e.status === "COMPLETED").length;
-const skippedCount = exchanges.filter(e => e.status === "CANCELLED").length;
+const completedCount = exchanges.filter((e) => e.status === "COMPLETED").length;
+const skippedCount = exchanges.filter((e) => e.status === "CANCELLED").length;
 const totalCount = exchanges.length;
 const progress = (completedCount / totalCount) * 100;
 ```
 
 **Display:**
+
 - Progress bar: Visual indicator
 - Text: "X / Y điểm dừng (Z bỏ qua)"
 - Percentage: "NN%"
@@ -444,17 +501,20 @@ const progress = (completedCount / totalCount) * 100;
 ## Error Handling
 
 **Validation Errors:**
+
 - Missing timestamps → "Vui lòng nhập đầy đủ thời gian"
 - Invalid plant counts → Auto-corrected to 0
 - Short skip reason → "Vui lòng nhập lý do bỏ qua (tối thiểu 10 ký tự)"
 - Incomplete stops → "Còn N điểm dừng chưa hoàn thành"
 
 **Photo Upload Errors:**
+
 - File too large → "File quá lớn (tối đa 30MB)"
 - Upload failed → "Không thể tải ảnh lên"
 - Network error → Retry mechanism
 
 **Authorization Errors:**
+
 - Unauthorized → 401 redirect
 - Forbidden → 403 error message
 
@@ -502,21 +562,25 @@ const progress = (completedCount / totalCount) * 100;
 ## Known Limitations
 
 **1. No GPS Tracking**
+
 - Manual time entry only
 - No location verification
 - No route tracking
 
 **2. No Offline Support**
+
 - Requires internet connection
 - No offline data storage
 - No sync when back online
 
 **3. No Photo Compression**
+
 - Large photos upload as-is
 - Can be slow on slow networks
 - Consider adding client-side compression (future)
 
 **4. No Real-time Updates**
+
 - Page refresh required after each action
 - No WebSocket updates
 - No collaborative editing
@@ -528,32 +592,38 @@ const progress = (completedCount / totalCount) * 100;
 ### Phase 4 Potential Features
 
 **1. GPS Integration** (Optional)
+
 - Auto-detect arrival at location
 - Verify location matches customer address
 - Track actual route taken
 
 **2. Offline Support**
+
 - Cache schedule data
 - Store photos locally
 - Sync when connection restored
 
 **3. Real-time Updates**
+
 - WebSocket updates
 - Live progress for managers
 - Notifications on completion
 
 **4. Photo Features**
+
 - Client-side compression
 - Before/after photo pairing
 - Photo annotations
 - Required vs optional photos
 
 **5. Voice Notes**
+
 - Audio recording for notes
 - Speech-to-text for feedback
 - Hands-free operation
 
 **6. Customer Signatures**
+
 - Digital signature capture
 - Signature verification
 - Signature storage in S3
@@ -565,6 +635,7 @@ const progress = (completedCount / totalCount) * 100;
 ### Prisma Schema
 
 **DailySchedule:**
+
 ```prisma
 model DailySchedule {
   status        ScheduleStatus
@@ -576,6 +647,7 @@ model DailySchedule {
 ```
 
 **ScheduledExchange:**
+
 ```prisma
 model ScheduledExchange {
   status             ExchangeStatus
@@ -604,15 +676,18 @@ model ScheduledExchange {
 ## Performance
 
 **Page Load Time:**
+
 - Schedule with 10 stops: <500ms
 - Schedule with 20 stops: <1s
 
 **Photo Upload:**
+
 - 1MB photo: ~1-2s
 - 10MB photo: ~5-10s
 - 30MB photo: ~15-20s
 
 **Form Submission:**
+
 - Complete stop: <200ms
 - Skip stop: <150ms
 - Complete schedule: <300ms
@@ -622,21 +697,25 @@ model ScheduledExchange {
 ## Security
 
 **Authentication:**
+
 - All actions require auth
 - Session-based verification
 - User ID logged in staff report
 
 **Authorization:**
+
 - Only staff can execute schedules
 - Only managers can approve (existing)
 - Skip requires authentication
 
 **Data Validation:**
+
 - All inputs validated with Zod schemas
 - SQL injection prevention via Prisma
 - XSS prevention via React escaping
 
 **Photo Storage:**
+
 - Uploaded to authenticated S3
 - Public read access for photos
 - No sensitive data in photo metadata
@@ -648,6 +727,7 @@ model ScheduledExchange {
 ✅ **Schedule Execution Tracking complete**
 
 **What Works:**
+
 - Start schedule execution
 - Manual check-in/check-out per stop
 - Photo upload (up to 30MB)

@@ -40,12 +40,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
 /**
  * Public routes that don't require authentication
  */
-export const PUBLIC_ROUTES = [
-  "/login",
-  "/api/auth",
-  "/api/health",
-  "/unauthorized",
-] as const;
+export const PUBLIC_ROUTES = ["/login", "/api/auth", "/api/health", "/unauthorized"] as const;
 
 /**
  * Check if a route requires specific roles
@@ -78,10 +73,7 @@ export function getRoutePermissions(pathname: string): UserRole[] | null {
  * @param userRole - The user's role
  * @returns true if user can access the route
  */
-export function canAccessRoute(
-  pathname: string,
-  userRole: UserRole | undefined
-): boolean {
+export function canAccessRoute(pathname: string, userRole: UserRole | undefined): boolean {
   const requiredRoles = getRoutePermissions(pathname);
 
   // Public route or unrestricted

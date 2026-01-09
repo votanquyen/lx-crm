@@ -26,7 +26,8 @@ export async function getPlantTypes(params: PlantTypeSearchParams) {
   await requireAuth();
 
   const validated = plantTypeSearchSchema.parse(params);
-  const { page, limit, search, category, isActive, minPrice, maxPrice, sortBy, sortOrder } = validated;
+  const { page, limit, search, category, isActive, minPrice, maxPrice, sortBy, sortOrder } =
+    validated;
 
   const skip = (page - 1) * limit;
 
@@ -362,7 +363,9 @@ export async function updatePlantType(id: string, data: unknown) {
       rentalPrice: validated.rentalPrice ? toDecimal(validated.rentalPrice) : undefined,
       depositPrice: validated.depositPrice ? toDecimal(validated.depositPrice) : undefined,
       salePrice: validated.salePrice ? toDecimal(validated.salePrice) : undefined,
-      replacementPrice: validated.replacementPrice ? toDecimal(validated.replacementPrice) : undefined,
+      replacementPrice: validated.replacementPrice
+        ? toDecimal(validated.replacementPrice)
+        : undefined,
     },
     include: {
       inventory: true,

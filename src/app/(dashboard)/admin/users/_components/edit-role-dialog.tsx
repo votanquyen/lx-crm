@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { updateUserRole } from "@/actions/users";
 import { toast } from "sonner";
 import type { UserRole } from "@prisma/client";
@@ -95,7 +101,7 @@ export function EditRoleDialog({ user, open, onOpenChange }: EditRoleDialogProps
                   <SelectItem key={value} value={value}>
                     <div>
                       <div className="font-medium">{label}</div>
-                      <div className="text-xs text-muted-foreground">{description}</div>
+                      <div className="text-muted-foreground text-xs">{description}</div>
                     </div>
                   </SelectItem>
                 ))}
@@ -104,7 +110,7 @@ export function EditRoleDialog({ user, open, onOpenChange }: EditRoleDialogProps
           </div>
 
           {role !== user.role && (
-            <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 border border-yellow-200">
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
               ⚠️ Người dùng sẽ bị đăng xuất và cần đăng nhập lại để áp dụng vai trò mới.
             </div>
           )}

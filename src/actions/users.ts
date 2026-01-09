@@ -162,120 +162,106 @@ export async function getUserById(id: string) {
  * Only accessible by ADMIN
  * Cannot change own role
  */
-export const updateUserRole = createAction(
-  updateUserRoleSchema,
-  async (input) => {
-    const session = await requireAdmin();
+export const updateUserRole = createAction(updateUserRoleSchema, async (input) => {
+  const session = await requireAdmin();
 
-    const { userId, role } = input;
+  const { userId, role } = input;
 
-    // Prevent self-role change
-    if (session.user.id === userId) {
-      throw new AppError(
-        "Bạn không thể thay đổi vai trò của chính mình",
-        "FORBIDDEN",
-        403
-      );
-    }
-
-    // Get current user data
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      throw new AppError("Người dùng không tồn tại", "NOT_FOUND", 404);
-    }
-
-    // Update role
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { role },
-    });
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "UPDATE_ROLE",
-        entityType: "User",
-        entityId: userId,
-        oldValues: { role: existingUser.role } as Prisma.JsonObject,
-        newValues: { role } as Prisma.JsonObject,
-      },
-    });
-
-    // Invalidate user sessions to force re-login with new role
-    await prisma.session.deleteMany({
-      where: { userId },
-    });
-
-    revalidatePath("/admin/users");
-    revalidatePath(`/admin/users/${userId}`);
-    return updatedUser;
+  // Prevent self-role change
+  if (session.user.id === userId) {
+    throw new AppError("Bạn không thể thay đổi vai trò của chính mình", "FORBIDDEN", 403);
   }
-);
+
+  // Get current user data
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new AppError("Người dùng không tồn tại", "NOT_FOUND", 404);
+  }
+
+  // Update role
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "UPDATE_ROLE",
+      entityType: "User",
+      entityId: userId,
+      oldValues: { role: existingUser.role } as Prisma.JsonObject,
+      newValues: { role } as Prisma.JsonObject,
+    },
+  });
+
+  // Invalidate user sessions to force re-login with new role
+  await prisma.session.deleteMany({
+    where: { userId },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  return updatedUser;
+});
 
 /**
  * Toggle user active status
  * Only accessible by ADMIN
  * Cannot deactivate own account
  */
-export const toggleUserActive = createAction(
-  toggleUserActiveSchema,
-  async (input) => {
-    const session = await requireAdmin();
+export const toggleUserActive = createAction(toggleUserActiveSchema, async (input) => {
+  const session = await requireAdmin();
 
-    const { userId, isActive } = input;
+  const { userId, isActive } = input;
 
-    // Prevent self-deactivation
-    if (session.user.id === userId && !isActive) {
-      throw new AppError(
-        "Bạn không thể vô hiệu hóa tài khoản của chính mình",
-        "FORBIDDEN",
-        403
-      );
-    }
-
-    // Get current user data
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      throw new AppError("Người dùng không tồn tại", "NOT_FOUND", 404);
-    }
-
-    // Update active status
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { isActive },
-    });
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: isActive ? "ACTIVATE_USER" : "DEACTIVATE_USER",
-        entityType: "User",
-        entityId: userId,
-        oldValues: { isActive: existingUser.isActive } as Prisma.JsonObject,
-        newValues: { isActive } as Prisma.JsonObject,
-      },
-    });
-
-    // If deactivating, invalidate user sessions
-    if (!isActive) {
-      await prisma.session.deleteMany({
-        where: { userId },
-      });
-    }
-
-    revalidatePath("/admin/users");
-    revalidatePath(`/admin/users/${userId}`);
-    return updatedUser;
+  // Prevent self-deactivation
+  if (session.user.id === userId && !isActive) {
+    throw new AppError("Bạn không thể vô hiệu hóa tài khoản của chính mình", "FORBIDDEN", 403);
   }
-);
+
+  // Get current user data
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new AppError("Người dùng không tồn tại", "NOT_FOUND", 404);
+  }
+
+  // Update active status
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { isActive },
+  });
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: isActive ? "ACTIVATE_USER" : "DEACTIVATE_USER",
+      entityType: "User",
+      entityId: userId,
+      oldValues: { isActive: existingUser.isActive } as Prisma.JsonObject,
+      newValues: { isActive } as Prisma.JsonObject,
+    },
+  });
+
+  // If deactivating, invalidate user sessions
+  if (!isActive) {
+    await prisma.session.deleteMany({
+      where: { userId },
+    });
+  }
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${userId}`);
+  return updatedUser;
+});
 
 /**
  * Get user statistics
@@ -297,8 +283,6 @@ export async function getUserStats() {
     total,
     active,
     inactive: total - active,
-    byRole: Object.fromEntries(
-      byRole.map((r) => [r.role, r._count])
-    ) as Record<UserRole, number>,
+    byRole: Object.fromEntries(byRole.map((r) => [r.role, r._count])) as Record<UserRole, number>,
   };
 }

@@ -33,6 +33,7 @@ sudo journalctl -u minio -f    # View logs
 ## mc CLI Commands
 
 ### Setup
+
 ```bash
 # Install mc
 wget https://dl.min.io/client/mc/release/linux-amd64/mc
@@ -43,6 +44,7 @@ mc alias set myminio https://minio.yourserver.com minioadmin password
 ```
 
 ### Bucket Operations
+
 ```bash
 mc ls myminio                              # List buckets
 mc ls myminio/locxanh-photos              # List files
@@ -51,6 +53,7 @@ mc rb myminio/bucket                      # Remove bucket
 ```
 
 ### File Operations
+
 ```bash
 mc cp photo.jpg myminio/locxanh-photos/   # Upload file
 mc cp myminio/locxanh-photos/photo.jpg .  # Download file
@@ -59,6 +62,7 @@ mc rm --recursive myminio/bucket/folder/  # Delete folder
 ```
 
 ### Policy & Permissions
+
 ```bash
 mc policy get myminio/locxanh-photos              # Check policy
 mc policy set download myminio/locxanh-photos     # Set public read
@@ -68,12 +72,14 @@ mc anonymous set public myminio/bucket            # Public read/write
 ```
 
 ### CORS
+
 ```bash
 mc cors set myminio/locxanh-photos cors.json  # Apply CORS
 mc cors get myminio/locxanh-photos            # View CORS
 ```
 
 ### Admin Operations
+
 ```bash
 mc admin info myminio                         # Server info
 mc admin user list myminio                    # List users
@@ -83,6 +89,7 @@ mc admin bucket quota myminio/bucket --size 10GB  # Set quota
 ```
 
 ### Monitoring
+
 ```bash
 mc du myminio/locxanh-photos             # Storage usage
 mc stat myminio/locxanh-photos/file.jpg  # File info
@@ -139,6 +146,7 @@ sudo certbot renew --dry-run
 ## Troubleshooting Quick Fixes
 
 ### Connection Refused
+
 ```bash
 sudo systemctl restart minio
 sudo systemctl status minio
@@ -146,22 +154,26 @@ sudo journalctl -u minio -n 50
 ```
 
 ### CORS Errors
+
 ```bash
 mc cors set myminio/locxanh-photos cors.json
 ```
 
 ### Upload Fails (403)
+
 ```bash
 mc anonymous set download myminio/locxanh-photos
 ```
 
 ### SSL Issues
+
 ```bash
 sudo certbot renew
 sudo systemctl reload nginx
 ```
 
 ### Check Firewall
+
 ```bash
 sudo ufw status
 sudo ufw allow 9000/tcp

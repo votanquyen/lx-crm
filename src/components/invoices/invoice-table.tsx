@@ -3,7 +3,7 @@
  */
 "use client";
 
-import React, { useCallback } from "react";
+import React, { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -49,7 +49,10 @@ type Invoice = {
   _count: { payments: number };
 };
 
-const statusConfig: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  InvoiceStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
@@ -86,23 +89,15 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
   return (
     <TableRow>
       <TableCell>
-        <Link
-          href={`/invoices/${invoice.id}`}
-          className="font-medium hover:underline"
-        >
+        <Link href={`/invoices/${invoice.id}`} className="font-medium hover:underline">
           {getInvoiceNo(invoice.invoiceNumber)}
         </Link>
         {invoice.contract && (
-          <p className="text-sm text-muted-foreground">
-            HĐ: {invoice.contract.contractNumber}
-          </p>
+          <p className="text-muted-foreground text-sm">HĐ: {invoice.contract.contractNumber}</p>
         )}
       </TableCell>
       <TableCell>
-        <Link
-          href={`/customers/${invoice.customer.id}`}
-          className="font-medium hover:underline"
-        >
+        <Link href={`/customers/${invoice.customer.id}`} className="font-medium hover:underline">
           {invoice.customer.companyName}
         </Link>
       </TableCell>
@@ -119,14 +114,10 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
           {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
         </span>
       </TableCell>
-      <TableCell className="text-right">
-        {formatCurrency(invoice.totalAmount)}
-      </TableCell>
+      <TableCell className="text-right">{formatCurrency(invoice.totalAmount)}</TableCell>
       <TableCell className="text-right font-medium">
         {invoice.outstandingAmount > 0 ? (
-          <span className="text-orange-600">
-            {formatCurrency(invoice.outstandingAmount)}
-          </span>
+          <span className="text-orange-600">{formatCurrency(invoice.outstandingAmount)}</span>
         ) : (
           <span className="text-green-600">0</span>
         )}
@@ -151,25 +142,19 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
                 Gửi hóa đơn
               </DropdownMenuItem>
             )}
-            {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) &&
-              onRecordPayment && (
-                <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
-                  <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Ghi nhận thanh toán
-                </DropdownMenuItem>
-              )}
+            {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) && onRecordPayment && (
+              <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
+                <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
+                Ghi nhận thanh toán
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
-            {invoice.status !== "CANCELLED" &&
-              invoice._count.payments === 0 &&
-              onCancel && (
-                <DropdownMenuItem
-                  onClick={() => onCancel(invoice.id)}
-                  className="text-destructive"
-                >
-                  <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Hủy hóa đơn
-                </DropdownMenuItem>
-              )}
+            {invoice.status !== "CANCELLED" && invoice._count.payments === 0 && onCancel && (
+              <DropdownMenuItem onClick={() => onCancel(invoice.id)} className="text-destructive">
+                <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                Hủy hóa đơn
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -185,12 +170,12 @@ interface InvoiceTableProps {
   onRecordPayment?: (id: string) => void;
 }
 
-export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: InvoiceTableProps) {
-  // Memoized callbacks for stable references
-  const handleSend = useCallback((id: string) => onSend?.(id), [onSend]);
-  const handleCancel = useCallback((id: string) => onCancel?.(id), [onCancel]);
-  const handleRecordPayment = useCallback((id: string) => onRecordPayment?.(id), [onRecordPayment]);
-
+export const InvoiceTable = memo(function InvoiceTable({
+  invoices,
+  onSend,
+  onCancel,
+  onRecordPayment,
+}: InvoiceTableProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -208,8 +193,8 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
         <TableBody>
           {invoices.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
+              <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
+                <Receipt className="mx-auto mb-2 h-8 w-8 opacity-50" />
                 Chưa có hóa đơn nào
               </TableCell>
             </TableRow>
@@ -221,14 +206,11 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
               return (
                 <TableRow key={invoice.id}>
                   <TableCell>
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="font-medium hover:underline"
-                    >
+                    <Link href={`/invoices/${invoice.id}`} className="font-medium hover:underline">
                       {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
                     </Link>
                     {invoice.contract && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         HĐ: {invoice.contract.contractNumber}
                       </p>
                     )}
@@ -240,9 +222,7 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
                     >
                       {invoice.customer.companyName}
                     </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {invoice.customer.code}
-                    </p>
+                    <p className="text-muted-foreground text-sm">{invoice.customer.code}</p>
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
@@ -319,4 +299,4 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
       </Table>
     </div>
   );
-}
+});

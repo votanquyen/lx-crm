@@ -23,12 +23,14 @@
 ## 🎯 General Principles
 
 ### Core Philosophy
+
 - **YAGNI**: You Aren't Gonna Need It - Build only what's needed now
 - **KISS**: Keep It Simple Stupid - Prefer clarity over cleverness
 - **DRY**: Don't Repeat Yourself - One source of truth
 - **API-First**: All features must have REST/Server Action interface
 
 ### Code Quality Gates
+
 ```bash
 # Before any commit
 pnpm run validate        # Full validation
@@ -37,6 +39,7 @@ pnpm run build           # Production build succeeds
 ```
 
 ### Quality Metrics
+
 - **Type Safety**: 100% - No `any` types allowed
 - **Test Coverage**: > 95% lines, > 90% functions
 - **Linting**: 0 errors, warnings addressed
@@ -49,6 +52,7 @@ pnpm run build           # Production build succeeds
 ### Type Safety Rules
 
 #### 1. No `any` Types
+
 ```typescript
 // ❌ BAD
 function process(data: any) { ... }
@@ -63,6 +67,7 @@ function process(data: CustomerInput) { ... }
 ```
 
 #### 2. Explicit Return Types
+
 ```typescript
 // ❌ BAD
 function getCustomer(id: string) {
@@ -76,6 +81,7 @@ async function getCustomer(id: string): Promise<Customer | null> {
 ```
 
 #### 3. Interface vs Type
+
 ```typescript
 // Use interfaces for objects
 interface Customer {
@@ -90,6 +96,7 @@ type CustomerTier = "STANDARD" | "PREMIUM" | "VIP";
 ```
 
 #### 4. Null Safety
+
 ```typescript
 // ❌ BAD
 const customer = await prisma.customer.findUnique({ where: { id } });
@@ -106,6 +113,7 @@ console.log(customer.companyName); // Safe
 ### TypeScript Configuration
 
 #### Strict Mode Requirements
+
 ```json
 {
   "compilerOptions": {
@@ -127,6 +135,7 @@ console.log(customer.companyName); // Safe
 ### 1. Server vs Client Components
 
 #### Server Components (Default)
+
 ```typescript
 // ✅ Default: Server Component
 import { prisma } from "@/lib/prisma";
@@ -138,6 +147,7 @@ export default async function CustomerPage({ params }: { params: { id: string } 
 ```
 
 #### Client Components (Use Sparingly)
+
 ```typescript
 // ✅ Use "use client" directive when needed
 "use client";
@@ -153,6 +163,7 @@ export function CustomerForm() {
 ### 2. Data Fetching Patterns
 
 #### Server Actions (Preferred)
+
 ```typescript
 // ✅ Server Action
 "use server";
@@ -174,6 +185,7 @@ function CustomerList() {
 ```
 
 #### React Query (For Real-time Updates)
+
 ```typescript
 // ✅ With caching and invalidation
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -183,19 +195,20 @@ function CustomerComponent() {
 
   const { data: customers } = useQuery({
     queryKey: ["customers"],
-    queryFn: () => getCustomers({ page: 1 })
+    queryFn: () => getCustomers({ page: 1 }),
   });
 
   const mutation = useMutation({
     mutationFn: createCustomer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
-    }
+    },
   });
 }
 ```
 
 ### 3. Suspense & Loading States
+
 ```typescript
 // ✅ Granular loading boundaries
 import { Suspense } from "react";
@@ -224,6 +237,7 @@ async function StatsSection() {
 ```
 
 ### 4. Dynamic Imports (Code Splitting)
+
 ```typescript
 // ✅ For heavy components
 import dynamic from "next/dynamic";
@@ -244,6 +258,7 @@ const RevenueChart = dynamic(
 ### 1. Schema Design
 
 #### Naming Conventions
+
 ```prisma
 // ✅ Use snake_case for database, PascalCase for models
 model Customer {
@@ -256,6 +271,7 @@ model Customer {
 ```
 
 #### Index Strategy
+
 ```prisma
 // ✅ Optimize for Vietnamese search
 model Customer {
@@ -272,6 +288,7 @@ model Customer {
 ### 2. Query Patterns
 
 #### Prisma Client Usage
+
 ```typescript
 // ✅ Use Prisma.sql for complex queries
 import { Prisma } from "@prisma/client";
@@ -290,6 +307,7 @@ const customers = await prisma.$queryRaw`
 ```
 
 #### Transaction Handling
+
 ```typescript
 // ✅ Use transactions for multi-step operations
 await prisma.$transaction(async (tx) => {
@@ -300,8 +318,8 @@ await prisma.$transaction(async (tx) => {
       action: "CREATE",
       entityType: "Customer",
       entityId: customer.id,
-      newValues: customer as Prisma.JsonObject
-    }
+      newValues: customer as Prisma.JsonObject,
+    },
   });
   return customer;
 });
@@ -310,6 +328,7 @@ await prisma.$transaction(async (tx) => {
 ### 3. Migration Standards
 
 #### Safe Migrations
+
 ```sql
 -- ✅ Idempotent migrations
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -327,6 +346,7 @@ ADD COLUMN IF NOT EXISTS address_normalized VARCHAR(500);
 ### 1. Action Structure
 
 #### Standard Pattern
+
 ```typescript
 // ✅ Complete server action pattern
 "use server";
@@ -336,53 +356,51 @@ import { createAction } from "@/lib/action-utils";
 import { requireAuth } from "@/lib/auth-utils";
 import { createCustomerSchema } from "@/lib/validations/customer";
 
-export const createCustomer = createAction(
-  createCustomerSchema,
-  async (input) => {
-    // 1. Authentication
-    const session = await requireAuth();
+export const createCustomer = createAction(createCustomerSchema, async (input) => {
+  // 1. Authentication
+  const session = await requireAuth();
 
-    // 2. Business Logic
-    const normalized = normalizeVietnamese(input.companyName);
-    const existing = await prisma.customer.findFirst({
-      where: { companyNameNorm: normalized }
-    });
+  // 2. Business Logic
+  const normalized = normalizeVietnamese(input.companyName);
+  const existing = await prisma.customer.findFirst({
+    where: { companyNameNorm: normalized },
+  });
 
-    if (existing) {
-      throw new ConflictError(`Khách hàng "${input.companyName}" đã tồn tại`);
-    }
-
-    // 3. Database Operation
-    const customer = await prisma.customer.create({
-      data: {
-        ...input,
-        companyNameNorm: normalized,
-        code: await generateCustomerCode()
-      }
-    });
-
-    // 4. Audit Logging
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CREATE",
-        entityType: "Customer",
-        entityId: customer.id,
-        newValues: customer as Prisma.JsonObject
-      }
-    });
-
-    // 5. Cache Invalidation
-    revalidatePath("/customers");
-
-    return customer;
+  if (existing) {
+    throw new ConflictError(`Khách hàng "${input.companyName}" đã tồn tại`);
   }
-);
+
+  // 3. Database Operation
+  const customer = await prisma.customer.create({
+    data: {
+      ...input,
+      companyNameNorm: normalized,
+      code: await generateCustomerCode(),
+    },
+  });
+
+  // 4. Audit Logging
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "Customer",
+      entityId: customer.id,
+      newValues: customer as Prisma.JsonObject,
+    },
+  });
+
+  // 5. Cache Invalidation
+  revalidatePath("/customers");
+
+  return customer;
+});
 ```
 
 ### 2. Action Wrappers
 
 #### Reusable Action Utilities
+
 ```typescript
 // ✅ lib/action-utils.ts
 export function createAction<TInput, TOutput>(
@@ -397,9 +415,7 @@ export function createAction<TInput, TOutput>(
     } catch (error) {
       return {
         success: false,
-        error: error instanceof AppError
-          ? error.message
-          : "Internal server error"
+        error: error instanceof AppError ? error.message : "Internal server error",
       };
     }
   };
@@ -413,6 +429,7 @@ export function createAction<TInput, TOutput>(
 ### 1. Zod Validation Standards
 
 #### Schema Design
+
 ```typescript
 // ✅ lib/validations/customer.ts
 import { z } from "zod";
@@ -427,10 +444,7 @@ export const customerSchema = z.object({
     .min(1, "Tên công ty không được để trống")
     .max(255, "Tên công ty tối đa 255 ký tự"),
 
-  address: z
-    .string()
-    .min(1, "Địa chỉ không được để trống")
-    .max(500, "Địa chỉ tối đa 500 ký tự"),
+  address: z.string().min(1, "Địa chỉ không được để trống").max(500, "Địa chỉ tối đa 500 ký tự"),
 
   // Phone with Vietnamese format
   contactPhone: z
@@ -463,6 +477,7 @@ export type CustomerSearchParams = z.input<typeof customerSearchSchema>;
 ### 2. Error Classes
 
 #### Custom Error Types
+
 ```typescript
 // ✅ lib/errors.ts
 export class AppError extends Error {
@@ -498,6 +513,7 @@ export class ForbiddenError extends AppError {
 ### 3. Error Handling Pattern
 
 #### Try-Catch with Specific Errors
+
 ```typescript
 // ✅ In Server Actions
 try {
@@ -535,6 +551,7 @@ async function handleSubmit(data: CustomerInput) {
 ### 1. Component Structure
 
 #### File Organization
+
 ```typescript
 // ✅ components/customers/customer-form.tsx
 "use client";
@@ -565,6 +582,7 @@ export function CustomerForm({ initialData, onSubmit }: CustomerFormProps) {
 ### 2. Loading States
 
 #### Skeleton Components
+
 ```typescript
 // ✅ Reusable skeletons
 export function CardSkeleton() {
@@ -591,6 +609,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 ### 3. Data Display
 
 #### Vietnamese Formatting
+
 ```typescript
 // ✅ utils/db-utils.ts
 export function formatCurrencyDecimal(amount: Decimal): string {
@@ -622,6 +641,7 @@ export function formatPhone(phone: string): string {
 ### 1. Test Structure
 
 #### Unit Tests
+
 ```typescript
 // ✅ __tests__/lib/utils.test.ts
 import { describe, it, expect } from "vitest";
@@ -647,6 +667,7 @@ describe("formatCurrencyDecimal", () => {
 ```
 
 #### Integration Tests
+
 ```typescript
 // ✅ __tests__/actions/customers.test.ts
 import { describe, it, expect, beforeEach } from "vitest";
@@ -728,6 +749,7 @@ statements: 95%
 ```
 
 #### Examples
+
 ```bash
 # ✅ Good commits
 git commit -m "feat(customer): add Vietnamese fuzzy search with pg_trgm"
@@ -762,6 +784,7 @@ git commit -m "feat(scope): description"
 ### 1. User-Facing Text
 
 #### Error Messages
+
 ```typescript
 // ✅ Clear, actionable Vietnamese
 export const ERROR_MESSAGES = {
@@ -776,6 +799,7 @@ export const ERROR_MESSAGES = {
 ```
 
 #### Success Messages
+
 ```typescript
 // ✅ Positive feedback
 export const SUCCESS_MESSAGES = {
@@ -789,6 +813,7 @@ export const SUCCESS_MESSAGES = {
 ### 2. Formatting Standards
 
 #### Currency
+
 ```typescript
 // ✅ Vietnamese currency format
 const amount = 1000000;
@@ -800,6 +825,7 @@ const formatted = new Intl.NumberFormat("vi-VN", {
 ```
 
 #### Dates
+
 ```typescript
 // ✅ Vietnamese date format
 const date = new Date();
@@ -812,6 +838,7 @@ const formatted = new Intl.DateTimeFormat("vi-VN", {
 ```
 
 #### Phone Numbers
+
 ```typescript
 // ✅ Vietnamese phone format
 function formatVietnamesePhone(phone: string): string {
@@ -826,6 +853,7 @@ function formatVietnamesePhone(phone: string): string {
 ### 3. Database Fields for Vietnamese
 
 #### Normalization Strategy
+
 ```typescript
 // ✅ Search optimization
 const companyName = "Công Ty TNHH ABC";
@@ -835,9 +863,9 @@ const normalized = normalizeVietnamese(companyName);
 // Store both original and normalized
 await prisma.customer.create({
   data: {
-    companyName: "Công Ty TNHH ABC",      // Original
-    companyNameNorm: "cong ty tnhh abc",  // For search
-  }
+    companyName: "Công Ty TNHH ABC", // Original
+    companyNameNorm: "cong ty tnhh abc", // For search
+  },
 });
 ```
 
@@ -848,6 +876,7 @@ await prisma.customer.create({
 ### 1. Authentication & Authorization
 
 #### Role-Based Access
+
 ```typescript
 // ✅ Server-side authorization
 export async function deleteCustomer(id: string) {
@@ -855,7 +884,7 @@ export async function deleteCustomer(id: string) {
 
   const existing = await prisma.customer.findUnique({
     where: { id },
-    include: { contracts: { where: { status: "ACTIVE" } } }
+    include: { contracts: { where: { status: "ACTIVE" } } },
   });
 
   if (existing.contracts.length > 0) {
@@ -864,7 +893,7 @@ export async function deleteCustomer(id: string) {
 
   return prisma.customer.update({
     where: { id },
-    data: { status: "TERMINATED" }
+    data: { status: "TERMINATED" },
   });
 }
 ```
@@ -872,10 +901,11 @@ export async function deleteCustomer(id: string) {
 ### 2. Data Validation
 
 #### Server-Side Always
+
 ```typescript
 // ✅ Never trust client input
 export const createCustomer = createAction(
-  createCustomerSchema,  // Always validate
+  createCustomerSchema, // Always validate
   async (input) => {
     // Even with validation, sanitize
     const sanitized = {
@@ -892,6 +922,7 @@ export const createCustomer = createAction(
 ### 3. File Upload Security
 
 #### Presigned URLs
+
 ```typescript
 // ✅ Secure file access
 export async function getUploadUrl(filename: string, contentType: string) {
@@ -914,7 +945,7 @@ export async function getUploadUrl(filename: string, contentType: string) {
       mimeType: contentType,
       uploadedById: session.user.id,
       expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-    }
+    },
   });
 
   return url;
@@ -928,6 +959,7 @@ export async function getUploadUrl(filename: string, contentType: string) {
 ### 1. Database Optimization
 
 #### Index Strategy
+
 ```sql
 -- ✅ Essential indexes
 CREATE INDEX idx_customer_name_norm ON customers(company_name_norm);
@@ -939,6 +971,7 @@ CREATE INDEX idx_contract_end_date ON contracts(endDate);
 ```
 
 #### Query Optimization
+
 ```typescript
 // ✅ Use raw SQL for complex aggregations
 const stats = await prisma.$queryRaw`
@@ -954,6 +987,7 @@ const stats = await prisma.$queryRaw`
 ### 2. Frontend Performance
 
 #### Code Splitting
+
 ```typescript
 // ✅ Dynamic imports for heavy libraries
 import dynamic from "next/dynamic";
@@ -968,6 +1002,7 @@ const RevenueChart = dynamic(
 ```
 
 #### Caching Strategy
+
 ```typescript
 // ✅ React Query for server state
 const { data: customers } = useQuery({
@@ -982,6 +1017,7 @@ const { data: customers } = useQuery({
 ## 🎯 Code Review Checklist
 
 ### Before Submitting PR
+
 - [ ] All tests pass (`pnpm test`)
 - [ ] Type checking passes (`pnpm run typecheck`)
 - [ ] Linting passes (`pnpm run lint:fix`)
@@ -994,6 +1030,7 @@ const { data: customers } = useQuery({
 - [ ] Performance optimized
 
 ### Code Quality
+
 - [ ] No `any` types
 - [ ] Proper error handling
 - [ ] Consistent naming conventions
@@ -1002,6 +1039,7 @@ const { data: customers } = useQuery({
 - [ ] Comments for complex logic
 
 ### Vietnamese Standards
+
 - [ ] All user-facing text in Vietnamese
 - [ ] Currency formatted as Vietnamese
 - [ ] Dates in DD/MM/YYYY format

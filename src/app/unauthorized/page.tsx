@@ -7,32 +7,29 @@ export default async function UnauthorizedPage() {
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4 bg-linear-to-br from-background to-muted">
+    <div className="from-background to-muted flex min-h-screen items-center justify-center bg-linear-to-br p-4">
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
-          <div className="rounded-full bg-destructive/10 p-6">
-            <ShieldAlert className="h-16 w-16 text-destructive" />
+          <div className="bg-destructive/10 rounded-full p-6">
+            <ShieldAlert className="text-destructive h-16 w-16" />
           </div>
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Không có quyền truy cập
-          </h1>
-          <p className="text-muted-foreground">
-            Bạn không có quyền truy cập vào trang này.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Không có quyền truy cập</h1>
+          <p className="text-muted-foreground">Bạn không có quyền truy cập vào trang này.</p>
           {session?.user && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Tài khoản: <span className="font-medium">{session.user.email}</span>
               <br />
-              Vai trò: <span className="font-medium capitalize">{session.user.role?.toLowerCase()}</span>
+              Vai trò:{" "}
+              <span className="font-medium capitalize">{session.user.role?.toLowerCase()}</span>
             </p>
           )}
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Nếu bạn cần quyền truy cập vào trang này, vui lòng liên hệ với quản trị viên hệ thống.
           </p>
 
@@ -46,10 +43,8 @@ export default async function UnauthorizedPage() {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Mã lỗi: 403 - Forbidden
-          </p>
+        <div className="border-border border-t pt-6">
+          <p className="text-muted-foreground text-xs">Mã lỗi: 403 - Forbidden</p>
         </div>
       </div>
     </div>
