@@ -61,9 +61,7 @@ async function generateQuotationNumber(): Promise<string> {
 
   let nextNumber = 1;
   if (latestQuotation) {
-    const currentNumber = parseInt(
-      latestQuotation.quoteNumber.split("-")[2] || "0"
-    );
+    const currentNumber = parseInt(latestQuotation.quoteNumber.split("-")[2] || "0");
     nextNumber = currentNumber + 1;
   }
 
@@ -199,10 +197,8 @@ export async function getQuotations(params: QuotationSearchInput) {
   // Amount range
   if (minAmount !== undefined || maxAmount !== undefined) {
     where.totalAmount = {};
-    if (minAmount !== undefined)
-      where.totalAmount.gte = toDecimal(minAmount);
-    if (maxAmount !== undefined)
-      where.totalAmount.lte = toDecimal(maxAmount);
+    if (minAmount !== undefined) where.totalAmount.gte = toDecimal(minAmount);
+    if (maxAmount !== undefined) where.totalAmount.lte = toDecimal(maxAmount);
   }
 
   const [quotations, total] = await Promise.all([
@@ -333,20 +329,18 @@ export async function getQuotationById(id: string) {
 export async function getQuotationStats() {
   await requireAuth();
 
-  const [total, draft, sent, accepted, rejected, expired, converted] =
-    await Promise.all([
-      prisma.quotation.count(),
-      prisma.quotation.count({ where: { status: "DRAFT" } }),
-      prisma.quotation.count({ where: { status: "SENT" } }),
-      prisma.quotation.count({ where: { status: "ACCEPTED" } }),
-      prisma.quotation.count({ where: { status: "REJECTED" } }),
-      prisma.quotation.count({ where: { status: "EXPIRED" } }),
-      prisma.quotation.count({ where: { status: "CONVERTED" } }),
-    ]);
+  const [total, draft, sent, accepted, rejected, expired, converted] = await Promise.all([
+    prisma.quotation.count(),
+    prisma.quotation.count({ where: { status: "DRAFT" } }),
+    prisma.quotation.count({ where: { status: "SENT" } }),
+    prisma.quotation.count({ where: { status: "ACCEPTED" } }),
+    prisma.quotation.count({ where: { status: "REJECTED" } }),
+    prisma.quotation.count({ where: { status: "EXPIRED" } }),
+    prisma.quotation.count({ where: { status: "CONVERTED" } }),
+  ]);
 
   const pending = sent; // SENT + VIEWED (you can add VIEWED count if needed)
-  const conversionRate =
-    accepted > 0 ? ((converted / accepted) * 100).toFixed(1) : "0.0";
+  const conversionRate = accepted > 0 ? ((converted / accepted) * 100).toFixed(1) : "0.0";
 
   return {
     total,
@@ -416,9 +410,7 @@ export async function createQuotation(data: CreateQuotationInput) {
         proposedMonthlyFee: validated.proposedMonthlyFee
           ? toDecimal(validated.proposedMonthlyFee)
           : null,
-        proposedDeposit: validated.proposedDeposit
-          ? toDecimal(validated.proposedDeposit)
-          : null,
+        proposedDeposit: validated.proposedDeposit ? toDecimal(validated.proposedDeposit) : null,
         notes: validated.notes,
         termsConditions: validated.termsConditions,
         internalNotes: validated.internalNotes,
@@ -539,14 +531,14 @@ export async function updateQuotation(data: UpdateQuotationInput) {
         vatRate: toDecimal(updateFields.vatRate),
       }),
       ...(updateFields.proposedMonthlyFee !== undefined && {
-        proposedMonthlyFee: updateFields.proposedMonthlyFee !== null
-          ? toDecimal(updateFields.proposedMonthlyFee)
-          : null,
+        proposedMonthlyFee:
+          updateFields.proposedMonthlyFee !== null
+            ? toDecimal(updateFields.proposedMonthlyFee)
+            : null,
       }),
       ...(updateFields.proposedDeposit !== undefined && {
-        proposedDeposit: updateFields.proposedDeposit !== null
-          ? toDecimal(updateFields.proposedDeposit)
-          : null,
+        proposedDeposit:
+          updateFields.proposedDeposit !== null ? toDecimal(updateFields.proposedDeposit) : null,
       }),
       ...totals,
     },
@@ -658,10 +650,7 @@ export async function addQuotationItem(data: AddQuotationItemInput) {
     select: { totalPrice: true },
   });
 
-  const newSubtotal = items.reduce(
-    (sum, item) => sum + parseFloat(item.totalPrice.toString()),
-    0
-  );
+  const newSubtotal = items.reduce((sum, item) => sum + parseFloat(item.totalPrice.toString()), 0);
 
   const currentQuotation = await prisma.quotation.findUnique({
     where: { id: validated.quotationId },
@@ -729,8 +718,7 @@ export async function updateQuotationItem(data: UpdateQuotationItemInput) {
     totalPrice = calculateItemTotal({
       quantity: updateData.quantity ?? item.quantity,
       unitPrice: updateData.unitPrice ?? parseFloat(item.unitPrice.toString()),
-      discountRate:
-        updateData.discountRate ?? parseFloat(item.discountRate.toString()),
+      discountRate: updateData.discountRate ?? parseFloat(item.discountRate.toString()),
     });
   }
 
@@ -757,10 +745,7 @@ export async function updateQuotationItem(data: UpdateQuotationItemInput) {
     select: { totalPrice: true },
   });
 
-  const newSubtotal = items.reduce(
-    (sum, item) => sum + parseFloat(item.totalPrice.toString()),
-    0
-  );
+  const newSubtotal = items.reduce((sum, item) => sum + parseFloat(item.totalPrice.toString()), 0);
 
   const quotation = await prisma.quotation.findUnique({
     where: { id: item.quotationId },
@@ -827,10 +812,7 @@ export async function removeQuotationItem(data: RemoveQuotationItemInput) {
     select: { totalPrice: true },
   });
 
-  const newSubtotal = items.reduce(
-    (sum, item) => sum + parseFloat(item.totalPrice.toString()),
-    0
-  );
+  const newSubtotal = items.reduce((sum, item) => sum + parseFloat(item.totalPrice.toString()), 0);
 
   const quotation = await prisma.quotation.findUnique({
     where: { id: item.quotationId },
@@ -1039,9 +1021,7 @@ export async function markExpiredQuotations() {
  * Convert accepted quotation to contract
  * TODO: Implement when contract creation is ready
  */
-export async function convertQuotationToContract(
-  data: ConvertToContractInput
-) {
+export async function convertQuotationToContract(data: ConvertToContractInput) {
   await requireAuth();
 
   const validated = convertToContractSchema.parse(data);

@@ -8,6 +8,7 @@
 ## 🏗 Architecture Overview
 
 ### High-Level Architecture
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Client Layer (Browser)                    │
@@ -57,6 +58,7 @@
 ### 1. Full-Stack Type Safety Pattern
 
 #### Type Flow
+
 ```typescript
 // 1. Database Schema (Prisma)
 model Customer {
@@ -93,6 +95,7 @@ function CustomerForm() {
 ```
 
 **Benefits**:
+
 - Compile-time type checking across entire stack
 - No runtime type errors
 - Automatic API documentation via types
@@ -101,6 +104,7 @@ function CustomerForm() {
 ### 2. Server Actions Pattern
 
 #### Architecture Layers
+
 ```
 ┌─────────────────────────────────────────┐
 │  Client Component (React)               │
@@ -130,6 +134,7 @@ function CustomerForm() {
 ```
 
 #### Implementation Pattern
+
 ```typescript
 // ✅ Complete server action pattern
 "use server";
@@ -141,61 +146,59 @@ import { createCustomerSchema } from "@/lib/validations/customer";
 import { prisma } from "@/lib/prisma";
 import { normalizeVietnamese } from "@/lib/utils";
 
-export const createCustomer = createAction(
-  createCustomerSchema,
-  async (input) => {
-    // 1. Authentication
-    const session = await requireAuth();
+export const createCustomer = createAction(createCustomerSchema, async (input) => {
+  // 1. Authentication
+  const session = await requireAuth();
 
-    // 2. Business Logic
-    const normalized = normalizeVietnamese(input.companyName);
-    const existing = await prisma.customer.findFirst({
-      where: { companyNameNorm: normalized, status: { not: "TERMINATED" } }
-    });
+  // 2. Business Logic
+  const normalized = normalizeVietnamese(input.companyName);
+  const existing = await prisma.customer.findFirst({
+    where: { companyNameNorm: normalized, status: { not: "TERMINATED" } },
+  });
 
-    if (existing) {
-      throw new ConflictError(`Khách hàng "${input.companyName}" đã tồn tại`);
-    }
-
-    // 3. Database Operation
-    const customer = await prisma.customer.create({
-      data: {
-        ...input,
-        companyNameNorm: normalized,
-        addressNormalized: normalizeVietnamese(input.address),
-        code: await generateCustomerCode(),
-      }
-    });
-
-    // 4. Audit Logging
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CREATE",
-        entityType: "Customer",
-        entityId: customer.id,
-        newValues: customer as Prisma.JsonObject,
-      }
-    });
-
-    // 5. Cache Invalidation
-    revalidatePath("/customers");
-    revalidatePath(`/customers/${customer.id}`);
-
-    return customer;
+  if (existing) {
+    throw new ConflictError(`Khách hàng "${input.companyName}" đã tồn tại`);
   }
-);
+
+  // 3. Database Operation
+  const customer = await prisma.customer.create({
+    data: {
+      ...input,
+      companyNameNorm: normalized,
+      addressNormalized: normalizeVietnamese(input.address),
+      code: await generateCustomerCode(),
+    },
+  });
+
+  // 4. Audit Logging
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "Customer",
+      entityId: customer.id,
+      newValues: customer as Prisma.JsonObject,
+    },
+  });
+
+  // 5. Cache Invalidation
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${customer.id}`);
+
+  return customer;
+});
 ```
 
 ### 3. Vietnamese-First Design Pattern
 
 #### Search Architecture
+
 ```typescript
 // ✅ Multi-layer Vietnamese search
 export async function searchCustomers(query: string) {
   // Layer 1: Exact match on code
   const exactMatch = await prisma.customer.findUnique({
-    where: { code: query.toUpperCase() }
+    where: { code: query.toUpperCase() },
   });
   if (exactMatch) return [exactMatch];
 
@@ -216,10 +219,10 @@ export async function searchCustomers(query: string) {
       OR: [
         { code: { contains: query, mode: "insensitive" } },
         { companyName: { contains: query, mode: "insensitive" } },
-        { contactPhone: { contains: query } }
-      ]
+        { contactPhone: { contains: query } },
+      ],
     },
-    take: 10
+    take: 10,
   });
 
   return [...fuzzyResults, ...partialResults];
@@ -227,15 +230,16 @@ export async function searchCustomers(query: string) {
 ```
 
 #### Data Normalization
+
 ```typescript
 // ✅ Store both original and normalized
 await prisma.customer.create({
   data: {
-    companyName: "Công Ty TNHH ABC",      // Original for display
-    companyNameNorm: "cong ty tnhh abc",  // Normalized for search
+    companyName: "Công Ty TNHH ABC", // Original for display
+    companyNameNorm: "cong ty tnhh abc", // Normalized for search
     address: "123 Đường Lê Lợi, Q1",
     addressNormalized: "123 duong le loi q1",
-  }
+  },
 });
 ```
 
@@ -246,6 +250,7 @@ await prisma.customer.create({
 ### 1. Schema Design
 
 #### Core Models
+
 ```prisma
 // Customer Management
 model Customer {
@@ -303,6 +308,7 @@ model StickyNote {
 ### 2. Index Strategy
 
 #### Performance Optimization
+
 ```sql
 -- Vietnamese Search (pg_trgm)
 CREATE INDEX idx_customer_name_trgm ON customers USING gin(company_name_norm gin_trgm_ops);
@@ -323,6 +329,7 @@ CREATE INDEX idx_activity_log_created ON activity_logs(createdAt);
 ### 3. Database Views
 
 #### Complex Aggregations
+
 ```sql
 -- v_customer_summary: Customer stats with aggregates
 CREATE VIEW v_customer_summary AS
@@ -392,17 +399,18 @@ WHERE i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
 
 ### 2. Authorization Matrix
 
-| Role | Customer | Contract | Invoice | Care | Exchange | Analytics | Admin |
-|------|----------|----------|---------|------|----------|-----------|-------|
-| **ADMIN** | Full | Full | Full | Full | Full | Full | Full |
-| **MANAGER** | Full | Full | Full | Full | Full | Full | Read |
-| **STAFF** | Create/Read | Create/Read | Read | Full | Full | Read | No |
-| **ACCOUNTANT** | Read | Read | Full | Read | Read | Read | No |
-| **VIEWER** | Read | Read | Read | Read | Read | Read | No |
+| Role           | Customer    | Contract    | Invoice | Care | Exchange | Analytics | Admin |
+| -------------- | ----------- | ----------- | ------- | ---- | -------- | --------- | ----- |
+| **ADMIN**      | Full        | Full        | Full    | Full | Full     | Full      | Full  |
+| **MANAGER**    | Full        | Full        | Full    | Full | Full     | Full      | Read  |
+| **STAFF**      | Create/Read | Create/Read | Read    | Full | Full     | Read      | No    |
+| **ACCOUNTANT** | Read        | Read        | Full    | Read | Read     | Read      | No    |
+| **VIEWER**     | Read        | Read        | Read    | Read | Read     | Read      | No    |
 
 ### 3. Data Protection
 
 #### Input Validation
+
 ```typescript
 // ✅ Multi-layer validation
 export const createCustomer = createAction(
@@ -419,6 +427,7 @@ export const createCustomer = createAction(
 ```
 
 #### Audit Trail
+
 ```typescript
 // ✅ Complete audit logging
 await prisma.activityLog.create({
@@ -431,7 +440,7 @@ await prisma.activityLog.create({
     newValues: updated as Prisma.JsonObject,
     ipAddress: req.ip,
     userAgent: req.headers["user-agent"],
-  }
+  },
 });
 ```
 
@@ -442,6 +451,7 @@ await prisma.activityLog.create({
 ### 1. Query Optimization
 
 #### Raw SQL for Analytics
+
 ```typescript
 // ❌ Inefficient: 5 separate queries
 const total = await prisma.customer.count({ where: { status: { not: "TERMINATED" } } });
@@ -472,6 +482,7 @@ const stats = await prisma.$queryRaw`
 ### 2. Caching Strategy
 
 #### Layered Caching
+
 ```typescript
 // ✅ Redis-ready architecture
 export async function getCustomerStats() {
@@ -507,6 +518,7 @@ export async function getCustomerStats() {
 ### 3. Code Splitting
 
 #### Component-Level Splitting
+
 ```typescript
 // ✅ Dynamic imports for heavy components
 import dynamic from "next/dynamic";
@@ -533,6 +545,7 @@ const MapComponent = dynamic(
 ### 4. Suspense & Loading States
 
 #### Granular Loading
+
 ```typescript
 // ✅ Per-section loading
 export default function Dashboard() {
@@ -588,6 +601,7 @@ App Router
 ### 2. State Management
 
 #### Client State (Zustand)
+
 ```typescript
 // ✅ Global UI state
 import { create } from "zustand";
@@ -604,6 +618,7 @@ export const useUIStore = create<UIState>((set) => ({
 ```
 
 #### Server State (React Query)
+
 ```typescript
 // ✅ Data fetching & caching
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -630,6 +645,7 @@ function CustomerList() {
 ### 3. Form Architecture
 
 #### React Hook Form + Zod
+
 ```typescript
 // ✅ Type-safe forms
 import { useForm } from "react-hook-form";
@@ -675,6 +691,7 @@ function CustomerForm({ initialData }: { initialData?: Partial<CustomerInput> })
 ### 1. Google Maps API
 
 #### Geocoding Service
+
 ```typescript
 // ✅ lib/maps.ts
 import { Client } from "@googlemaps/google-maps-services-js";
@@ -704,6 +721,7 @@ export async function geocodeAddress(address: string) {
 ```
 
 #### Distance Calculation
+
 ```typescript
 export async function calculateDistance(
   origin: { lat: number; lng: number },
@@ -728,6 +746,7 @@ export async function calculateDistance(
 ### 2. MinIO/S3 Storage
 
 #### File Upload
+
 ```typescript
 // ✅ lib/storage.ts
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
@@ -742,11 +761,7 @@ const s3 = new S3Client({
   forcePathStyle: true, // Required for MinIO
 });
 
-export async function uploadFile(
-  file: Buffer,
-  filename: string,
-  contentType: string
-) {
+export async function uploadFile(file: Buffer, filename: string, contentType: string) {
   const key = `uploads/${Date.now()}-${filename}`;
 
   const command = new PutObjectCommand({
@@ -765,7 +780,7 @@ export async function uploadFile(
       storageKey: key,
       mimeType: contentType,
       size: file.length,
-    }
+    },
   });
 
   return key;
@@ -784,6 +799,7 @@ export async function getDownloadUrl(key: string) {
 ### 3. AI Integration (Gemini)
 
 #### Note Analysis
+
 ```typescript
 // ✅ lib/ai.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -825,6 +841,7 @@ export async function analyzeStickyNote(content: string) {
 ### 1. Performance Metrics
 
 #### Key Metrics to Track
+
 ```typescript
 // ✅ Performance monitoring
 interface Metrics {
@@ -845,23 +862,27 @@ interface Metrics {
 ```
 
 #### Logging Strategy
+
 ```typescript
 // ✅ Structured logging
 export function logAction(action: string, metadata: Record<string, any>) {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    action,
-    userId: metadata.userId,
-    duration: metadata.duration,
-    error: metadata.error,
-    ...metadata,
-  }));
+  console.log(
+    JSON.stringify({
+      timestamp: new Date().toISOString(),
+      action,
+      userId: metadata.userId,
+      duration: metadata.duration,
+      error: metadata.error,
+      ...metadata,
+    })
+  );
 }
 ```
 
 ### 2. Error Tracking
 
 #### Error Boundaries
+
 ```typescript
 // ✅ React Error Boundary
 import { Component, ReactNode } from "react";
@@ -988,6 +1009,7 @@ Status Updates
 ### 1. Why Next.js 16 + Server Actions?
 
 **Benefits**:
+
 - ✅ Full-stack type safety
 - ✅ No separate API layer needed
 - ✅ Built-in authentication integration
@@ -995,6 +1017,7 @@ Status Updates
 - ✅ Progressive enhancement
 
 **Trade-offs**:
+
 - ⚠️ Tightly coupled to Next.js
 - ⚠️ Limited to Vercel/Node.js runtime
 - ⚠️ Harder to migrate to other frameworks
@@ -1002,35 +1025,41 @@ Status Updates
 ### 2. Why PostgreSQL + PostGIS?
 
 **Benefits**:
+
 - ✅ Geospatial queries for route optimization
 - ✅ pg_trgm for Vietnamese fuzzy search
 - ✅ ACID compliance for financial data
 - ✅ Mature ecosystem
 
 **Trade-offs**:
+
 - ⚠️ Requires extensions (PostGIS, pg_trgm)
 - ⚠️ More complex setup than SQLite
 
 ### 3. Why Zod over Yup?
 
 **Benefits**:
+
 - ✅ TypeScript inference
 - ✅ Smaller bundle size
 - ✅ Better error messages
 - ✅ Active maintenance
 
 **Trade-offs**:
+
 - ⚠️ Less mature ecosystem than Yup
 
 ### 4. Why shadcn/ui?
 
 **Benefits**:
+
 - ✅ Copy-paste components (no dependency lock-in)
 - ✅ Accessible by default
 - ✅ Customizable with Tailwind
 - ✅ TypeScript support
 
 **Trade-offs**:
+
 - ⚠️ Manual updates required
 - ⚠️ Larger initial setup
 

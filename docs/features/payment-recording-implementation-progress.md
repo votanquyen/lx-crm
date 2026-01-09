@@ -17,6 +17,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 ### 1. Payment Validation Schemas (`src/lib/validations/payment.ts`)
 
 **Features:**
+
 - ✅ Create payment schema with method-specific validation
 - ✅ Update payment schema
 - ✅ Verify payment schema
@@ -26,6 +27,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 - ✅ Date validation (payment date cannot be in future)
 
 **Validations:**
+
 ```typescript
 - amount: Required, positive, max 1 billion VND
 - paymentDate: Required, cannot be future
@@ -37,6 +39,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 ### 2. Payment Server Actions (`src/actions/payments.ts`)
 
 **Features:**
+
 - ✅ `getPayments()` - Paginated list with filters (method, verified status, date range, amount range)
 - ✅ `getPaymentById()` - Single payment with invoice and customer details
 - ✅ `createPayment()` - Record new payment with transaction safety
@@ -53,6 +56,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 - ✅ `getPaymentStats()` - Statistics (total amount, today's payments, unverified count)
 
 **Business Logic:**
+
 ```typescript
 // Auto-update invoice status based on payments:
 - totalPaid = 0 → status = SENT
@@ -63,6 +67,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 ### 3. Payment Recording Form (`src/components/payments/payment-form.tsx`)
 
 **Features:**
+
 - ✅ Invoice summary (number, customer, total, paid, remaining)
 - ✅ Payment amount input (max = remaining balance)
 - ✅ Payment date picker (cannot be future)
@@ -76,6 +81,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 - ✅ Submit/Cancel buttons with loading state
 
 **UX Features:**
+
 - Pre-fills amount with remaining balance
 - Shows maximum allowed payment
 - Conditional validation messages
@@ -84,6 +90,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 ### 4. Payment List Page (`src/app/(dashboard)/payments/page.tsx`)
 
 **Features:**
+
 - ✅ Payment statistics dashboard:
   - Total payments (amount + count)
   - Today's payments
@@ -106,6 +113,7 @@ Successfully implemented core Payment Recording Interface with validation schema
 ### 5. Payment Detail Page (`src/app/(dashboard)/payments/[id]/page.tsx`)
 
 **Features:**
+
 - ✅ Full payment information:
   - Amount, date, method
   - Bank transfer details (ref, bank, account)
@@ -153,11 +161,13 @@ src/
 ## Pending Tasks
 
 ### 1. Create Record Payment Page (`/invoices/[id]/record-payment`)
+
 Create page where users can record a payment directly from invoice detail page.
 
 **File:** `src/app/(dashboard)/invoices/[id]/record-payment/page.tsx`
 
 **Content:**
+
 ```typescript
 import { getInvoiceById } from "@/actions/invoices";
 import { PaymentForm } from "@/components/payments/payment-form";
@@ -169,6 +179,7 @@ import { PaymentForm } from "@/components/payments/payment-form";
 ### 2. Update Invoice Detail Page
 
 Add "Payment History" section to invoice detail page showing:
+
 - List of all payments for this invoice
 - "Record Payment" button
 - Payment summary (total paid, remaining)
@@ -176,6 +187,7 @@ Add "Payment History" section to invoice detail page showing:
 **File:** `src/app/(dashboard)/invoices/[id]/page.tsx`
 
 **Add section:**
+
 ```typescript
 // Payment History Section
 <Card>
@@ -210,6 +222,7 @@ Create realistic payment data for testing.
 **File:** `prisma/seeds/payments.ts`
 
 **Content:**
+
 ```typescript
 // Create payments for existing invoices
 // Mix of verified/unverified
@@ -311,6 +324,7 @@ enum PaymentMethod {
 ## API Examples
 
 ### Record Payment
+
 ```typescript
 await createPayment({
   invoiceId: "...",
@@ -324,6 +338,7 @@ await createPayment({
 ```
 
 ### Search Payments
+
 ```typescript
 await getPayments({
   page: 1,
@@ -336,6 +351,7 @@ await getPayments({
 ```
 
 ### Verify Payment
+
 ```typescript
 await verifyPayment({
   paymentId: "...",
@@ -358,17 +374,17 @@ await verifyPayment({
 
 ## Success Metrics
 
-| Metric | Status |
-|--------|--------|
-| Validation schemas | ✅ Complete |
-| Server actions | ✅ Complete |
-| Payment form | ✅ Complete |
-| List page | ✅ Complete |
-| Detail page | ✅ Complete |
-| Record from invoice | ⏳ Pending |
-| Verification | ⏳ Pending |
-| Seed data | ⏳ Pending |
-| Testing | ⏳ Pending |
+| Metric              | Status      |
+| ------------------- | ----------- |
+| Validation schemas  | ✅ Complete |
+| Server actions      | ✅ Complete |
+| Payment form        | ✅ Complete |
+| List page           | ✅ Complete |
+| Detail page         | ✅ Complete |
+| Record from invoice | ⏳ Pending  |
+| Verification        | ⏳ Pending  |
+| Seed data           | ⏳ Pending  |
+| Testing             | ⏳ Pending  |
 
 ---
 

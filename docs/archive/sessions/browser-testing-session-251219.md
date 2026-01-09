@@ -20,6 +20,7 @@
 ## Test Priority Order
 
 ### 1. Login \u0026 Authentication (5 min)
+
 - [ ] Navigate to http://localhost:3001
 - [ ] Should redirect to `/login`
 - [ ] Click "Sign in with Google"
@@ -36,6 +37,7 @@
 **URL:** http://localhost:3001/analytics
 
 #### Revenue Section
+
 - [ ] Page loads without errors
 - [ ] Revenue overview cards display:
   - [ ] Total revenue (formatted VND)
@@ -48,11 +50,13 @@
 - [ ] Y-axis shows values in millions (1M, 2M, ...)
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
 
 #### Invoice Aging Section
+
 - [ ] Invoice aging card displays
 - [ ] 4 aging buckets shown:
   - [ ] Current (0-30 days) - Green
@@ -63,11 +67,13 @@
 - [ ] Percentages match visual bars
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
 
 #### Top Customers Table
+
 - [ ] Table loads with customer data
 - [ ] Customer code links work (navigate to `/customers/[id]`)
 - [ ] Revenue column formatted correctly
@@ -77,11 +83,13 @@
 - [ ] Empty state shows if no data
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
 
 #### Contract Expiry Alerts
+
 - [ ] Expiring contracts section displays
 - [ ] Shows contracts expiring in 30 days
 - [ ] Days until expiry calculated correctly
@@ -90,6 +98,7 @@
 - [ ] Empty state if no expiring contracts
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -120,6 +129,7 @@
 - [ ] Clicking quotation navigates to detail page
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -146,6 +156,7 @@
 - [ ] Form validation shows errors
 
 **Test Data:**
+
 - Select a customer
 - Add 2-3 plant types
 - Set quantities: 5, 10, 3
@@ -155,6 +166,7 @@
 - Calculate expected total manually and verify
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -192,6 +204,7 @@
   - [ ] Reject quotation (SENT → REJECTED)
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -201,6 +214,7 @@
 ### 4. Navigation \u0026 Integration (10 min)
 
 #### Sidebar Navigation
+
 - [ ] All menu items visible
 - [ ] Active page highlighted
 - [ ] Links work:
@@ -217,11 +231,13 @@
 - [ ] Logout works
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
 
 #### Cross-Feature Integration
+
 - [ ] Customer data consistent across:
   - [ ] Quotations
   - [ ] Analytics
@@ -231,6 +247,7 @@
 - [ ] Quotation statistics match list counts
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -249,6 +266,7 @@
 - [ ] Network error handling (if applicable)
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -268,6 +286,7 @@
 - [ ] Test desktop view (1920px width)
 
 **Issues Found:**
+
 ```
 [Document any issues here]
 ```
@@ -285,6 +304,7 @@
 - [ ] Table scrolling smooth with 20+ rows
 
 **Performance Notes:**
+
 ```
 Initial load: ___ ms
 TTI (Time to Interactive): ___ ms
@@ -299,6 +319,7 @@ Issues: [document here]
 Open DevTools (F12) → Console tab
 
 **Errors Found:**
+
 ```javascript
 // Copy/paste any console errors here
 // Include:
@@ -308,6 +329,7 @@ Open DevTools (F12) → Console tab
 ```
 
 **Warnings:**
+
 ```javascript
 // Non-critical warnings
 ```
@@ -317,9 +339,11 @@ Open DevTools (F12) → Console tab
 ## Critical Bugs Found
 
 ### Bug #1: [Title]
+
 **Severity:** 🔴 Critical / 🟡 Medium / 🟢 Low
 **Page:** [URL]
 **Steps to Reproduce:**
+
 1.
 2.
 3.
@@ -331,6 +355,7 @@ Open DevTools (F12) → Console tab
 ---
 
 ### Bug #2: [Title]
+
 **Severity:**
 **Page:**
 **Steps:**
@@ -343,27 +368,31 @@ Open DevTools (F12) → Console tab
 ## Test Summary
 
 **Total Tests:** 100+
-**Passed:** ___
-**Failed:** ___
-**Blocked:** ___
+**Passed:** **_
+**Failed:** _**
+**Blocked:** \_\_\_
 
 ### Pass Rate
-- Analytics Dashboard: ___ %
-- Quotations System: ___ %
-- Navigation: ___ %
-- Overall: ___ %
+
+- Analytics Dashboard: \_\_\_ %
+- Quotations System: \_\_\_ %
+- Navigation: \_\_\_ %
+- Overall: \_\_\_ %
 
 ---
 
 ## Recommendations
 
 ### Must Fix Before Production
+
 1.
 
 ### Should Fix Soon
+
 1.
 
 ### Nice to Have
+
 1.
 
 ---
@@ -371,12 +400,14 @@ Open DevTools (F12) → Console tab
 ## Next Steps
 
 ### If Tests Pass (✅)
+
 1. Fix 10 remaining backend errors
 2. Run code review agent
 3. Deploy to staging
 4. User acceptance testing
 
 ### If Tests Fail (❌)
+
 1. Document all critical bugs
 2. Prioritize by severity
 3. Fix critical bugs first
@@ -387,19 +418,16 @@ Open DevTools (F12) → Console tab
 
 ## Session Notes
 
-**What Worked Well:**
--
+## **What Worked Well:**
 
-**Issues Encountered:**
--
+## **Issues Encountered:**
 
-**Observations:**
--
+## **Observations:**
 
 ---
 
-**Test Session End Time:** ___
-**Duration:** ___
+**Test Session End Time:** **_
+**Duration:** _**
 **Status:** ⏳ In Progress / ✅ Complete / ❌ Blocked
 
 ---
@@ -407,10 +435,11 @@ Open DevTools (F12) → Console tab
 ## Quick Reference
 
 **Dev Server:** http://localhost:3001
-**API Endpoint:** http://localhost:3001/api/*
+**API Endpoint:** http://localhost:3001/api/\*
 **Database:** Neon PostgreSQL (check `.env` for connection)
 
 **Useful Commands:**
+
 ```bash
 # View server logs
 tail -f /tmp/claude/tasks/beae20b.output

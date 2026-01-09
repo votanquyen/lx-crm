@@ -24,13 +24,18 @@ import {
 } from "@/lib/validations/customer";
 
 /**
- * Get paginated list of customers with optional search and filters
+ * Get paginated list of customers with optional search and filters.
+ * Uses pg_trgm for Vietnamese fuzzy search when search term provided.
+ *
+ * @param params - Search parameters including pagination, filters, and sorting
+ * @returns Paginated customer list with counts
+ * @throws {AppError} If rate limit exceeded for search queries
  */
 export async function getCustomers(params: CustomerSearchParams) {
   await requireAuth();
 
   const validated = customerSearchSchema.parse(params);
-  const { page, limit, search, status, tier, district, hasDebt, sortBy, sortOrder } = validated;
+  const { page, limit, search, status, district, hasDebt, sortBy, sortOrder } = validated;
 
   // Rate limit search queries (expensive trigram operations)
   if (search && search.trim()) {
@@ -47,7 +52,6 @@ export async function getCustomers(params: CustomerSearchParams) {
     status: status ?? { not: "TERMINATED" },
   };
 
-  if (tier) where.tier = tier;
   if (district) where.district = district;
 
   // Has debt filter (customers with unpaid invoices)
@@ -68,48 +72,49 @@ export async function getCustomers(params: CustomerSearchParams) {
     const codePattern = `%${sanitizedSearch}%`;
 
     // Use raw query for trigram search
+    // Note: Column names match Prisma schema (camelCase stored as-is in DB)
     const customersRaw = await prisma.$queryRaw<
       Array<{
         id: string;
         code: string;
-        company_name: string;
-        company_name_norm: string;
+        companyName: string;
+        companyNameNorm: string | null;
         address: string;
-        address_normalized: string | null;
+        addressNormalized: string | null;
         district: string | null;
         city: string | null;
-        contact_name: string | null;
-        contact_phone: string | null;
-        contact_email: string | null;
-        tax_code: string | null;
+        contactName: string | null;
+        contactPhone: string | null;
+        contactEmail: string | null;
+        taxCode: string | null;
         latitude: number | null;
         longitude: number | null;
         status: string;
-        tier: string;
-        ai_notes: string | null;
-        created_by_id: string | null;
-        created_at: Date;
-        updated_at: Date;
+        notes: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         similarity: number;
       }>
     >`
-      SELECT c.*,
+      SELECT c.id, c.code, c."companyName", c."companyNameNorm", c.address,
+             c."addressNormalized", c.district, c.city, c."contactName",
+             c."contactPhone", c."contactEmail", c."taxCode", c.latitude,
+             c.longitude, c.status, c.notes, c."createdAt", c."updatedAt",
              GREATEST(
-               similarity(company_name_norm, ${normalized}),
-               similarity(COALESCE(address_normalized, ''), ${normalized}),
-               similarity(code, ${normalized})
+               similarity(COALESCE(c."companyNameNorm", ''), ${normalized}),
+               similarity(COALESCE(c."addressNormalized", ''), ${normalized}),
+               similarity(c.code, ${normalized})
              ) as similarity
       FROM customers c
       WHERE c.status != 'TERMINATED'
         AND (
-          c.company_name_norm % ${normalized}
+          COALESCE(c."companyNameNorm", '') % ${normalized}
           OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
+          OR COALESCE(c."addressNormalized", '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-      ORDER BY similarity DESC, c.company_name ASC
+      ORDER BY similarity DESC, c."companyName" ASC
       LIMIT ${limit} OFFSET ${skip}
     `;
 
@@ -118,39 +123,36 @@ export async function getCustomers(params: CustomerSearchParams) {
       SELECT COUNT(*) as count FROM customers c
       WHERE c.status != 'TERMINATED'
         AND (
-          c.company_name_norm % ${normalized}
+          COALESCE(c."companyNameNorm", '') % ${normalized}
           OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
+          OR COALESCE(c."addressNormalized", '') % ${normalized}
         )
         ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
         ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
     `;
 
     const total = Number(countResult[0].count);
 
-    // Map raw results to Prisma model format
+    // Map raw results to consistent format
     const customers = customersRaw.map((c) => ({
       id: c.id,
       code: c.code,
-      companyName: c.company_name,
-      companyNameNorm: c.company_name_norm,
+      companyName: c.companyName,
+      companyNameNorm: c.companyNameNorm,
       address: c.address,
-      addressNorm: c.address_normalized,
+      addressNormalized: c.addressNormalized,
       district: c.district,
       city: c.city,
-      contactName: c.contact_name,
-      contactPhone: c.contact_phone,
-      contactEmail: c.contact_email,
-      taxCode: c.tax_code,
+      contactName: c.contactName,
+      contactPhone: c.contactPhone,
+      contactEmail: c.contactEmail,
+      taxCode: c.taxCode,
       latitude: c.latitude,
       longitude: c.longitude,
       status: c.status,
-      tier: c.tier,
-      aiNotes: c.ai_notes,
-      createdById: c.created_by_id,
-      createdAt: c.created_at,
-      updatedAt: c.updated_at,
+      notes: c.notes,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
     }));
 
     return {
@@ -196,7 +198,12 @@ export async function getCustomers(params: CustomerSearchParams) {
 }
 
 /**
- * Get a single customer by ID with related data
+ * Get a single customer by ID with related data.
+ * Includes contracts, plants, invoices with payments, notes, and statements.
+ *
+ * @param id - Customer UUID
+ * @returns Customer with all related data and counts
+ * @throws {NotFoundError} If customer not found
  */
 export async function getCustomerById(id: string) {
   await requireAuth();
@@ -204,21 +211,44 @@ export async function getCustomerById(id: string) {
   const customer = await prisma.customer.findUnique({
     where: { id },
     include: {
-      // Include recent invoices for customer detail view
+      // Include all contracts with items
+      contracts: {
+        orderBy: { startDate: "desc" },
+        include: {
+          items: {
+            include: { plantType: true },
+          },
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      },
+      // Include all plants
+      customerPlants: {
+        include: { plantType: true },
+        orderBy: { position: "asc" },
+      },
+      // Include recent invoices with payments
       invoices: {
         orderBy: { issueDate: "desc" },
         take: 50,
-        select: {
-          id: true,
-          invoiceNumber: true,
-          status: true,
-          issueDate: true,
-          dueDate: true,
-          totalAmount: true,
-          paidAmount: true,
-          outstandingAmount: true,
+        include: {
+          payments: {
+            orderBy: { paymentDate: "desc" },
+          },
         },
       },
+      // Include sticky notes
+      stickyNotes: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          createdBy: { select: { id: true, name: true } },
+        },
+      },
+      // Include latest monthly statement
+      monthlyStatements: {
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        take: 1,
+      },
+      // Include counts for all relations
       _count: {
         select: {
           customerPlants: true,
@@ -261,160 +291,174 @@ async function generateCustomerCode(): Promise<string> {
 }
 
 /**
- * Create a new customer
- * Sanitizes all string inputs before database storage
+ * Create a new customer.
+ * Auto-generates customer code (KH-XXXX), sanitizes inputs, checks duplicates.
+ *
+ * @param input - Customer data matching createCustomerSchema
+ * @returns Newly created customer
+ * @throws {ConflictError} If company name already exists
+ * @throws {AppError} If rate limit exceeded
  */
-export const createCustomer = createAction(
-  createCustomerSchema,
-  async (input) => {
-    const session = await requireAuth();
+export const createCustomer = createAction(createCustomerSchema, async (input) => {
+  const session = await requireAuth();
 
-    // Rate limit mutations
-    await requireRateLimit("customer-create", {
-      max: RATE_LIMITS.MUTATION.limit,
-      windowMs: RATE_LIMITS.MUTATION.window * 1000,
-    });
+  // Rate limit mutations
+  await requireRateLimit("customer-create", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
 
-    // Sanitize string inputs (strips HTML and trims)
-    const companyName = sanitizeText(input.companyName) ?? input.companyName.trim();
-    const address = sanitizeText(input.address) ?? input.address.trim();
-    const contactName = sanitizeText(input.contactName);
-    const contactPhone = sanitizePhone(input.contactPhone);
-    const contactEmail = sanitizeEmail(input.contactEmail);
-    const taxCode = sanitizeText(input.taxCode);
-    const district = sanitizeText(input.district);
-    const city = sanitizeText(input.city) ?? "TP.HCM";
+  // Sanitize string inputs (strips HTML and trims)
+  const companyName = sanitizeText(input.companyName) ?? input.companyName.trim();
+  const address = sanitizeText(input.address) ?? input.address.trim();
+  const contactName = sanitizeText(input.contactName);
+  const contactPhone = sanitizePhone(input.contactPhone);
+  const contactEmail = sanitizeEmail(input.contactEmail);
+  const taxCode = sanitizeText(input.taxCode);
+  const district = sanitizeText(input.district);
+  const city = sanitizeText(input.city) ?? "TP.HCM";
 
-    // Check for duplicate company name
+  // Check for duplicate company name
+  const normalized = normalizeVietnamese(companyName);
+  const existing = await prisma.customer.findFirst({
+    where: {
+      companyNameNorm: normalized,
+      status: { not: "TERMINATED" },
+    },
+  });
+
+  if (existing) {
+    throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
+  }
+
+  // Generate customer code
+  const code = await generateCustomerCode();
+
+  // Create customer with sanitized data
+  const customer = await prisma.customer.create({
+    data: {
+      code,
+      companyName,
+      companyNameNorm: normalized,
+      address,
+      addressNormalized: normalizeVietnamese(address),
+      district,
+      city,
+      contactName,
+      contactPhone,
+      contactEmail,
+      taxCode,
+      status: input.status ?? "ACTIVE",
+      latitude: input.latitude ?? null,
+      longitude: input.longitude ?? null,
+    },
+  });
+
+  // Log activity with IP and user agent
+  await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
+
+  revalidatePath("/customers");
+  return customer;
+});
+
+/**
+ * Update an existing customer.
+ * Sanitizes inputs and checks for duplicate company names.
+ *
+ * @param input - Update data with id and fields to update
+ * @returns Updated customer
+ * @throws {NotFoundError} If customer not found
+ * @throws {ConflictError} If new company name already exists
+ * @throws {AppError} If rate limit exceeded
+ */
+export const updateCustomer = createAction(updateCustomerSchema, async (input) => {
+  const session = await requireAuth();
+
+  // Rate limit mutations
+  await requireRateLimit("customer-update", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
+  const { id, ...updateData } = input;
+
+  // Check customer exists
+  const existing = await prisma.customer.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    throw new NotFoundError("Khách hàng");
+  }
+
+  // Sanitize string inputs (strips HTML and trims)
+  const companyName = sanitizeText(updateData.companyName);
+  const address = sanitizeText(updateData.address);
+
+  // Check for duplicate company name (if changing)
+  if (companyName && companyName !== existing.companyName) {
     const normalized = normalizeVietnamese(companyName);
-    const existing = await prisma.customer.findFirst({
+    const duplicate = await prisma.customer.findFirst({
       where: {
         companyNameNorm: normalized,
         status: { not: "TERMINATED" },
+        id: { not: id },
       },
     });
 
-    if (existing) {
+    if (duplicate) {
       throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
     }
-
-    // Generate customer code
-    const code = await generateCustomerCode();
-
-    // Create customer with sanitized data
-    const customer = await prisma.customer.create({
-      data: {
-        code,
-        companyName,
-        companyNameNorm: normalized,
-        address,
-        addressNormalized: normalizeVietnamese(address),
-        district,
-        city,
-        contactName,
-        contactPhone,
-        contactEmail,
-        taxCode,
-        tier: input.tier,
-        status: input.status ?? "ACTIVE",
-        latitude: input.latitude ?? null,
-        longitude: input.longitude ?? null,
-      },
-    });
-
-    // Log activity with IP and user agent
-    await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
-
-    revalidatePath("/customers");
-    return customer;
   }
-);
+
+  // Build update data with sanitized values
+  const data: Prisma.CustomerUpdateInput = {};
+
+  if (companyName) {
+    data.companyName = companyName;
+    data.companyNameNorm = normalizeVietnamese(companyName);
+  }
+  if (address) {
+    data.address = address;
+    data.addressNormalized = normalizeVietnamese(address);
+  }
+  if (updateData.district !== undefined)
+    data.district = sanitizeText(updateData.district) ?? undefined;
+  if (updateData.city !== undefined) data.city = sanitizeText(updateData.city) ?? undefined;
+  if (updateData.contactName !== undefined)
+    data.contactName = sanitizeText(updateData.contactName) ?? undefined;
+  if (updateData.contactPhone !== undefined)
+    data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
+  if (updateData.contactEmail !== undefined)
+    data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
+  if (updateData.taxCode !== undefined)
+    data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
+  if (updateData.status !== undefined) data.status = updateData.status;
+  if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
+  if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
+
+  // Update customer
+  const customer = await prisma.customer.update({
+    where: { id },
+    data,
+  });
+
+  // Log activity with IP and user agent
+  await logCustomerAction(session.user.id, "UPDATE", customer.id, existing, customer);
+
+  revalidatePath(`/customers/${id}`);
+  revalidatePath("/customers");
+  return customer;
+});
 
 /**
- * Update an existing customer
- * Sanitizes all string inputs before database storage
- */
-export const updateCustomer = createAction(
-  updateCustomerSchema,
-  async (input) => {
-    const session = await requireAuth();
-
-    // Rate limit mutations
-    await requireRateLimit("customer-update", {
-      max: RATE_LIMITS.MUTATION.limit,
-      windowMs: RATE_LIMITS.MUTATION.window * 1000,
-    });
-
-    const { id, ...updateData } = input;
-
-    // Check customer exists
-    const existing = await prisma.customer.findUnique({
-      where: { id },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("Khách hàng");
-    }
-
-    // Sanitize string inputs (strips HTML and trims)
-    const companyName = sanitizeText(updateData.companyName);
-    const address = sanitizeText(updateData.address);
-
-    // Check for duplicate company name (if changing)
-    if (companyName && companyName !== existing.companyName) {
-      const normalized = normalizeVietnamese(companyName);
-      const duplicate = await prisma.customer.findFirst({
-        where: {
-          companyNameNorm: normalized,
-          status: { not: "TERMINATED" },
-          id: { not: id },
-        },
-      });
-
-      if (duplicate) {
-        throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
-      }
-    }
-
-    // Build update data with sanitized values
-    const data: Prisma.CustomerUpdateInput = {};
-
-    if (companyName) {
-      data.companyName = companyName;
-      data.companyNameNorm = normalizeVietnamese(companyName);
-    }
-    if (address) {
-      data.address = address;
-      data.addressNormalized = normalizeVietnamese(address);
-    }
-    if (updateData.district !== undefined) data.district = sanitizeText(updateData.district) ?? undefined;
-    if (updateData.city !== undefined) data.city = sanitizeText(updateData.city) ?? undefined;
-    if (updateData.contactName !== undefined) data.contactName = sanitizeText(updateData.contactName) ?? undefined;
-    if (updateData.contactPhone !== undefined) data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
-    if (updateData.contactEmail !== undefined) data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
-    if (updateData.taxCode !== undefined) data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
-    if (updateData.tier !== undefined) data.tier = updateData.tier;
-    if (updateData.status !== undefined) data.status = updateData.status;
-    if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
-    if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
-
-    // Update customer
-    const customer = await prisma.customer.update({
-      where: { id },
-      data,
-    });
-
-    // Log activity with IP and user agent
-    await logCustomerAction(session.user.id, "UPDATE", customer.id, existing, customer);
-
-    revalidatePath(`/customers/${id}`);
-    revalidatePath("/customers");
-    return customer;
-  }
-);
-
-/**
- * Soft delete a customer (set status to TERMINATED)
+ * Soft delete a customer by setting status to TERMINATED.
+ * Requires ADMIN or MANAGER role.
+ *
+ * @param id - Customer UUID
+ * @returns Success confirmation object
+ * @throws {NotFoundError} If customer not found
+ * @throws {AppError} If customer has active contracts or rate limit exceeded
  */
 export const deleteCustomer = createSimpleAction(async (id: string) => {
   const session = await requireManager(); // Only ADMIN or MANAGER can delete
@@ -474,9 +518,7 @@ const getCachedDistricts = unstable_cache(
       orderBy: { district: "asc" },
     });
 
-    return districts
-      .map((d) => d.district)
-      .filter((d): d is string => d !== null);
+    return districts.map((d) => d.district).filter((d): d is string => d !== null);
   },
   ["districts"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
@@ -496,18 +538,20 @@ export async function getCustomerStats() {
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
   // Single query with FILTER - use COUNT(DISTINCT c.id) to avoid counting join rows
-  const stats = await prisma.$queryRaw<[{
-    total: bigint;
-    active: bigint;
-    leads: bigint;
-    vip: bigint;
-    with_debt: bigint;
-  }]>`
+  const stats = await prisma.$queryRaw<
+    [
+      {
+        total: bigint;
+        active: bigint;
+        leads: bigint;
+        with_debt: bigint;
+      },
+    ]
+  >`
     SELECT
       COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
       COUNT(DISTINCT CASE
         WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
           AND i."outstandingAmount" > 0
@@ -521,7 +565,6 @@ export async function getCustomerStats() {
     total: Number(stats[0].total),
     active: Number(stats[0].active),
     leads: Number(stats[0].leads),
-    vip: Number(stats[0].vip),
     withDebt: Number(stats[0].with_debt),
   };
 }

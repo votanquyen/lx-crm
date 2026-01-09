@@ -61,9 +61,7 @@ export function UserStats({ stats }: UserStatsProps) {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </p>
+                  <p className="text-muted-foreground text-sm font-medium">{stat.title}</p>
                   <p className="text-2xl font-bold">{stat.value}</p>
                 </div>
                 <div className={`rounded-full p-3 ${stat.bgColor}`}>

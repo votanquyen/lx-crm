@@ -25,6 +25,7 @@
 **Purpose**: Manage customer lifecycle from lead to terminated
 
 **Key Operations**:
+
 ```typescript
 // CRUD Operations
 createCustomer(data: CustomerInput) → Customer
@@ -43,12 +44,14 @@ exportCustomers(format: 'csv' | 'excel') → Blob
 ```
 
 **Vietnamese-Specific Features**:
+
 - **Fuzzy Search**: `pg_trgm` + `unaccent` for Vietnamese name matching
 - **Normalization**: Store both original and normalized names
 - **Address Parsing**: District/Ward/City hierarchy
 - **Phone Validation**: Vietnamese format (0XX XXX XXXX)
 
 **Customer Status Flow**:
+
 ```
 LEAD → ACTIVE → INACTIVE → TERMINATED
    ↓        ↓          ↓
@@ -56,6 +59,7 @@ LEAD → ACTIVE → INACTIVE → TERMINATED
 ```
 
 **Customer Tier Rules**:
+
 - **STANDARD**: Basic pricing, standard support
 - **PREMIUM**: 10% discount, priority scheduling
 - **VIP**: 15% discount, dedicated account manager
@@ -67,6 +71,7 @@ LEAD → ACTIVE → INACTIVE → TERMINATED
 **Purpose**: Full lifecycle management of rental contracts
 
 **Key Operations**:
+
 ```typescript
 // Lifecycle Management
 createContract(data: ContractInput) → Contract
@@ -91,6 +96,7 @@ sendRenewalReminder(id: string) → void  // 30 days before expiry
 ```
 
 **Contract Status Flow**:
+
 ```
 DRAFT → SENT → NEGOTIATING → SIGNED → ACTIVE → EXPIRED/TERMINATED
    ↓                                                      ↑
@@ -98,15 +104,16 @@ DRAFT → SENT → NEGOTIATING → SIGNED → ACTIVE → EXPIRED/TERMINATED
 ```
 
 **Financial Calculations**:
+
 ```typescript
 // Contract total calculation
-subtotal = sum(contractItems.map(item => item.price * item.quantity))
-discount = subtotal * (discountPercent / 100)
-vat = (subtotal - discount) * (vatRate / 100)  // Default 10%
-total = subtotal - discount + vat
+subtotal = sum(contractItems.map((item) => item.price * item.quantity));
+discount = subtotal * (discountPercent / 100);
+vat = (subtotal - discount) * (vatRate / 100); // Default 10%
+total = subtotal - discount + vat;
 
 // Monthly fee calculation (for invoices)
-monthlyFee = total / contractDurationMonths
+monthlyFee = total / contractDurationMonths;
 ```
 
 **Contract Number Format**: `HĐ-YYYY-NNN` (e.g., `HĐ-2025-001`)
@@ -118,6 +125,7 @@ monthlyFee = total / contractDurationMonths
 **Purpose**: Generate invoices, track payments, manage outstanding amounts
 
 **Key Operations**:
+
 ```typescript
 // Invoice Generation
 createInvoiceFromContract(contractId: string) → Invoice
@@ -147,6 +155,7 @@ calculateAging(invoiceId: string) → {
 ```
 
 **Invoice Status Flow**:
+
 ```
 DRAFT → SENT → PARTIAL → PAID → OVERDUE → CANCELLED/REFUNDED
    ↓         ↓          ↓
@@ -154,6 +163,7 @@ DRAFT → SENT → PARTIAL → PAID → OVERDUE → CANCELLED/REFUNDED
 ```
 
 **Payment Methods**:
+
 - **BANK_TRANSFER**: Chuyển khoản ngân hàng
 - **CASH**: Tiền mặt
 - **CARD**: Thẻ tín dụng/ghi nợ
@@ -164,8 +174,9 @@ DRAFT → SENT → PARTIAL → PAID → OVERDUE → CANCELLED/REFUNDED
 **Invoice Number Format**: `INV-YYYY-NNN` (e.g., `INV-2025-001`)
 
 **Due Date Calculation**:
+
 ```typescript
-dueDate = invoiceDate + paymentTermDays  // Default 30 days
+dueDate = invoiceDate + paymentTermDays; // Default 30 days
 ```
 
 ---
@@ -175,6 +186,7 @@ dueDate = invoiceDate + paymentTermDays  // Default 30 days
 **Purpose**: Schedule and track plant care visits
 
 **Key Operations**:
+
 ```typescript
 // Schedule Generation
 generateDailySchedule(date: Date, staffId?: string) → CareSchedule[]
@@ -197,6 +209,7 @@ recordFeedback(visitId: string, rating: number, comment: string) → void
 ```
 
 **Visit Status Flow**:
+
 ```
 SCHEDULED → IN_PROGRESS → COMPLETED
    ↓              ↓
@@ -204,17 +217,20 @@ SCHEDULED → IN_PROGRESS → COMPLETED
 ```
 
 **Care Frequency Options**:
+
 - **WEEKLY**: Every week
 - **BI_WEEKLY**: Every 2 weeks
 - **MONTHLY**: Every month
 
 **Time Slots**:
+
 - **MORNING**: 08:00 - 10:00
 - **MIDDAY**: 10:00 - 12:00
 - **AFTERNOON**: 14:00 - 16:00
 - **EVENING**: 16:00 - 18:00
 
 **Route Optimization**:
+
 ```typescript
 // Group by district
 // Sort by proximity within district
@@ -229,6 +245,7 @@ SCHEDULED → IN_PROGRESS → COMPLETED
 **Purpose**: Manage plant replacement requests
 
 **Key Operations**:
+
 ```typescript
 // Exchange Request
 createExchangeRequest(data: ExchangeInput) → Exchange
@@ -249,6 +266,7 @@ recordBeforeAfterPhotos(exchangeId: string, before: File, after: File) → void
 ```
 
 **Exchange Status Flow**:
+
 ```
 PENDING → SCHEDULED → IN_PROGRESS → COMPLETED
    ↓           ↓            ↓
@@ -256,6 +274,7 @@ PENDING → SCHEDULED → IN_PROGRESS → COMPLETED
 ```
 
 **Priority Scoring**:
+
 ```typescript
 score = baseScore + urgencyBonus + conditionPenalty
 
@@ -275,6 +294,7 @@ dead_plant: +3
 ```
 
 **Exchange Data Structure**:
+
 ```typescript
 {
   plantsData: [
@@ -292,6 +312,7 @@ dead_plant: +3
 **Purpose**: Generate monthly billing statements
 
 **Key Operations**:
+
 ```typescript
 // Statement Generation
 generateMonthlyStatement(customerId: string, month: Date) → MonthlyStatement
@@ -319,6 +340,7 @@ exportStatementToPDF(statementId: string) → Blob
 **Billing Cycle**: 24th → 23rd of following month
 
 **Statement Status Flow**:
+
 ```
 DRAFT → SENT → CONFIRMED → FINALIZED
    ↓        ↓
@@ -334,6 +356,7 @@ DRAFT → SENT → CONFIRMED → FINALIZED
 **Purpose**: Generate business insights and reports
 
 **Key Operations**:
+
 ```typescript
 // Revenue Analytics
 getRevenueOverview(month?: Date) → {
@@ -376,6 +399,7 @@ getTopCustomers(limit: number) → CustomerWithRevenue[]
 ```
 
 **Performance Optimization**:
+
 - **Raw SQL**: Single query vs 5 separate queries
 - **Caching**: Redis-ready architecture
 - **Dynamic Imports**: Code splitting for heavy charts
@@ -387,6 +411,7 @@ getTopCustomers(limit: number) → CustomerWithRevenue[]
 **Purpose**: Analyze sticky notes with AI
 
 **Key Operations**:
+
 ```typescript
 // Note Analysis
 analyzeNote(content: string) → AIAnalysis
@@ -406,6 +431,7 @@ reanalyzeAllNotes() → number
 ```
 
 **AI Analysis Output**:
+
 ```typescript
 {
   entities: ["Customer ABC", "15/12/2025", "5.000.000 ₫"],
@@ -649,6 +675,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Success Metrics**:
+
 - Time from lead to contract: < 7 days
 - Conversion rate: > 60%
 - Customer satisfaction: > 4.5/5
@@ -701,6 +728,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Success Metrics**:
+
 - Visit completion rate: 100%
 - On-time arrival: > 90%
 - Customer satisfaction: > 4.5/5
@@ -754,6 +782,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Success Metrics**:
+
 - Collection rate: > 95%
 - Days sales outstanding: < 45 days
 - Overdue rate: < 5%
@@ -803,6 +832,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Priority Levels**:
+
 - **URGENT** (9-10): Same day/next day
 - **HIGH** (7-8): Within 3 days
 - **MEDIUM** (4-6): Within week
@@ -949,6 +979,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Error Message Examples**:
+
 ```typescript
 {
   userMessage: "Khách hàng đã tồn tại",
@@ -997,6 +1028,7 @@ reanalyzeAllNotes() → number
 ```
 
 **Example: Create Customer with Geocoding**
+
 ```typescript
 await prisma.$transaction(async (tx) => {
   // 1. Check duplicate
@@ -1061,6 +1093,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 **Example: Customer Update**
+
 ```typescript
 export const updateCustomer = createAction(schema, async (input) => {
   // 1. Update database
@@ -1125,6 +1158,7 @@ export const updateCustomer = createAction(schema, async (input) => {
 ```
 
 **Supported File Types**:
+
 - **Documents**: PDF, DOCX, XLSX
 - **Images**: JPG, PNG (max 5MB)
 - **Signatures**: PNG (max 1MB)
@@ -1166,6 +1200,7 @@ export const updateCustomer = createAction(schema, async (input) => {
 ```
 
 **API Calls**:
+
 ```typescript
 // Geocoding
 const response = await mapsClient.geocode({
@@ -1225,6 +1260,7 @@ const response = await mapsClient.distancematrix({
 ```
 
 **Bucket Structure**:
+
 ```
 locxanh/
 ├── uploads/
@@ -1281,6 +1317,7 @@ locxanh/
 ```
 
 **Prompt Template**:
+
 ```
 Analyze this customer note in Vietnamese:
 
@@ -1479,6 +1516,7 @@ Provide JSON response with:
 ```
 
 **Example Optimization**:
+
 ```typescript
 // ❌ Before: 5 queries
 const total = await prisma.customer.count({...});
@@ -1641,6 +1679,7 @@ const stats = await prisma.$queryRaw`
 ## 🎯 Success Metrics & KPIs
 
 ### Business Metrics
+
 - **Customer Retention**: > 95%
 - **Collection Rate**: > 95%
 - **Contract Renewal**: > 80%
@@ -1648,6 +1687,7 @@ const stats = await prisma.$queryRaw`
 - **Response Time**: < 2 seconds
 
 ### Technical Metrics
+
 - **System Uptime**: 99.9%
 - **API Response**: < 200ms average
 - **Test Coverage**: > 95%
@@ -1655,6 +1695,7 @@ const stats = await prisma.$queryRaw`
 - **Error Rate**: < 0.5%
 
 ### Operational Metrics
+
 - **Visit Completion**: 100%
 - **On-Time Arrival**: > 90%
 - **Invoice Accuracy**: 100%

@@ -49,6 +49,7 @@ DATABASE_URL="postgresql://[user]:[password]@[host]/[database]?sslmode=require"
 ```
 
 **Example:**
+
 ```env
 DATABASE_URL="postgresql://neondb_owner:npg_abc123@ep-tree-123.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 ```
@@ -93,13 +94,13 @@ SELECT count(*) FROM pg_stat_activity;
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
+| Issue              | Solution                            |
+| ------------------ | ----------------------------------- |
 | Connection timeout | Check internet, verify DATABASE_URL |
-| SSL required | Add `?sslmode=require` to URL |
-| PostGIS not found | Run `CREATE EXTENSION postgis` |
-| Migration failed | Check `bunx prisma migrate status` |
-| Slow queries | Check Neon dashboard → Queries |
+| SSL required       | Add `?sslmode=require` to URL       |
+| PostGIS not found  | Run `CREATE EXTENSION postgis`      |
+| Migration failed   | Check `bunx prisma migrate status`  |
+| Slow queries       | Check Neon dashboard → Queries      |
 
 ---
 
@@ -124,6 +125,7 @@ SELECT count(*) FROM pg_stat_activity;
 ## Best Practices
 
 ✅ **Do:**
+
 - Use connection pooling in production (`?pgbouncer=true`)
 - Enable auto-suspend (default, saves costs)
 - Create database branches for testing
@@ -131,6 +133,7 @@ SELECT count(*) FROM pg_stat_activity;
 - Use migrations for schema changes
 
 ❌ **Don't:**
+
 - Store connection string in code
 - Disable SSL (`sslmode=require` is required)
 - Run `prisma db push` in production (use migrations)

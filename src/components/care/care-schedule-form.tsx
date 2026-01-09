@@ -32,13 +32,7 @@ interface CareScheduleFormProps {
   defaultCustomerId?: string;
 }
 
-const timeSlots = [
-  "08:00-10:00",
-  "10:00-12:00",
-  "13:00-15:00",
-  "15:00-17:00",
-  "Cả ngày",
-];
+const timeSlots = ["08:00-10:00", "10:00-12:00", "13:00-15:00", "15:00-17:00", "Cả ngày"];
 
 export function CareScheduleForm({
   schedule,
@@ -56,8 +50,8 @@ export function CareScheduleForm({
     scheduledDate: schedule?.scheduledDate
       ? format(new Date(schedule.scheduledDate), "yyyy-MM-dd")
       : defaultDate
-      ? format(defaultDate, "yyyy-MM-dd")
-      : format(new Date(), "yyyy-MM-dd"),
+        ? format(defaultDate, "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd"),
     timeSlot: schedule?.timeSlot || "",
     estimatedDurationMins: schedule?.estimatedDurationMins || 30,
     notes: schedule?.notes || "",
@@ -106,9 +100,7 @@ export function CareScheduleForm({
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>
-            {schedule ? "Chỉnh sửa lịch chăm sóc" : "Tạo lịch chăm sóc mới"}
-          </CardTitle>
+          <CardTitle>{schedule ? "Chỉnh sửa lịch chăm sóc" : "Tạo lịch chăm sóc mới"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Customer Selection */}
@@ -127,9 +119,7 @@ export function CareScheduleForm({
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
                     {customer.code} - {customer.companyName}
-                    <span className="text-xs text-gray-500 ml-2">
-                      ({customer.district})
-                    </span>
+                    <span className="ml-2 text-xs text-gray-500">({customer.district})</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -201,18 +191,14 @@ export function CareScheduleForm({
 
           {/* Estimated Duration */}
           <div className="space-y-2">
-            <Label htmlFor="estimatedDurationMins">
-              Thời gian dự kiến (phút)
-            </Label>
+            <Label htmlFor="estimatedDurationMins">Thời gian dự kiến (phút)</Label>
             <Input
               id="estimatedDurationMins"
               type="number"
               min="15"
               step="15"
               value={formData.estimatedDurationMins}
-              onChange={(e) =>
-                handleChange("estimatedDurationMins", parseInt(e.target.value))
-              }
+              onChange={(e) => handleChange("estimatedDurationMins", parseInt(e.target.value))}
             />
             <p className="text-xs text-gray-500">
               Mặc định: 30 phút. Có thể điều chỉnh theo số lượng cây.
@@ -232,7 +218,7 @@ export function CareScheduleForm({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -242,11 +228,7 @@ export function CareScheduleForm({
               Hủy
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isPending
-                ? "Đang lưu..."
-                : schedule
-                ? "Cập nhật"
-                : "Tạo lịch"}
+              {isPending ? "Đang lưu..." : schedule ? "Cập nhật" : "Tạo lịch"}
             </Button>
           </div>
         </CardContent>

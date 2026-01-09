@@ -11,6 +11,7 @@ Create detailed technical implementation plans through research, codebase analys
 ## When to Use
 
 Use this skill when:
+
 - Planning new feature implementations
 - Architecting system designs
 - Evaluating technical approaches
@@ -24,20 +25,25 @@ Always honoring **YAGNI**, **KISS**, and **DRY** principles.
 **Be honest, be brutal, straight to the point, and be concise.**
 
 ### 1. Research & Analysis
+
 Load: `references/research-phase.md`
 **Skip if:** Provided with researcher reports
 
 ### 2. Codebase Understanding
+
 Load: `references/codebase-understanding.md`
 **Skip if:** Provided with scout reports
 
 ### 3. Solution Design
+
 Load: `references/solution-design.md`
 
 ### 4. Plan Creation & Organization
+
 Load: `references/plan-organization.md`
 
 ### 5. Task Breakdown & Output Standards
+
 Load: `references/output-standards.md`
 
 ## Workflow Process
@@ -59,6 +65,7 @@ Load: `references/output-standards.md`
 - Fully respect the `./docs/development-rules.md` file.
 
 **Plan Directory Structure**
+
 ```
 plans/
 └── {date}-plan-name/
@@ -82,14 +89,15 @@ Prevents version proliferation by tracking current working plan via session stat
 
 ### Active vs Suggested Plans
 
-| Type | Env Var | Meaning |
-|------|---------|---------|
-| **Active** | `$CK_ACTIVE_PLAN` | Explicitly set via `set-active-plan.cjs` - use for reports |
-| **Suggested** | `$CK_SUGGESTED_PLAN` | Branch-matched, hint only - do NOT auto-use |
+| Type          | Env Var              | Meaning                                                    |
+| ------------- | -------------------- | ---------------------------------------------------------- |
+| **Active**    | `$CK_ACTIVE_PLAN`    | Explicitly set via `set-active-plan.cjs` - use for reports |
+| **Suggested** | `$CK_SUGGESTED_PLAN` | Branch-matched, hint only - do NOT auto-use                |
 
 ### How It Works
 
 Plan context is managed through:
+
 1. **`$CK_ACTIVE_PLAN` env var**: Only set for explicitly activated plans (via session state)
 2. **`$CK_SUGGESTED_PLAN` env var**: Branch-matched plans shown as hints, not directives
 3. **Session temp file**: `/tmp/ck-session-{id}.json` stores explicit activations only
@@ -107,6 +115,7 @@ Plan context is managed through:
 ### Report Output Location
 
 All agents writing reports MUST:
+
 1. Check `Plan Context` section injected by hooks for `Reports Path`
 2. Only `$CK_ACTIVE_PLAN` plans use plan-specific reports path
 3. `$CK_SUGGESTED_PLAN` plans use default `plans/reports/` (not plan folder)

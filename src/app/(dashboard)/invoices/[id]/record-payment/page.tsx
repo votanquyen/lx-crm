@@ -35,14 +35,15 @@ export default async function RecordPaymentPage({ params }: PageProps) {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Ghi nhận thanh toán</h1>
             <p className="text-muted-foreground">
-              Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-{new Date(invoice.issueDate).getMonth() + 1}
+              Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-
+              {new Date(invoice.issueDate).getMonth() + 1}
             </p>
           </div>
         </div>
 
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-lg font-semibold mb-2">Hóa đơn đã thanh toán đầy đủ</p>
+            <p className="mb-2 text-lg font-semibold">Hóa đơn đã thanh toán đầy đủ</p>
             <p className="text-muted-foreground mb-4">
               Hóa đơn này đã được thanh toán toàn bộ. Không thể ghi nhận thêm thanh toán.
             </p>
@@ -67,7 +68,8 @@ export default async function RecordPaymentPage({ params }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ghi nhận thanh toán</h1>
           <p className="text-muted-foreground">
-            Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-{new Date(invoice.issueDate).getMonth() + 1}
+            Hóa đơn {invoice.invoiceNumber}/{new Date(invoice.issueDate).getDate()}-
+            {new Date(invoice.issueDate).getMonth() + 1}
           </p>
         </div>
       </div>
@@ -78,10 +80,7 @@ export default async function RecordPaymentPage({ params }: PageProps) {
           <CardTitle>Thông tin thanh toán</CardTitle>
         </CardHeader>
         <CardContent>
-          <PaymentForm
-            invoice={invoice as any}
-            remainingBalance={remainingBalance}
-          />
+          <PaymentForm invoice={invoice as any} remainingBalance={remainingBalance} />
         </CardContent>
       </Card>
     </div>

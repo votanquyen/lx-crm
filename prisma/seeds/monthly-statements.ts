@@ -17,11 +17,32 @@ interface PlantItem {
 
 // Sample plant data for statements
 const samplePlants: PlantItem[] = [
-  { id: "1", name: "Phát Tài Núi", sizeSpec: "140-150", quantity: 2, unitPrice: 350000, total: 700000 },
+  {
+    id: "1",
+    name: "Phát Tài Núi",
+    sizeSpec: "140-150",
+    quantity: 2,
+    unitPrice: 350000,
+    total: 700000,
+  },
   { id: "2", name: "Kim Tiền", sizeSpec: "120-130", quantity: 3, unitPrice: 280000, total: 840000 },
-  { id: "3", name: "Trầu Bà Cột", sizeSpec: "100-110", quantity: 1, unitPrice: 220000, total: 220000 },
+  {
+    id: "3",
+    name: "Trầu Bà Cột",
+    sizeSpec: "100-110",
+    quantity: 1,
+    unitPrice: 220000,
+    total: 220000,
+  },
   { id: "4", name: "Lưỡi Hổ", sizeSpec: "80-90", quantity: 4, unitPrice: 150000, total: 600000 },
-  { id: "5", name: "Bạch Mã Hoàng Tử", sizeSpec: "130-140", quantity: 2, unitPrice: 400000, total: 800000 },
+  {
+    id: "5",
+    name: "Bạch Mã Hoàng Tử",
+    sizeSpec: "130-140",
+    quantity: 2,
+    unitPrice: 400000,
+    total: 800000,
+  },
 ];
 
 // Calculate period dates (24th previous month to 23rd current month)
@@ -93,14 +114,17 @@ export async function seedMonthlyStatements() {
       // Randomly select 2-5 plants
       const numPlants = 2 + Math.floor(Math.random() * 4);
       const shuffled = [...samplePlants].sort(() => 0.5 - Math.random());
-      const selectedPlants = shuffled.slice(0, numPlants).map((p, idx) => ({
-        ...p,
-        id: `${customer.id}-${month}-${idx + 1}`,
-        quantity: 1 + Math.floor(Math.random() * 3),
-      })).map(p => ({
-        ...p,
-        total: p.unitPrice * p.quantity,
-      }));
+      const selectedPlants = shuffled
+        .slice(0, numPlants)
+        .map((p, idx) => ({
+          ...p,
+          id: `${customer.id}-${month}-${idx + 1}`,
+          quantity: 1 + Math.floor(Math.random() * 3),
+        }))
+        .map((p) => ({
+          ...p,
+          total: p.unitPrice * p.quantity,
+        }));
 
       const { periodStart, periodEnd } = calculatePeriod(year, month);
       const { subtotal, vatAmount, total } = calculateAmounts(selectedPlants);

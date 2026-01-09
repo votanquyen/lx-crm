@@ -79,10 +79,7 @@ export async function geocodeAddress(
 /**
  * Reverse geocode coordinates to address
  */
-export async function reverseGeocode(
-  lat: number,
-  lng: number
-): Promise<string | null> {
+export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
     const params = new URLSearchParams({
       lat: lat.toString(),
@@ -90,15 +87,12 @@ export async function reverseGeocode(
       format: "json",
     });
 
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?${params}`,
-      {
-        headers: {
-          "User-Agent": USER_AGENT,
-        },
-        next: { revalidate: 86400 },
-      }
-    );
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+      headers: {
+        "User-Agent": USER_AGENT,
+      },
+      next: { revalidate: 86400 },
+    });
 
     if (!res.ok) return null;
 
@@ -114,21 +108,13 @@ export async function reverseGeocode(
  * Calculate distance between two coordinates (Haversine formula)
  * Returns distance in kilometers
  */
-export function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
+export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371; // Earth's radius in km
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }

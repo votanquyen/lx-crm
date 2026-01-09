@@ -7,7 +7,13 @@ import { auth } from "./auth";
 import { AppError } from "./errors";
 
 // Re-export auth helpers from centralized location for backward compatibility
-export { requireAuth, requireRole, requireAdmin, requireManager, requireAccountant } from "./auth-utils";
+export {
+  requireAuth,
+  requireRole,
+  requireAdmin,
+  requireManager,
+  requireAccountant,
+} from "./auth-utils";
 
 /** User roles for authorization */
 export type UserRole = "ADMIN" | "MANAGER" | "STAFF";
@@ -20,7 +26,7 @@ export const requireUser = async () => {
   }
   return {
     id: session.user.id as string,
-    role: (session.user as { role?: string }).role as UserRole | undefined
+    role: (session.user as { role?: string }).role as UserRole | undefined,
   };
 };
 
@@ -63,7 +69,7 @@ export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
       // Get auth context
       const session = await auth();
       const ctx: ActionContext = {
-        user: session?.user as ActionContext['user'],
+        user: session?.user as ActionContext["user"],
       };
 
       // Execute handler with context
@@ -101,9 +107,7 @@ export function createAction<TSchema extends z.ZodTypeAny, TOutput>(
  * Create a server action without validation schema
  * For actions that don't need input validation
  */
-export function createServerAction<TOutput>(
-  handler: () => Promise<TOutput>
-) {
+export function createServerAction<TOutput>(handler: () => Promise<TOutput>) {
   return async (): Promise<TOutput> => {
     try {
       return await handler();
@@ -120,9 +124,7 @@ export function createServerAction<TOutput>(
 /**
  * Create a server action without schema validation
  */
-export function createSimpleAction<TInput, TOutput>(
-  handler: (input: TInput) => Promise<TOutput>
-) {
+export function createSimpleAction<TInput, TOutput>(handler: (input: TInput) => Promise<TOutput>) {
   return async (input: TInput): Promise<ActionResponse<TOutput>> => {
     try {
       const result = await handler(input);

@@ -70,9 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const configuredUsers = devUsers.filter((u) => u.password !== "");
 
         const user = configuredUsers.find(
-          (u) =>
-            u.email === credentials.email &&
-            u.password === credentials.password
+          (u) => u.email === credentials.email && u.password === credentials.password
         );
 
         if (!user) {
@@ -142,4 +140,10 @@ export async function getCurrentUser() {
 }
 
 // Re-export auth utilities from centralized location
-export { requireAuth, requireRole, requireAdmin, requireManager, requireAccountant } from "./auth-utils";
+export {
+  requireAuth,
+  requireRole,
+  requireAdmin,
+  requireManager,
+  requireAccountant,
+} from "./auth-utils";

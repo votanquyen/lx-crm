@@ -31,9 +31,7 @@ export default async function LoginPage({
           />
         </div>
         <h1 className="mt-4 text-2xl font-bold text-gray-900">Lộc Xanh CRM</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Hệ thống Quản lý Cho thuê Cây xanh
-        </p>
+        <p className="mt-2 text-sm text-gray-600">Hệ thống Quản lý Cho thuê Cây xanh</p>
       </div>
 
       {/* Error Message */}
@@ -58,10 +56,7 @@ export default async function LoginPage({
         className="space-y-4"
       >
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
             Email
           </label>
           <input
@@ -69,16 +64,13 @@ export default async function LoginPage({
             name="email"
             type="email"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
+            className="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:ring-1 focus:outline-hidden"
             placeholder="admin@locxanh.vn"
           />
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
             Mật khẩu
           </label>
           <input
@@ -86,14 +78,14 @@ export default async function LoginPage({
             name="password"
             type="password"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:border-primary-500 focus:outline-hidden focus:ring-1 focus:ring-primary-500"
+            className="focus:border-primary-500 focus:ring-primary-500 mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-xs focus:ring-1 focus:outline-hidden"
             placeholder="••••••••"
           />
         </div>
 
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-medium text-white shadow-xs transition hover:bg-primary-700 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-white shadow-xs transition focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         >
           Đăng nhập
         </button>
@@ -118,7 +110,7 @@ export default async function LoginPage({
       >
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          className="focus:ring-primary-500 flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:outline-hidden"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -144,9 +136,7 @@ export default async function LoginPage({
 
       {/* Development Credentials Info */}
       <div className="rounded-lg bg-blue-50 p-4">
-        <p className="text-xs font-medium text-blue-800">
-          Development Mode - Test Accounts:
-        </p>
+        <p className="text-xs font-medium text-blue-800">Development Mode - Test Accounts:</p>
         <ul className="mt-2 space-y-1 text-xs text-blue-700">
           <li>• admin@locxanh.vn / admin123 (Admin)</li>
           <li>• manager@locxanh.vn / manager123 (Manager)</li>

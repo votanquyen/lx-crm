@@ -51,12 +51,20 @@ function StatsCard({
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${color || ""}`}>{value}</div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
           {trend && trendValue && (
             <span
-              className={trend === "up" ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}
+              className={
+                trend === "up"
+                  ? "flex items-center text-green-600"
+                  : "flex items-center text-red-600"
+              }
             >
-              {trend === "up" ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
+              {trend === "up" ? (
+                <TrendingUp className="mr-1 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3" />
+              )}
               {trendValue}
             </span>
           )}
@@ -112,8 +120,8 @@ async function TodaySchedules() {
 
   if (schedules.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <Calendar className="mx-auto h-8 w-8 mb-2 opacity-50" />
+      <div className="text-muted-foreground py-8 text-center">
+        <Calendar className="mx-auto mb-2 h-8 w-8 opacity-50" />
         <p>Không có lịch chăm sóc hôm nay</p>
       </div>
     );
@@ -122,10 +130,7 @@ async function TodaySchedules() {
   return (
     <div className="space-y-4">
       {schedules.slice(0, 5).map((schedule) => (
-        <div
-          key={schedule.id}
-          className="flex items-center justify-between rounded-lg border p-3"
-        >
+        <div key={schedule.id} className="flex items-center justify-between rounded-lg border p-3">
           <div>
             <Link
               href={`/customers/${schedule.customer.id}`}
@@ -133,22 +138,23 @@ async function TodaySchedules() {
             >
               {schedule.customer.companyName}
             </Link>
-            <p className="text-sm text-muted-foreground">
-              {schedule.customer.district} • {schedule.scheduledTime ? new Date(schedule.scheduledTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Chưa xác định giờ"}
+            <p className="text-muted-foreground text-sm">
+              {schedule.customer.district} •{" "}
+              {schedule.scheduledTime
+                ? new Date(schedule.scheduledTime).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Chưa xác định giờ"}
             </p>
           </div>
-          <Badge
-            variant={schedule.status === "IN_PROGRESS" ? "default" : "secondary"}
-          >
+          <Badge variant={schedule.status === "IN_PROGRESS" ? "default" : "secondary"}>
             {schedule.status === "IN_PROGRESS" ? "Đang thực hiện" : "Đã lên lịch"}
           </Badge>
         </div>
       ))}
       {schedules.length > 5 && (
-        <Link
-          href="/care"
-          className="block text-center text-sm text-primary hover:underline"
-        >
+        <Link href="/care" className="text-primary block text-center text-sm hover:underline">
           Xem thêm {schedules.length - 5} lịch khác
         </Link>
       )}
@@ -162,8 +168,8 @@ async function TodaySchedules() {
 function RecentNotesDisplay({ notes }: { notes: Awaited<ReturnType<typeof getRecentNotes>> }) {
   if (notes.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <StickyNote className="mx-auto h-8 w-8 mb-2 opacity-50" />
+      <div className="text-muted-foreground py-8 text-center">
+        <StickyNote className="mx-auto mb-2 h-8 w-8 opacity-50" />
         <p>Không có ghi chú nào cần xử lý</p>
       </div>
     );
@@ -184,14 +190,14 @@ function RecentNotesDisplay({ notes }: { notes: Awaited<ReturnType<typeof getRec
           >
             <StickyNote className="h-4 w-4" />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <Link
               href={`/customers/${note.customer.id}`}
-              className="font-medium text-sm hover:underline"
+              className="text-sm font-medium hover:underline"
             >
               {note.customer.companyName}
             </Link>
-            <p className="text-sm text-muted-foreground truncate">{note.content}</p>
+            <p className="text-muted-foreground truncate text-sm">{note.content}</p>
           </div>
           <Badge variant={note.category === "URGENT" ? "destructive" : "secondary"}>
             {note.category}
@@ -227,7 +233,7 @@ async function AlertsAndNotesWrapper() {
       <CardContent className="space-y-4">
         {expiringContracts.length > 0 && (
           <div>
-            <p className="font-medium text-sm mb-2">
+            <p className="mb-2 text-sm font-medium">
               Hợp đồng sắp hết hạn ({expiringContracts.length})
             </p>
             <div className="space-y-2">
@@ -235,7 +241,7 @@ async function AlertsAndNotesWrapper() {
                 <Link
                   key={contract.id}
                   href={`/contracts/${contract.id}`}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground block text-sm"
                 >
                   • {contract.customer.companyName} - {contract.contractNumber}
                 </Link>
@@ -245,7 +251,7 @@ async function AlertsAndNotesWrapper() {
         )}
         {overdueInvoices.length > 0 && (
           <div>
-            <p className="font-medium text-sm mb-2 text-red-600">
+            <p className="mb-2 text-sm font-medium text-red-600">
               Hóa đơn quá hạn ({overdueInvoices.length})
             </p>
             <div className="space-y-2">
@@ -253,9 +259,10 @@ async function AlertsAndNotesWrapper() {
                 <Link
                   key={invoice.id}
                   href={`/invoices/${invoice.id}`}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground block text-sm"
                 >
-                  • {invoice.customer.companyName} - {new Intl.NumberFormat("vi-VN").format(Number(invoice.outstandingAmount))} VND
+                  • {invoice.customer.companyName} -{" "}
+                  {new Intl.NumberFormat("vi-VN").format(Number(invoice.outstandingAmount))} VND
                 </Link>
               ))}
             </div>
@@ -281,12 +288,8 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Xin chào!
-        </h1>
-        <p className="text-muted-foreground">
-          Đây là tổng quan hoạt động kinh doanh hôm nay.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">Xin chào!</h1>
+        <p className="text-muted-foreground">Đây là tổng quan hoạt động kinh doanh hôm nay.</p>
       </div>
 
       {/* Stats Grid */}
@@ -374,42 +377,42 @@ export default async function DashboardPage() {
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             <Link
               href="/customers/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-4 transition-colors"
             >
-              <Users className="h-5 w-5 text-primary" />
+              <Users className="text-primary h-5 w-5" />
               <div>
                 <p className="font-medium">Thêm khách hàng</p>
-                <p className="text-xs text-muted-foreground">Tạo khách hàng mới</p>
+                <p className="text-muted-foreground text-xs">Tạo khách hàng mới</p>
               </div>
             </Link>
             <Link
               href="/contracts/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-4 transition-colors"
             >
-              <FileText className="h-5 w-5 text-primary" />
+              <FileText className="text-primary h-5 w-5" />
               <div>
                 <p className="font-medium">Tạo hợp đồng</p>
-                <p className="text-xs text-muted-foreground">Soạn hợp đồng mới</p>
+                <p className="text-muted-foreground text-xs">Soạn hợp đồng mới</p>
               </div>
             </Link>
             <Link
               href="/invoices/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-4 transition-colors"
             >
-              <Receipt className="h-5 w-5 text-primary" />
+              <Receipt className="text-primary h-5 w-5" />
               <div>
                 <p className="font-medium">Xuất hóa đơn</p>
-                <p className="text-xs text-muted-foreground">Tạo hóa đơn thanh toán</p>
+                <p className="text-muted-foreground text-xs">Tạo hóa đơn thanh toán</p>
               </div>
             </Link>
             <Link
               href="/exchanges"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
+              className="hover:bg-accent flex items-center gap-3 rounded-lg border p-4 transition-colors"
             >
-              <RefreshCcw className="h-5 w-5 text-primary" />
+              <RefreshCcw className="text-primary h-5 w-5" />
               <div>
                 <p className="font-medium">Đổi cây</p>
-                <p className="text-xs text-muted-foreground">Xử lý yêu cầu đổi cây</p>
+                <p className="text-muted-foreground text-xs">Xử lý yêu cầu đổi cây</p>
               </div>
             </Link>
           </div>

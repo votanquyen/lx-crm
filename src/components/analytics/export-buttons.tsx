@@ -36,9 +36,7 @@ interface AnalyticsExportButtonsProps {
   variant?: "default" | "outline";
 }
 
-export function AnalyticsExportButtons({
-  variant = "outline",
-}: AnalyticsExportButtonsProps) {
+export function AnalyticsExportButtons({ variant = "outline" }: AnalyticsExportButtonsProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async (type: ExportType) => {
@@ -77,7 +75,7 @@ export function AnalyticsExportButtons({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant={variant} disabled={isExporting}>
-          <Download className="h-4 w-4 mr-2" />
+          <Download className="mr-2 h-4 w-4" />
           {isExporting ? "Đang xuất..." : "Xuất CSV"}
         </Button>
       </DropdownMenuTrigger>
@@ -85,10 +83,7 @@ export function AnalyticsExportButtons({
         <DropdownMenuLabel>Chọn báo cáo xuất</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {exportOptions.map((option) => (
-          <DropdownMenuItem
-            key={option.type}
-            onClick={() => handleExport(option.type)}
-          >
+          <DropdownMenuItem key={option.type} onClick={() => handleExport(option.type)}>
             {option.label}
           </DropdownMenuItem>
         ))}
@@ -106,11 +101,7 @@ interface SingleExportButtonProps {
   variant?: "default" | "outline" | "ghost";
 }
 
-export function SingleExportButton({
-  type,
-  label,
-  variant = "outline",
-}: SingleExportButtonProps) {
+export function SingleExportButton({ type, label, variant = "outline" }: SingleExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
@@ -144,13 +135,8 @@ export function SingleExportButton({
   };
 
   return (
-    <Button
-      variant={variant}
-      size="sm"
-      onClick={handleExport}
-      disabled={isExporting}
-    >
-      <Download className="h-3 w-3 mr-1" />
+    <Button variant={variant} size="sm" onClick={handleExport} disabled={isExporting}>
+      <Download className="mr-1 h-3 w-3" />
       {isExporting ? "..." : label || "Xuất CSV"}
     </Button>
   );

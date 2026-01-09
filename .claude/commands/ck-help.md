@@ -11,6 +11,7 @@ All-in-one ClaudeKit guide. Run the script and present output based on type mark
 **IMPORTANT: Always translate `$ARGUMENTS` to English before passing to script.**
 
 The Python script only understands English keywords. If `$ARGUMENTS` is in another language:
+
 1. Translate `$ARGUMENTS` to English
 2. Pass the translated English string to the script
 
@@ -31,6 +32,7 @@ The script outputs a type marker on the first line: `@CK_OUTPUT_TYPE:<type>`
 Full documentation (config, schema, setup guides).
 
 **Presentation:**
+
 1. Show the **COMPLETE** script output verbatim - every section, every code block
 2. **THEN ADD** helpful context:
    - Real-world usage examples ("For example, if you're working on multiple projects...")
@@ -39,6 +41,7 @@ Full documentation (config, schema, setup guides).
 3. End with a specific follow-up question
 
 **Example enhancement after showing full output:**
+
 ```
 ## Additional Tips
 
@@ -57,6 +60,7 @@ Need help setting up a specific configuration?
 Workflow guides for command categories (fix, plan, cook, etc.).
 
 **Presentation:**
+
 1. Show the complete workflow and command list
 2. **ADD** practical context:
    - When to use this workflow vs alternatives
@@ -69,6 +73,7 @@ Workflow guides for command categories (fix, plan, cook, etc.).
 Single command documentation.
 
 **Presentation:**
+
 1. Show full command info from script
 2. **ADD**:
    - Concrete usage example with realistic input
@@ -81,6 +86,7 @@ Single command documentation.
 Search matches for a keyword.
 
 **Presentation:**
+
 1. Show all matches from script
 2. **HELP** user navigate:
    - Group by relevance if many results
@@ -93,6 +99,7 @@ Search matches for a keyword.
 Task-based command suggestions.
 
 **Presentation:**
+
 1. Show recommended commands from script
 2. **EXPLAIN** the reasoning:
    - Why these commands fit the task

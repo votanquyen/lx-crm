@@ -9,6 +9,7 @@
 ## What Was Built
 
 ### 1. Server Actions (`src/actions/plant-types.ts`)
+
 - ✅ `getPlantTypes()` - Paginated list with search, filters, trigram search
 - ✅ `getPlantTypeById()` - Get single plant type with inventory & contracts
 - ✅ `getPlantTypeByCode()` - Get by plant code
@@ -20,6 +21,7 @@
 - ✅ `getPlantCategories()` - List of unique categories
 
 ### 2. Validation Schemas (`src/lib/validations/plant-type.ts`)
+
 - ✅ `createPlantTypeSchema` - Zod schema for creating plant types
 - ✅ `updatePlantTypeSchema` - Zod schema for updating
 - ✅ `plantTypeSearchSchema` - Search/filter parameters
@@ -29,6 +31,7 @@
 ### 3. Pages
 
 #### List Page (`/plant-types`)
+
 - ✅ Grid view of all plant types with images
 - ✅ Search by name, code
 - ✅ Filter by category, status
@@ -37,6 +40,7 @@
 - ✅ Pagination
 
 #### Detail Page (`/plant-types/[id]`)
+
 - ✅ Full plant type information
 - ✅ Pricing details (rental, deposit, sale, replacement)
 - ✅ Specifications (size, height, pot size)
@@ -46,6 +50,7 @@
 - ✅ Usage statistics
 
 #### Create Page (`/plant-types/new`)
+
 - ✅ Form to create new plant type
 - ✅ Basic info (code, name, category, description)
 - ✅ Specifications (height, pot diameter)
@@ -54,11 +59,13 @@
 - ✅ Auto-creates inventory record on creation
 
 #### Edit Page (`/plant-types/[id]/edit`)
+
 - ✅ Form to update existing plant type
 - ✅ Pre-filled with current values
 - ✅ Cannot change plant code (immutable)
 
 ### 4. Components
+
 - ✅ `PlantTypeForm` - Reusable create/edit form with react-hook-form + Zod
 - Form components still need shadcn/ui setup (currently have TypeScript errors)
 
@@ -144,6 +151,7 @@ All operations handled via Server Actions (no API routes needed).
 ## Known Issues & Next Steps
 
 ### Issues to Fix
+
 1. **TypeScript Errors** - Form and checkbox components need shadcn/ui setup
    - Missing `src/components/ui/form.tsx`
    - Missing `src/components/ui/checkbox.tsx`
@@ -155,6 +163,7 @@ All operations handled via Server Actions (no API routes needed).
    - Missing contract ID in detail page query
 
 ### Future Enhancements
+
 1. **Inventory Management Page** (`/plant-types/[id]/inventory`)
    - Adjust stock levels
    - Track stock movements
@@ -170,6 +179,7 @@ All operations handled via Server Actions (no API routes needed).
 ## Usage Examples
 
 ### Create Plant Type
+
 ```typescript
 const plantType = await createPlantType({
   code: "KT",
@@ -185,11 +195,12 @@ const plantType = await createPlantType({
 ```
 
 ### Search Plants
+
 ```typescript
 const result = await getPlantTypes({
   page: 1,
   limit: 20,
-  search: "kim tien",  // Vietnamese fuzzy search
+  search: "kim tien", // Vietnamese fuzzy search
   category: "Indoor",
   isActive: true,
   minPrice: 30000,
@@ -200,6 +211,7 @@ const result = await getPlantTypes({
 ```
 
 ### Update Inventory
+
 ```typescript
 await updateInventory({
   plantTypeId: "...",
@@ -216,6 +228,7 @@ await updateInventory({
 ## Testing
 
 ### Manual Testing Checklist
+
 - [ ] Navigate to http://localhost:3001/plant-types
 - [ ] View empty state
 - [ ] Click "Add Plant Type"
@@ -227,6 +240,7 @@ await updateInventory({
 - [ ] Check inventory stats
 
 ### Unit Tests Needed
+
 - [ ] Plant type CRUD actions
 - [ ] Validation schemas
 - [ ] Search/filter logic
@@ -257,6 +271,7 @@ await updateInventory({
 ## Conclusion
 
 Plant Types Management is fully functional with:
+
 - Complete CRUD operations
 - Advanced search & filtering
 - Inventory tracking

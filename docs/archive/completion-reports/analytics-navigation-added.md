@@ -8,20 +8,23 @@
 ## Changes Made
 
 ### File Modified
+
 - `src/components/layout/sidebar.tsx`
 
 ### Changes
 
 #### 1. Added Icon Import
+
 ```typescript
 import {
   // ... existing imports
-  BarChart3,  // ✅ Added
+  BarChart3, // ✅ Added
   // ... rest of imports
 } from "lucide-react";
 ```
 
 #### 2. Added Navigation Item
+
 ```typescript
 const navItems: NavItem[] = [
   { title: "Tổng quan", href: "/", icon: LayoutDashboard },
@@ -31,7 +34,7 @@ const navItems: NavItem[] = [
   { title: "Hóa đơn", href: "/invoices", icon: Receipt },
   { title: "Lịch chăm sóc", href: "/schedules", icon: Calendar },
   { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
-  { title: "Báo cáo", href: "/analytics", icon: BarChart3 },  // ✅ Added
+  { title: "Báo cáo", href: "/analytics", icon: BarChart3 }, // ✅ Added
   { title: "Cài đặt", href: "/settings", icon: Settings },
 ];
 ```
@@ -41,6 +44,7 @@ const navItems: NavItem[] = [
 ## Result
 
 **Analytics dashboard now accessible from sidebar:**
+
 - **Label:** "Báo cáo" (Vietnamese for "Reports")
 - **Icon:** BarChart3 (bar chart icon)
 - **Route:** `/analytics`
@@ -60,6 +64,7 @@ const navItems: NavItem[] = [
 ## User Experience
 
 **Navigation Flow:**
+
 1. User clicks "Báo cáo" in sidebar
 2. Navigates to `/analytics` page
 3. Sees comprehensive analytics dashboard with:
@@ -69,6 +74,7 @@ const navItems: NavItem[] = [
    - Contract tracking
 
 **Visual:**
+
 - Chart icon makes it instantly recognizable
 - Positioned logically after operational items
 - Before settings (admin section)

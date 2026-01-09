@@ -20,7 +20,8 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const search = params.search;
   const role = params.role as any;
-  const isActive = params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
+  const isActive =
+    params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
 
   const [usersData, stats] = await Promise.all([
     getUsers({ page, limit: 20, search, role, isActive }),
@@ -46,9 +47,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Danh sách Người dùng</CardTitle>
-          <CardDescription>
-            Tổng số {usersData.pagination.total} người dùng
-          </CardDescription>
+          <CardDescription>Tổng số {usersData.pagination.total} người dùng</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <UserFilters />

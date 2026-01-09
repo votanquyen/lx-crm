@@ -10,6 +10,7 @@
 ## Pre-Testing Setup
 
 ### 1. Start Development Server
+
 ```bash
 cd C:\Users\Quyen_Vo\locxanh.vn
 bun run dev
@@ -18,11 +19,13 @@ bun run dev
 **Expected:** Server starts on `http://localhost:3003` (or next available port)
 
 ### 2. Verify Database Connection
+
 - Check `.env` file has valid `DATABASE_URL`
 - Ensure Neon PostgreSQL is accessible
 - Run `bun run db:generate` if needed
 
 ### 3. Authentication
+
 - Login with Google OAuth
 - Verify user session persists
 - Check sidebar shows user info
@@ -32,6 +35,7 @@ bun run dev
 ## Feature Testing Matrix
 
 ### Phase 2.1: Plant Types ✅
+
 **Status:** Previously tested and verified
 **Route:** `/plant-types`
 
@@ -45,6 +49,7 @@ bun run dev
 ---
 
 ### Phase 2.2: Payment Recording ✅
+
 **Status:** Previously tested and verified
 **Route:** `/payments`, `/invoices/[id]/record-payment`
 
@@ -57,10 +62,12 @@ bun run dev
 ---
 
 ### Phase 2.3: Quotations System ⏳
+
 **Status:** Backend complete, UI needs browser testing
 **Route:** `/quotations`
 
 #### List Page (`/quotations`)
+
 - [ ] **Load quotations list** - Verify all quotations display
 - [ ] **Statistics cards** - Check draft, sent, accepted, rejected counts
 - [ ] **Status badges** - Verify colors (draft=secondary, sent=default, accepted=default, rejected=destructive)
@@ -70,6 +77,7 @@ bun run dev
 - [ ] **Currency formatting** - Check VND formatting (e.g., "10.000.000 ₫")
 
 #### Create Page (`/quotations/new`)
+
 - [ ] **Customer dropdown** - Load customers list
 - [ ] **Plant types selection** - Add/remove items
 - [ ] **Quantity input** - Enter numbers, verify validation
@@ -85,6 +93,7 @@ bun run dev
 - [ ] **Validation errors** - Show Vietnamese error messages
 
 #### Detail Page (`/quotations/[id]`)
+
 - [ ] **Quotation header** - Display quote number, status, dates
 - [ ] **Customer info** - Show company name, tax code, address, email, phone
 - [ ] **Items table** - List all quotation items with calculations
@@ -99,6 +108,7 @@ bun run dev
 - [ ] **Created by info** - Show creator name \u0026 email
 
 #### Actions Testing
+
 - [ ] **Send quotation** - Status DRAFT → SENT
 - [ ] **Accept quotation** - Status SENT → ACCEPTED
 - [ ] **Reject quotation** - Status SENT → REJECTED with reason
@@ -107,6 +117,7 @@ bun run dev
 ---
 
 ### Phase 2.4: Sticky Notes ⏳
+
 **Status:** Backend ready, UI deferred
 **Route:** `/sticky-notes` (not implemented)
 
@@ -115,15 +126,18 @@ bun run dev
 ---
 
 ### Phase 3.3: Analytics Dashboard ⏳
+
 **Status:** Core features complete, needs browser testing
 **Route:** `/analytics`
 
 #### Page Load
+
 - [ ] **Navigation link** - Click "Phân tích" in sidebar
 - [ ] **Page renders** - No console errors
 - [ ] **Loading states** - Show suspense fallbacks during data fetch
 
 #### Revenue Overview Card
+
 - [ ] **Total revenue** - Display formatted VND amount
 - [ ] **YTD revenue** - Year-to-date calculation
 - [ ] **MTD revenue** - Month-to-date calculation
@@ -131,6 +145,7 @@ bun run dev
 - [ ] **Growth indicator** - Green arrow up (positive) or red arrow down (negative)
 
 #### Invoice Aging Card
+
 - [ ] **Outstanding total** - Sum of unpaid invoices
 - [ ] **Aging buckets**:
   - Current (0-30 days) - Green
@@ -141,6 +156,7 @@ bun run dev
 - [ ] **Amount formatting** - VND currency format
 
 #### 12-Month Revenue Trend Chart
+
 - [ ] **Chart renders** - Line chart displays
 - [ ] **X-axis** - Vietnamese month labels (Th1, Th2, ...)
 - [ ] **Y-axis** - Formatted in millions (1M, 2M, ...)
@@ -149,6 +165,7 @@ bun run dev
 - [ ] **Data accuracy** - Matches database revenue
 
 #### Top 10 Customers Table
+
 - [ ] **Customer list** - Display top 10 by revenue
 - [ ] **Customer link** - Click name navigates to `/customers/[id]`
 - [ ] **Revenue column** - Formatted VND
@@ -158,6 +175,7 @@ bun run dev
 - [ ] **Empty state** - Show "Chưa có dữ liệu" if no customers
 
 #### Contract Expiry Alerts
+
 - [ ] **Expiring contracts** - Show contracts expiring in next 30 days
 - [ ] **Days until expiry** - Calculate from end date
 - [ ] **Customer info** - Link to customer profile
@@ -165,6 +183,7 @@ bun run dev
 - [ ] **Empty state** - "Không có hợp đồng sắp hết hạn"
 
 #### Responsive Design
+
 - [ ] **Desktop view** - 2-column grid layout
 - [ ] **Tablet view** - Adjust to single column if needed
 - [ ] **Mobile view** - Stack all widgets vertically
@@ -173,17 +192,20 @@ bun run dev
 ---
 
 ### Phase 2.5: Bảng Kê (Monthly Statement) 🆕 PRIORITY
+
 **Status:** Implementation complete, needs browser testing
 **Route:** `/bang-ke`
 **Detailed Checklist:** `plans/reports/251220-manual-testing-bangke.md`
 
 #### Navigation & Authorization
+
 - [ ] **Sidebar link** - "Bảng Kê" visible in sidebar
 - [ ] **Route accessible** - Navigate to `/bang-ke`
 - [ ] **Authorization** - Only ADMIN/MANAGER/ACCOUNTANT can access
 - [ ] **Unauthorized redirect** - Other roles get error/redirect
 
 #### Layout & Companies List
+
 - [ ] **3-column layout** - Sidebar | Main | AI panel (empty)
 - [ ] **Companies load** - Display all customers with contracts
 - [ ] **Company avatars** - Show initials from shortName
@@ -193,6 +215,7 @@ bun run dev
 - [ ] **Company selection** - Click loads statement
 
 #### Statement Display
+
 - [ ] **Statement header** - Company name, month/year
 - [ ] **Period display** - Billing period (24th → 23rd)
 - [ ] **Month selector** - Switch between months/years
@@ -203,6 +226,7 @@ bun run dev
 - [ ] **Total amount** - Subtotal + VAT
 
 #### Confirmation Workflow
+
 - [ ] **Confirm button** - "Xác nhận bảng kê" visible
 - [ ] **Confirmation dialog** - Warning before confirming
 - [ ] **Status update** - Confirmed after action
@@ -210,6 +234,7 @@ bun run dev
 - [ ] **Banner removal** - Warning banner disappears
 
 #### Export Features
+
 - [ ] **CSV export** - Download CSV file
 - [ ] **UTF-8 encoding** - Vietnamese characters correct
 - [ ] **PDF export** - Generate PDF
@@ -218,6 +243,7 @@ bun run dev
 - [ ] **Signature fields** - Space for manual signatures
 
 #### Edge Cases
+
 - [ ] **Empty statement** - Handle no plants gracefully
 - [ ] **Month navigation** - Switch months smoothly
 - [ ] **Large plant list** - Handle 50+ plants
@@ -230,16 +256,19 @@ bun run dev
 ## Cross-Feature Integration Tests
 
 ### Navigation
+
 - [ ] **Sidebar links** - All routes accessible
 - [ ] **Active states** - Current page highlighted
 - [ ] **Breadcrumbs** - Show correct path (if implemented)
 
 ### Data Consistency
+
 - [ ] **Customer data** - Same across quotations, contracts, analytics
 - [ ] **Invoice totals** - Match payment records
 - [ ] **Revenue calculations** - Consistent across analytics
 
 ### Error Handling
+
 - [ ] **Network errors** - Show user-friendly messages
 - [ ] **404 pages** - Invalid routes show not found
 - [ ] **Empty states** - Display helpful messages
@@ -260,6 +289,7 @@ bun run dev
 ## Browser Compatibility
 
 Test in:
+
 - [ ] **Chrome** (recommended)
 - [ ] **Edge**
 - [ ] **Firefox**
@@ -281,6 +311,7 @@ Test in:
 From validation report:
 
 ### TypeScript Errors (90+)
+
 1. **`src/actions/reports.ts`** - Missing `requireUser`, `createServerAction` exports
 2. **`src/actions/quotations.ts`** - VIEWED status not in enum
 3. **`src/app/(dashboard)/quotations/[id]/page.tsx`** - Missing `XCircle` import, customer email/phone property mismatches
@@ -288,6 +319,7 @@ From validation report:
 5. **Test scripts** - Type mismatches (acceptable, scripts not in production)
 
 ### Console Warnings (179)
+
 - **Seed files \u0026 scripts** - console.log usage (acceptable for dev tools)
 
 **Note:** These TypeScript errors may cause runtime issues. Proceed with browser testing but note any failures for code fixing phase.
@@ -302,24 +334,26 @@ From validation report:
 **Viewport:**
 
 ### Quotations System
-| Feature | Status | Notes |
-|---------|--------|-------|
-| List page loads | ⬜ Pass / ⬜ Fail | |
-| Create quotation | ⬜ Pass / ⬜ Fail | |
-| View details | ⬜ Pass / ⬜ Fail | |
-| Send quotation | ⬜ Pass / ⬜ Fail | |
-| Accept quotation | ⬜ Pass / ⬜ Fail | |
-| Calculations correct | ⬜ Pass / ⬜ Fail | |
+
+| Feature              | Status            | Notes |
+| -------------------- | ----------------- | ----- |
+| List page loads      | ⬜ Pass / ⬜ Fail |       |
+| Create quotation     | ⬜ Pass / ⬜ Fail |       |
+| View details         | ⬜ Pass / ⬜ Fail |       |
+| Send quotation       | ⬜ Pass / ⬜ Fail |       |
+| Accept quotation     | ⬜ Pass / ⬜ Fail |       |
+| Calculations correct | ⬜ Pass / ⬜ Fail |       |
 
 ### Analytics Dashboard
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Page loads | ⬜ Pass / ⬜ Fail | |
-| Revenue cards | ⬜ Pass / ⬜ Fail | |
-| Trend chart | ⬜ Pass / ⬜ Fail | |
-| Customer table | ⬜ Pass / ⬜ Fail | |
-| Invoice aging | ⬜ Pass / ⬜ Fail | |
-| Responsive | ⬜ Pass / ⬜ Fail | |
+
+| Feature        | Status            | Notes |
+| -------------- | ----------------- | ----- |
+| Page loads     | ⬜ Pass / ⬜ Fail |       |
+| Revenue cards  | ⬜ Pass / ⬜ Fail |       |
+| Trend chart    | ⬜ Pass / ⬜ Fail |       |
+| Customer table | ⬜ Pass / ⬜ Fail |       |
+| Invoice aging  | ⬜ Pass / ⬜ Fail |       |
+| Responsive     | ⬜ Pass / ⬜ Fail |       |
 
 ---
 
@@ -351,6 +385,7 @@ bun run db:studio
 ---
 
 **Next Steps After Browser Testing:**
+
 1. Fix TypeScript errors (src/actions/reports.ts, quotations.ts)
 2. Fix any UI bugs found during testing
 3. Run full validation again

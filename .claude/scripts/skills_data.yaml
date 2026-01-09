@@ -98,21 +98,21 @@
   name: devops
   path: devops/SKILL.md
 - category: dev-tools
-  description: 'Search technical documentation using executable scripts to detect
+  description: "Search technical documentation using executable scripts to detect
     query type, fetch from llms.txt sources (context7.com), and analyze results. Use
     when user needs: (1) Topic-specific documentation (features/components/concepts),
     (2) Library/framework documentation, (3) GitHub repository analysis, (4) Documentation
-    discovery with automated agent distribution strategy'
+    discovery with automated agent distribution strategy"
   has_references: true
   has_scripts: true
   name: docs-seeker
   path: docs-seeker/SKILL.md
 - category: multimedia
-  description: 'Comprehensive document creation, editing, and analysis with support
+  description: "Comprehensive document creation, editing, and analysis with support
     for tracked changes, comments, formatting preservation, and text extraction. When
     Claude needs to work with professional documents (.docx files) for: (1) Creating
     new documents, (2) Modifying or editing content, (3) Working with tracked changes,
-    (4) Adding comments, or any other document tasks'
+    (4) Adding comments, or any other document tasks"
   has_references: false
   has_scripts: true
   name: document-skills/docx
@@ -127,21 +127,21 @@
   name: document-skills/pdf
   path: document-skills/pdf/SKILL.md
 - category: multimedia
-  description: 'Presentation creation, editing, and analysis. When Claude needs to
+  description: "Presentation creation, editing, and analysis. When Claude needs to
     work with presentations (.pptx files) for: (1) Creating new presentations, (2)
     Modifying or editing content, (3) Working with layouts, (4) Adding comments or
-    speaker notes, or any other presentation tasks'
+    speaker notes, or any other presentation tasks"
   has_references: false
   has_scripts: true
   name: document-skills/pptx
   path: document-skills/pptx/SKILL.md
 - category: multimedia
-  description: 'Comprehensive spreadsheet creation, editing, and analysis with support
+  description: "Comprehensive spreadsheet creation, editing, and analysis with support
     for formulas, formatting, data analysis, and visualization. When Claude needs
     to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new
     spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3)
     Modify existing spreadsheets while preserving formulas, (4) Data analysis and
-    visualization in spreadsheets, or (5) Recalculating formulas'
+    visualization in spreadsheets, or (5) Recalculating formulas"
   has_references: false
   has_scripts: false
   name: document-skills/xlsx
@@ -340,7 +340,7 @@
   name: ui-styling
   path: ui-styling/SKILL.md
 - category: frontend
-  description: 'Frontend UI/UX design intelligence - activate FIRST when user requests
+  description: "Frontend UI/UX design intelligence - activate FIRST when user requests
     beautiful, stunning, gorgeous, or aesthetic interfaces. The primary skill for
     design decisions before implementation. 50 styles, 21 palettes, 50 font pairings,
     20 charts, 8 stacks (React, Next.js, Vue, Svelte, SwiftUI, React Native, Flutter,
@@ -351,7 +351,7 @@
     chart. Styles: glassmorphism, claymorphism, minimalism, brutalism, neumorphism,
     bento grid, dark mode, responsive, skeuomorphism, flat design. Topics: color palette,
     accessibility, animation, layout, typography, font pairing, spacing, hover, shadow,
-    gradient.'
+    gradient."
   has_references: false
   has_scripts: true
   name: ui-ux-pro-max

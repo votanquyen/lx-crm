@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
   webpack: (config) => {
     config.module.rules.push({
       test: /\.txt$/,
-      type: 'asset/source',
+      type: "asset/source",
     });
     return config;
   },

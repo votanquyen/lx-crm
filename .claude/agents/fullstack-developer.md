@@ -50,6 +50,7 @@ You are a senior fullstack developer executing implementation phases from parall
 Check "Plan Context" section above for `Reports Path`. Use that path, or `plans/reports/` as fallback.
 
 ### File Naming
+
 `fullstack-dev-{date}-phase-{XX}-{topic-slug}.md`
 
 **Note:** `{date}` format injected by session hooks (`$CK_PLAN_DATE_FORMAT`).
@@ -74,25 +75,31 @@ Check "Plan Context" section above for `Reports Path`. Use that path, or `plans/
 ## Phase Implementation Report
 
 ### Executed Phase
+
 - Phase: [phase-XX-name]
 - Plan: [plan directory path]
 - Status: [completed/blocked/partial]
 
 ### Files Modified
+
 [List actual files changed with line counts]
 
 ### Tasks Completed
+
 [Checked list matching phase todo items]
 
 ### Tests Status
+
 - Type check: [pass/fail]
 - Unit tests: [pass/fail + coverage]
 - Integration tests: [pass/fail]
 
 ### Issues Encountered
+
 [Any conflicts, blockers, or deviations]
 
 ### Next Steps
+
 [Dependencies unblocked, follow-up tasks]
 ```
 

@@ -25,23 +25,23 @@ Anthropic's agentic coding tool combining autonomous planning, execution, and va
 
 Load references as needed for specific topics:
 
-| Topic | Reference File | Contents |
-|-------|----------------|----------|
-| Installation & setup | `references/getting-started.md` | Prerequisites, installation methods, authentication |
-| Slash commands | `references/slash-commands.md` | Full catalog: /cook, /plan, /fix, /test, /docs, /git, /design |
-| Workflow examples | `references/common-workflows.md` | Feature implementation, bug fixing, testing, git ops |
-| Creating skills | `references/agent-skills.md` | Skill structure, metadata, bundled resources |
-| MCP servers | `references/mcp-integration.md` | Configuration, common servers, authentication |
-| Hooks system | `references/hooks-comprehensive.md` | Event types, command/prompt hooks, tool matchers |
-| Plugins | `references/hooks-and-plugins.md` | Plugin structure, marketplace, installation |
-| Configuration | `references/configuration.md` | Settings hierarchy, model config, output styles |
-| Enterprise | `references/enterprise-features.md` | SSO, RBAC, sandboxing, audit logging, deployment |
-| IDE integration | `references/ide-integration.md` | VS Code extension, JetBrains plugin |
-| CI/CD | `references/cicd-integration.md` | GitHub Actions, GitLab workflows |
-| Advanced features | `references/advanced-features.md` | Extended thinking, caching, checkpointing |
-| Troubleshooting | `references/troubleshooting.md` | Auth failures, MCP issues, performance, debug mode |
-| API reference | `references/api-reference.md` | Admin, Messages, Files, Models, Skills APIs |
-| Best practices | `references/best-practices.md` | Project organization, security, performance, cost |
+| Topic                | Reference File                      | Contents                                                      |
+| -------------------- | ----------------------------------- | ------------------------------------------------------------- |
+| Installation & setup | `references/getting-started.md`     | Prerequisites, installation methods, authentication           |
+| Slash commands       | `references/slash-commands.md`      | Full catalog: /cook, /plan, /fix, /test, /docs, /git, /design |
+| Workflow examples    | `references/common-workflows.md`    | Feature implementation, bug fixing, testing, git ops          |
+| Creating skills      | `references/agent-skills.md`        | Skill structure, metadata, bundled resources                  |
+| MCP servers          | `references/mcp-integration.md`     | Configuration, common servers, authentication                 |
+| Hooks system         | `references/hooks-comprehensive.md` | Event types, command/prompt hooks, tool matchers              |
+| Plugins              | `references/hooks-and-plugins.md`   | Plugin structure, marketplace, installation                   |
+| Configuration        | `references/configuration.md`       | Settings hierarchy, model config, output styles               |
+| Enterprise           | `references/enterprise-features.md` | SSO, RBAC, sandboxing, audit logging, deployment              |
+| IDE integration      | `references/ide-integration.md`     | VS Code extension, JetBrains plugin                           |
+| CI/CD                | `references/cicd-integration.md`    | GitHub Actions, GitLab workflows                              |
+| Advanced features    | `references/advanced-features.md`   | Extended thinking, caching, checkpointing                     |
+| Troubleshooting      | `references/troubleshooting.md`     | Auth failures, MCP issues, performance, debug mode            |
+| API reference        | `references/api-reference.md`       | Admin, Messages, Files, Models, Skills APIs                   |
+| Best practices       | `references/best-practices.md`      | Project organization, security, performance, cost             |
 
 ## Instructions
 
@@ -53,6 +53,7 @@ When answering questions:
 4. For complex queries, load multiple references
 
 **Documentation sources:**
+
 - Context7 llms.txt: `https://context7.com/websites/claude_en_claude-code/llms.txt?tokens=10000`
 - Topic search: `https://context7.com/websites/claude_en_claude-code/llms.txt?topic=<topic>&tokens=5000`
 - Official docs: https://docs.claude.com/en/docs/claude-code/

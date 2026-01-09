@@ -75,11 +75,11 @@ gh run watch
 
 ## Coverage Thresholds
 
-| Phase | Functions | Lines |
-|-------|-----------|-------|
-| Phase 1 (Current) | ≥40% | ≥40% |
-| Phase 2 (Next) | ≥60% | ≥60% |
-| Phase 3 (Final) | ≥80% | ≥80% |
+| Phase             | Functions | Lines |
+| ----------------- | --------- | ----- |
+| Phase 1 (Current) | ≥40%      | ≥40%  |
+| Phase 2 (Next)    | ≥60%      | ≥60%  |
+| Phase 3 (Final)   | ≥80%      | ≥80%  |
 
 **Current Coverage:** 94.55% functions, 97.50% lines ✅
 
@@ -87,22 +87,22 @@ gh run watch
 
 ## Troubleshooting
 
-| Error | Solution |
-|-------|----------|
-| Lint errors | `bun run lint:fix` |
-| Format errors | `bunx prettier --write .` |
-| Type errors | Fix TypeScript issues |
-| Test failures | Fix tests or code |
+| Error          | Solution                       |
+| -------------- | ------------------------------ |
+| Lint errors    | `bun run lint:fix`             |
+| Format errors  | `bunx prettier --write .`      |
+| Type errors    | Fix TypeScript issues          |
+| Test failures  | Fix tests or code              |
 | Build failures | Check `.env` and Prisma client |
 
 ---
 
 ## Required Secrets
 
-| Secret | Purpose | Required? |
-|--------|---------|-----------|
-| CODECOV_TOKEN | Coverage reports | ✅ Yes |
-| SNYK_TOKEN | Security scan | ❌ Optional |
+| Secret        | Purpose          | Required?   |
+| ------------- | ---------------- | ----------- |
+| CODECOV_TOKEN | Coverage reports | ✅ Yes      |
+| SNYK_TOKEN    | Security scan    | ❌ Optional |
 
 ---
 

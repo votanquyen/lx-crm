@@ -47,12 +47,12 @@ export default async function PaymentDetailPage({ params }: PageProps) {
             <>
               <Button asChild variant="outline" size="sm">
                 <Link href={`/payments/${id}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="mr-2 h-4 w-4" />
                   Sửa
                 </Link>
               </Button>
               <Button variant="default" size="sm">
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="mr-2 h-4 w-4" />
                 Xác minh
               </Button>
             </>
@@ -62,7 +62,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Main Info */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6 md:col-span-2">
           {/* Payment Info */}
           <Card>
             <CardHeader>
@@ -77,7 +77,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
               <div className="grid gap-3">
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-muted-foreground">Số tiền:</span>
-                  <span className="font-bold text-lg text-green-600">
+                  <span className="text-lg font-bold text-green-600">
                     {formatCurrencyDecimal(payment.amount)}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
 
                 {payment.notes && (
                   <div className="border-t pt-3">
-                    <span className="text-muted-foreground block mb-1">Ghi chú:</span>
+                    <span className="text-muted-foreground mb-1 block">Ghi chú:</span>
                     <p className="text-sm">{payment.notes}</p>
                   </div>
                 )}
@@ -171,16 +171,17 @@ export default async function PaymentDetailPage({ params }: PageProps) {
             <CardContent>
               <Link
                 href={`/invoices/${payment.invoice.id}`}
-                className="block space-y-3 hover:bg-muted/50 p-3 rounded-lg transition-colors"
+                className="hover:bg-muted/50 block space-y-3 rounded-lg p-3 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">
-                    {payment.invoice.invoiceNumber}/{new Date(payment.invoice.issueDate).getDate()}-{new Date(payment.invoice.issueDate).getMonth() + 1}
+                    {payment.invoice.invoiceNumber}/{new Date(payment.invoice.issueDate).getDate()}-
+                    {new Date(payment.invoice.issueDate).getMonth() + 1}
                   </span>
                   <Badge>{payment.invoice.status}</Badge>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   {payment.invoice.customer.companyName}
                 </div>
 
@@ -238,23 +239,19 @@ export default async function PaymentDetailPage({ params }: PageProps) {
                 <div>
                   <span className="text-muted-foreground">Người ghi nhận:</span>
                   <p className="font-medium">{payment.recordedBy.name}</p>
-                  <p className="text-xs text-muted-foreground">{payment.recordedBy.email}</p>
+                  <p className="text-muted-foreground text-xs">{payment.recordedBy.email}</p>
                 </div>
               )}
 
               <div>
                 <span className="text-muted-foreground">Ngày tạo:</span>
-                <p className="text-xs">
-                  {new Date(payment.createdAt).toLocaleString("vi-VN")}
-                </p>
+                <p className="text-xs">{new Date(payment.createdAt).toLocaleString("vi-VN")}</p>
               </div>
 
               {payment.updatedAt !== payment.createdAt && (
                 <div>
                   <span className="text-muted-foreground">Cập nhật:</span>
-                  <p className="text-xs">
-                    {new Date(payment.updatedAt).toLocaleString("vi-VN")}
-                  </p>
+                  <p className="text-xs">{new Date(payment.updatedAt).toLocaleString("vi-VN")}</p>
                 </div>
               )}
             </CardContent>

@@ -26,6 +26,7 @@ Random fixes waste time and create new bugs. Find the root cause, fix at source,
 ### 1. Systematic Debugging (`references/systematic-debugging.md`)
 
 Four-phase framework ensuring proper investigation:
+
 - Phase 1: Root Cause Investigation (read errors, reproduce, check changes, gather evidence)
 - Phase 2: Pattern Analysis (find working examples, compare, identify differences)
 - Phase 3: Hypothesis and Testing (form theory, test minimally, verify)
@@ -75,6 +76,7 @@ Bug → systematic-debugging.md (Phase 1-4)
 ## Red Flags
 
 Stop and follow process if thinking:
+
 - "Quick fix for now, investigate later"
 - "Just try changing X and see if it works"
 - "It's probably X, let me fix that"

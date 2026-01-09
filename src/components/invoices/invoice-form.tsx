@@ -94,11 +94,7 @@ export function InvoiceForm({
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-          {error}
-        </div>
-      )}
+      {error && <div className="bg-destructive/10 text-destructive rounded-lg p-4">{error}</div>}
 
       <Card>
         <CardHeader>
@@ -127,7 +123,7 @@ export function InvoiceForm({
                 </SelectContent>
               </Select>
               {form.formState.errors.customerId && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {form.formState.errors.customerId.message}
                 </p>
               )}
@@ -137,7 +133,9 @@ export function InvoiceForm({
               <Label htmlFor="contractId">Hợp đồng (tùy chọn)</Label>
               <Select
                 value={form.watch("contractId") || undefined}
-                onValueChange={(value) => form.setValue("contractId", value === "none" ? undefined : value)}
+                onValueChange={(value) =>
+                  form.setValue("contractId", value === "none" ? undefined : value)
+                }
                 disabled={!selectedCustomerId}
               >
                 <SelectTrigger>
@@ -178,9 +176,7 @@ export function InvoiceForm({
                 )}
               />
               {form.formState.errors.dueDate && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.dueDate.message}
-                </p>
+                <p className="text-destructive text-sm">{form.formState.errors.dueDate.message}</p>
               )}
             </div>
           </div>
@@ -208,11 +204,8 @@ export function InvoiceForm({
         <CardContent>
           <div className="space-y-4">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="flex gap-4 items-start p-4 border rounded-lg"
-              >
-                <div className="flex-1 grid gap-4 md:grid-cols-4">
+              <div key={field.id} className="flex items-start gap-4 rounded-lg border p-4">
+                <div className="grid flex-1 gap-4 md:grid-cols-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label>Mô tả *</Label>
                     <Input
@@ -220,7 +213,7 @@ export function InvoiceForm({
                       placeholder="Mô tả dịch vụ/sản phẩm"
                     />
                     {form.formState.errors.items?.[index]?.description && (
-                      <p className="text-sm text-destructive">
+                      <p className="text-destructive text-sm">
                         {form.formState.errors.items[index]?.description?.message}
                       </p>
                     )}
@@ -257,21 +250,19 @@ export function InvoiceForm({
                     onClick={() => remove(index)}
                     className="mt-6"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="text-destructive h-4 w-4" />
                   </Button>
                 )}
               </div>
             ))}
 
             {form.formState.errors.items && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.items.message}
-              </p>
+              <p className="text-destructive text-sm">{form.formState.errors.items.message}</p>
             )}
           </div>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <div className="flex justify-between items-center text-lg font-semibold">
+          <div className="bg-muted mt-6 rounded-lg p-4">
+            <div className="flex items-center justify-between text-lg font-semibold">
               <span>Tổng cộng:</span>
               <span className="text-primary">{formatCurrency(total)}</span>
             </div>
@@ -284,12 +275,7 @@ export function InvoiceForm({
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Tạo hóa đơn
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isPending}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>
           Hủy
         </Button>
       </div>

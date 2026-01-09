@@ -7,18 +7,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateMorningBriefingPDF } from "@/lib/pdf/morning-briefing";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -47,10 +41,7 @@ export async function GET(
     });
 
     if (!schedule) {
-      return NextResponse.json(
-        { error: "Schedule not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
     }
 
     // Generate PDF
@@ -69,9 +60,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error generating PDF:", error);
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
   }
 }

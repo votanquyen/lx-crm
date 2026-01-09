@@ -32,10 +32,7 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   // Calculate totals
   const totalStops = schedule.exchanges.length;
   const totalPlants = schedule.exchanges.reduce((sum, ex) => sum + ex.totalPlantCount, 0);
-  const totalDuration = schedule.exchanges.reduce(
-    (sum, ex) => sum + ex.estimatedDurationMins,
-    0
-  );
+  const totalDuration = schedule.exchanges.reduce((sum, ex) => sum + ex.estimatedDurationMins, 0);
 
   // Header
   doc.setFontSize(20);
@@ -65,11 +62,7 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   doc.text(`Thời gian dự kiến: ${totalDuration} phút`, 130, 52);
 
   doc.text(`Mã lịch trình: ${schedule.id.slice(0, 8).toUpperCase()}`, 20, 59);
-  doc.text(
-    `Trạng thái: ${schedule.status === "APPROVED" ? "ĐÃ DUYỆT" : schedule.status}`,
-    130,
-    59
-  );
+  doc.text(`Trạng thái: ${schedule.status === "APPROVED" ? "ĐÃ DUYỆT" : schedule.status}`, 130, 59);
 
   // Stops Table
   const tableData = schedule.exchanges.map((ex) => {
@@ -155,12 +148,7 @@ export function generateMorningBriefingPDF(schedule: ScheduleWithDetails): jsPDF
   // Footer
   doc.setFontSize(8);
   doc.setTextColor(128);
-  doc.text(
-    `In lúc: ${format(new Date(), "dd/MM/yyyy HH:mm")}`,
-    105,
-    280,
-    { align: "center" }
-  );
+  doc.text(`In lúc: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 105, 280, { align: "center" });
   doc.text("Lộc Xanh - Hệ thống quản lý chăm sóc cây thuê", 105, 285, {
     align: "center",
   });

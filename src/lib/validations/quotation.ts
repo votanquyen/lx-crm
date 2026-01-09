@@ -136,12 +136,7 @@ const baseQuotationSchema = z.object({
   customerId: z.string().cuid("ID khách hàng không hợp lệ"),
 
   // Basic info
-  title: z
-    .string()
-    .min(1, "Tiêu đề là bắt buộc")
-    .max(200, "Tiêu đề quá dài")
-    .optional()
-    .nullable(),
+  title: z.string().min(1, "Tiêu đề là bắt buộc").max(200, "Tiêu đề quá dài").optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
 
   // Validity period
@@ -279,14 +274,7 @@ export const quotationSearchSchema = z.object({
 
   // Sorting
   sortBy: z
-    .enum([
-      "quoteNumber",
-      "validFrom",
-      "validUntil",
-      "totalAmount",
-      "createdAt",
-      "updatedAt",
-    ])
+    .enum(["quoteNumber", "validFrom", "validUntil", "totalAmount", "createdAt", "updatedAt"])
     .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
@@ -329,16 +317,10 @@ export const sendQuotationSchema = z.object({
 export type QuotationItemInput = z.infer<typeof quotationItemSchema>;
 export type CreateQuotationInput = z.infer<typeof createQuotationSchema>;
 export type UpdateQuotationInput = z.infer<typeof updateQuotationSchema>;
-export type UpdateQuotationStatusInput = z.infer<
-  typeof updateQuotationStatusSchema
->;
+export type UpdateQuotationStatusInput = z.infer<typeof updateQuotationStatusSchema>;
 export type AddQuotationItemInput = z.infer<typeof addQuotationItemSchema>;
-export type UpdateQuotationItemInput = z.infer<
-  typeof updateQuotationItemSchema
->;
-export type RemoveQuotationItemInput = z.infer<
-  typeof removeQuotationItemSchema
->;
+export type UpdateQuotationItemInput = z.infer<typeof updateQuotationItemSchema>;
+export type RemoveQuotationItemInput = z.infer<typeof removeQuotationItemSchema>;
 export type QuotationSearchInput = z.infer<typeof quotationSearchSchema>;
 export type ConvertToContractInput = z.infer<typeof convertToContractSchema>;
 export type SendQuotationInput = z.infer<typeof sendQuotationSchema>;

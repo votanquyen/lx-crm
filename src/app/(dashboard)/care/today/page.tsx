@@ -59,10 +59,7 @@ async function TodaySchedulesContent() {
         },
       },
     },
-    orderBy: [
-      { status: "asc" },
-      { scheduledTime: "asc" },
-    ],
+    orderBy: [{ status: "asc" }, { scheduledTime: "asc" }],
   });
 
   const stats = {
@@ -77,9 +74,7 @@ async function TodaySchedulesContent() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Lịch chăm sóc hôm nay</h1>
-        <p className="text-gray-600 mt-1">
-          {format(today, "EEEE, dd MMMM yyyy", { locale: vi })}
-        </p>
+        <p className="mt-1 text-gray-600">{format(today, "EEEE, dd MMMM yyyy", { locale: vi })}</p>
       </div>
 
       {/* Quick Stats */}
@@ -88,37 +83,31 @@ async function TodaySchedulesContent() {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-              <div className="text-sm text-gray-600 mt-1">Tổng lịch</div>
+              <div className="mt-1 text-sm text-gray-600">Tổng lịch</div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-600">
-                {stats.scheduled}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Chờ thực hiện</div>
+              <div className="text-3xl font-bold text-yellow-600">{stats.scheduled}</div>
+              <div className="mt-1 text-sm text-gray-600">Chờ thực hiện</div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">
-                {stats.inProgress}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Đang thực hiện</div>
+              <div className="text-3xl font-bold text-orange-600">{stats.inProgress}</div>
+              <div className="mt-1 text-sm text-gray-600">Đang thực hiện</div>
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">
-                {stats.completed}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Hoàn thành</div>
+              <div className="text-3xl font-bold text-green-600">{stats.completed}</div>
+              <div className="mt-1 text-sm text-gray-600">Hoàn thành</div>
             </div>
           </CardContent>
         </Card>
@@ -129,27 +118,25 @@ async function TodaySchedulesContent() {
         <Card>
           <CardContent className="py-12">
             <div className="text-center text-gray-500">
-              <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <Calendar className="mx-auto mb-3 h-12 w-12 opacity-50" />
               <p className="text-lg font-medium">Không có lịch chăm sóc nào hôm nay</p>
-              <p className="text-sm mt-1">Hãy tận hưởng ngày nghỉ!</p>
+              <p className="mt-1 text-sm">Hãy tận hưởng ngày nghỉ!</p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
           {schedules.map((schedule) => (
-            <Card key={schedule.id} className="hover:shadow-md transition-shadow">
+            <Card key={schedule.id} className="transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-xl">
-                      {schedule.customer.companyName}
-                    </CardTitle>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {schedule.customer.code}
-                    </div>
+                    <CardTitle className="text-xl">{schedule.customer.companyName}</CardTitle>
+                    <div className="mt-1 text-sm text-gray-600">{schedule.customer.code}</div>
                   </div>
-                  <Badge className={statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}>
+                  <Badge
+                    className={statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}
+                  >
                     {statusConfig[schedule.status]?.label ?? schedule.status}
                   </Badge>
                 </div>
@@ -157,7 +144,7 @@ async function TodaySchedulesContent() {
               <CardContent className="space-y-3">
                 {/* Address */}
                 <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 mt-0.5 text-gray-500" />
+                  <MapPin className="mt-0.5 h-4 w-4 text-gray-500" />
                   <div>
                     {schedule.customer.address}, {schedule.customer.district}
                   </div>
@@ -193,7 +180,7 @@ async function TodaySchedulesContent() {
 
                 {/* Notes */}
                 {schedule.notes && (
-                  <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  <div className="rounded bg-gray-50 p-2 text-sm text-gray-600">
                     <strong>Ghi chú:</strong> {schedule.notes}
                   </div>
                 )}
@@ -203,7 +190,7 @@ async function TodaySchedulesContent() {
                   {schedule.status === "SCHEDULED" && (
                     <Link href={`/care/${schedule.id}/complete`}>
                       <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <CheckCircle className="mr-2 h-4 w-4" />
                         Bắt đầu thực hiện
                       </Button>
                     </Link>
@@ -229,9 +216,9 @@ async function TodaySchedulesContent() {
 
       {/* Back to Calendar */}
       <Link href="/care">
-        <Card className="border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer">
+        <Card className="cursor-pointer border-blue-200 bg-blue-50 transition-colors hover:bg-blue-100">
           <CardContent className="py-4">
-            <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
+            <div className="flex items-center justify-center gap-2 font-medium text-blue-700">
               <Calendar className="h-5 w-5" />
               Xem lịch cả tuần
             </div>

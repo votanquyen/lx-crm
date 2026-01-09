@@ -16,6 +16,7 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 ### Export Types
 
 **1. Monthly Revenue (Doanh thu theo tháng)**
+
 - Last 12 months of revenue data
 - Total revenue per month
 - Paid amount
@@ -23,6 +24,7 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 - Overdue amount
 
 **2. Invoice Aging (Phân tích công nợ)**
+
 - Unpaid invoices grouped by age
 - 5 aging buckets:
   - Not due yet (Chưa đến hạn)
@@ -34,6 +36,7 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 - Percentage breakdown
 
 **3. Top Customers (Khách hàng hàng đầu)**
+
 - Top 100 customers by revenue
 - Customer code and company name
 - Customer tier
@@ -42,6 +45,7 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 - Invoice statistics (total, paid, overdue)
 
 **4. Overdue Invoices (Hóa đơn quá hạn)**
+
 - All overdue invoices
 - Customer details
 - Invoice dates (issue, due)
@@ -49,6 +53,7 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 - Days overdue
 
 **5. Contract Report (Báo cáo hợp đồng)**
+
 - All contracts
 - Customer details
 - Contract status
@@ -64,15 +69,17 @@ The Analytics CSV Export feature allows users to export analytics data to CSV fi
 
 **1. CSV Utility** (src/lib/csv/csv-utils.ts)
 Core CSV generation functions:
+
 ```typescript
-arrayToCSV(data, headers) // Convert array to CSV
-formatCSVCell(value) // Format and escape cells
-formatCurrencyForCSV(amount) // Vietnamese currency
-formatDateForCSV(date) // DD/MM/YYYY format
-downloadCSV(csv, filename) // Browser download
+arrayToCSV(data, headers); // Convert array to CSV
+formatCSVCell(value); // Format and escape cells
+formatCurrencyForCSV(amount); // Vietnamese currency
+formatDateForCSV(date); // DD/MM/YYYY format
+downloadCSV(csv, filename); // Browser download
 ```
 
 **Features:**
+
 - Auto-escaping of commas, quotes, newlines
 - UTF-8 BOM for Excel compatibility
 - Vietnamese number formatting
@@ -80,27 +87,31 @@ downloadCSV(csv, filename) // Browser download
 
 **2. Export Generators** (src/lib/csv/export-analytics.ts)
 Type-specific CSV generators:
+
 ```typescript
-generateMonthlyRevenueCSV(data)
-generateInvoiceAgingCSV(data)
-generateTopCustomersCSV(data)
-generateOverdueInvoicesCSV(data)
-generateContractReportCSV(data)
-generateRevenueSummaryCSV(data)
+generateMonthlyRevenueCSV(data);
+generateInvoiceAgingCSV(data);
+generateTopCustomersCSV(data);
+generateOverdueInvoicesCSV(data);
+generateContractReportCSV(data);
+generateRevenueSummaryCSV(data);
 ```
 
 Each function:
+
 - Accepts typed data array
 - Formats Vietnamese headers
 - Applies currency/date formatting
 - Returns CSV string
 
 **3. API Endpoint** (src/app/api/analytics/export/route.ts)
+
 ```
 GET /api/analytics/export?type=TYPE
 ```
 
 **Supported Types:**
+
 - `monthly-revenue`
 - `invoice-aging`
 - `top-customers`
@@ -108,6 +119,7 @@ GET /api/analytics/export?type=TYPE
 - `contracts`
 
 **Response Headers:**
+
 ```
 Content-Type: text/csv; charset=utf-8
 Content-Disposition: attachment; filename="FILENAME.csv"
@@ -116,15 +128,18 @@ Content-Disposition: attachment; filename="FILENAME.csv"
 **4. UI Components** (src/components/analytics/export-buttons.tsx)
 
 **AnalyticsExportButtons:**
+
 - Dropdown menu with all export options
 - Loading state during export
 - Toast notifications
 
 **SingleExportButton:**
+
 - Single export button for specific type
 - Compact size for inline use
 
 **5. Page Integration** (src/app/(dashboard)/analytics/page.tsx)
+
 - Export button in page header
 - Accessible from analytics dashboard
 
@@ -135,10 +150,12 @@ Content-Disposition: attachment; filename="FILENAME.csv"
 ### User Workflow
 
 **1. Access Analytics**
+
 - Go to "Báo cáo & Phân tích" page
 - View current analytics data
 
 **2. Export Data**
+
 - Click "Xuất CSV" button in header
 - Select report type from dropdown:
   - Doanh thu theo tháng
@@ -149,6 +166,7 @@ Content-Disposition: attachment; filename="FILENAME.csv"
 - File downloads automatically
 
 **3. Open in Excel/Sheets**
+
 - Open downloaded CSV file
 - Vietnamese characters display correctly
 - Data ready for analysis
@@ -160,6 +178,7 @@ Content-Disposition: attachment; filename="FILENAME.csv"
 ### CSV Format
 
 **Structure:**
+
 ```csv
 Header1,Header2,Header3
 Value1,Value2,Value3
@@ -167,11 +186,13 @@ Value4,"Value with, comma",Value6
 ```
 
 **Character Encoding:**
+
 - UTF-8 with BOM (`\uFEFF`)
 - Ensures Excel displays Vietnamese correctly
 - Compatible with Google Sheets
 
 **Cell Escaping:**
+
 - Values with commas wrapped in quotes
 - Quotes doubled for escaping
 - Newlines preserved in quoted values
@@ -179,18 +200,21 @@ Value4,"Value with, comma",Value6
 ### Data Formatting
 
 **Currency (VND):**
+
 ```typescript
-formatCurrencyForCSV(50000000)
+formatCurrencyForCSV(50000000);
 // Returns: "50.000.000" (Vietnamese format)
 ```
 
 **Dates:**
+
 ```typescript
-formatDateForCSV(new Date("2025-12-19"))
+formatDateForCSV(new Date("2025-12-19"));
 // Returns: "19/12/2025" (DD/MM/YYYY)
 ```
 
 **Empty Values:**
+
 - `null` → empty string
 - `undefined` → empty string
 - `0` → "0"
@@ -204,23 +228,27 @@ formatDateForCSV(new Date("2025-12-19"))
 **Description:** Export analytics data to CSV
 
 **Query Parameters:**
+
 - `type` (required): Export type
   - Values: `monthly-revenue`, `invoice-aging`, `top-customers`, `overdue-invoices`, `contracts`
 
 **Authentication:** Required (session-based)
 
 **Response:**
+
 - Success (200): CSV file download
 - Unauthorized (401): Not logged in
 - Bad Request (400): Missing or invalid type
 - Server Error (500): Export failed
 
 **Example:**
+
 ```bash
 GET /api/analytics/export?type=monthly-revenue
 ```
 
 **Response Headers:**
+
 ```
 Content-Type: text/csv; charset=utf-8
 Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
@@ -235,6 +263,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Filename:** `doanh-thu-theo-thang-YYYY-MM-DD.csv`
 
 **Columns:**
+
 1. Tháng (Month) - YYYY-MM format
 2. Tổng doanh thu (VND)
 3. Đã thanh toán (VND)
@@ -242,6 +271,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 5. Quá hạn (VND)
 
 **Data Source:**
+
 - Invoices from last 12 months
 - Grouped by month
 - Aggregated by status
@@ -255,12 +285,14 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Filename:** `phan-tich-cong-no-YYYY-MM-DD.csv`
 
 **Columns:**
+
 1. Khoảng thời gian (Age Range)
 2. Số lượng hóa đơn (Count)
 3. Tổng tiền (VND)
 4. Tỷ lệ (%) (Percentage)
 
 **Aging Buckets:**
+
 - Chưa đến hạn (Not due)
 - 0-30 ngày
 - 31-60 ngày
@@ -276,6 +308,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Filename:** `khach-hang-hang-dau-YYYY-MM-DD.csv`
 
 **Columns:**
+
 1. Mã khách hàng (Customer Code)
 2. Tên công ty (Company Name)
 3. Phân loại (Tier)
@@ -296,6 +329,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Filename:** `hoa-don-qua-han-YYYY-MM-DD.csv`
 
 **Columns:**
+
 1. Số hóa đơn (Invoice Number)
 2. Mã khách hàng (Customer Code)
 3. Tên khách hàng (Customer Name)
@@ -307,6 +341,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 9. Số ngày quá hạn (Days Overdue)
 
 **Filtering:**
+
 - Status: OVERDUE or PARTIALLY_PAID
 - Due date < today
 
@@ -321,6 +356,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 **Filename:** `hop-dong-YYYY-MM-DD.csv`
 
 **Columns:**
+
 1. Số hợp đồng (Contract Number)
 2. Mã khách hàng (Customer Code)
 3. Tên khách hàng (Customer Name)
@@ -342,14 +378,17 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ### AnalyticsExportButtons
 
 **Usage:**
+
 ```tsx
 <AnalyticsExportButtons variant="outline" />
 ```
 
 **Props:**
+
 - `variant?: "default" | "outline-solid"` - Button variant (default: "outline-solid")
 
 **Features:**
+
 - Dropdown menu
 - 5 export options
 - Loading state
@@ -360,15 +399,13 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ### SingleExportButton
 
 **Usage:**
+
 ```tsx
-<SingleExportButton
-  type="monthly-revenue"
-  label="Xuất doanh thu"
-  variant="outline"
-/>
+<SingleExportButton type="monthly-revenue" label="Xuất doanh thu" variant="outline" />
 ```
 
 **Props:**
+
 - `type: ExportType` - Export type (required)
 - `label?: string` - Button label (default: "Xuất CSV")
 - `variant?: "default" | "outline-solid" | "ghost"` - Button variant
@@ -380,16 +417,19 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ## Error Handling
 
 **Client-side Errors:**
+
 - Network error → "Không thể xuất dữ liệu"
 - Invalid response → "Không thể xuất dữ liệu"
 
 **Server-side Errors:**
+
 - Unauthorized → 401 redirect
 - Invalid type → 400 Bad Request
 - Database error → 500 Internal Server Error
 - Logged to console for debugging
 
 **User Notifications:**
+
 - Success: "Đã xuất file CSV thành công"
 - Error: "Không thể xuất dữ liệu"
 - Toast notifications (sonner)
@@ -399,6 +439,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ## Performance
 
 **Export Time:**
+
 - Monthly Revenue: <500ms (12 rows)
 - Invoice Aging: <300ms (5 rows)
 - Top Customers: <1s (100 customers)
@@ -406,6 +447,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 - Contracts: <1.5s (all contracts)
 
 **File Sizes:**
+
 - Monthly Revenue: ~1 KB
 - Invoice Aging: ~0.5 KB
 - Top Customers: ~10-15 KB
@@ -413,6 +455,7 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 - Contracts: ~20-100 KB (varies)
 
 **Database Queries:**
+
 - Optimized with select statements
 - Indexed fields for filtering
 - Minimal joins
@@ -422,17 +465,20 @@ Content-Disposition: attachment; filename="doanh-thu-theo-thang-2025-12-19.csv"
 ## Excel Compatibility
 
 **UTF-8 BOM:**
+
 ```typescript
 const BOM = "\uFEFF";
 const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
 ```
 
 **Why BOM:**
+
 - Excel requires BOM to detect UTF-8
 - Without BOM, Vietnamese shows as gibberish
 - Google Sheets works with or without BOM
 
 **Tested In:**
+
 - Microsoft Excel 2019+
 - Excel Online
 - Google Sheets
@@ -473,26 +519,31 @@ const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
 ## Known Limitations
 
 **1. No Date Range Selection**
+
 - Monthly revenue: Fixed 12 months
 - Other exports: All-time data
 - Future: Add date range picker
 
 **2. No Custom Fields**
+
 - Fixed column sets
 - Cannot add/remove columns
 - Future: Column customization
 
 **3. No Filtering**
+
 - Exports include all matching data
 - Cannot filter by customer, status, etc.
 - Future: Advanced filtering
 
 **4. No Formatting**
+
 - Plain CSV only
 - No colors, borders, formulas
 - User must format in Excel
 
 **5. Row Limits**
+
 - Top customers: 100 limit
 - Other exports: No limits
 - Very large exports may be slow
@@ -504,32 +555,38 @@ const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
 ### Phase 4 Potential Features
 
 **1. Date Range Selector**
+
 - Custom date ranges
 - Preset ranges (This month, Last quarter, etc.)
 - Dynamic data based on selection
 
 **2. Advanced Filtering**
+
 - Filter by customer tier
 - Filter by status
 - Filter by amount range
 - Multiple filter criteria
 
 **3. Column Customization**
+
 - Select which columns to export
 - Reorder columns
 - Custom column headers
 
 **4. Multiple Formats**
+
 - Excel (.xlsx) with formatting
 - PDF reports
 - JSON for API integration
 
 **5. Scheduled Exports**
+
 - Auto-export daily/weekly/monthly
 - Email delivery
 - Cloud storage integration
 
 **6. Export Templates**
+
 - Save export configurations
 - Reuse frequently used exports
 - Share templates with team
@@ -539,16 +596,19 @@ const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
 ## Security
 
 **Authentication:**
+
 - All exports require login
 - Session-based auth
 - No public access
 
 **Authorization:**
+
 - Users see only their data
 - Role-based filtering (future)
 - Audit logging (future)
 
 **Data Validation:**
+
 - Input sanitization
 - SQL injection prevention (Prisma)
 - XSS prevention (no HTML in CSV)
@@ -560,6 +620,7 @@ const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
 ✅ **Analytics CSV Export complete**
 
 **What Works:**
+
 - 5 export types
 - Vietnamese character support
 - Excel compatibility (UTF-8 BOM)

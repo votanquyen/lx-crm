@@ -29,9 +29,7 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Tạo hóa đơn mới</h1>
-        <p className="text-muted-foreground">
-          Điền thông tin để tạo hóa đơn
-        </p>
+        <p className="text-muted-foreground">Điền thông tin để tạo hóa đơn</p>
       </div>
 
       <InvoiceForm

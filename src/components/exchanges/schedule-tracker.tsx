@@ -24,11 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  completeStop,
-  skipStop,
-  completeSchedule,
-} from "@/actions/daily-schedules";
+import { completeStop, skipStop, completeSchedule } from "@/actions/daily-schedules";
 import { uploadCarePhoto } from "@/lib/storage/s3-client";
 import type { ScheduledExchange, Customer } from "@prisma/client";
 
@@ -39,7 +35,10 @@ interface ScheduleTrackerProps {
     status: string;
     startedAt: Date | null;
     exchanges: (ScheduledExchange & {
-      customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "contactPhone">;
+      customer: Pick<
+        Customer,
+        "id" | "code" | "companyName" | "address" | "district" | "contactPhone"
+      >;
     })[];
   };
 }
@@ -63,18 +62,22 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
   const [skipReason, setSkipReason] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  const completedCount = schedule.exchanges.filter(
-    (e) => e.status === "COMPLETED"
-  ).length;
-  const skippedCount = schedule.exchanges.filter(
-    (e) => e.status === "CANCELLED"
-  ).length;
+  const completedCount = schedule.exchanges.filter((e) => e.status === "COMPLETED").length;
+  const skippedCount = schedule.exchanges.filter((e) => e.status === "CANCELLED").length;
   const totalCount = schedule.exchanges.length;
   const progress = (completedCount / totalCount) * 100;
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // File size validation (max 5MB per file)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    const oversizedFiles = Array.from(files).filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversizedFiles.length > 0) {
+      toast.error(`${oversizedFiles.length} file quá lớn (tối đa 5MB/file)`);
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -194,9 +197,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
     };
 
     const config = statusMap[status] ?? statusMap.PENDING;
-    return (
-      <Badge className={`${config?.color} text-white`}>{config?.label}</Badge>
-    );
+    return <Badge className={`${config?.color} text-white`}>{config?.label}</Badge>;
   };
 
   // Auto-fill current time helpers
@@ -217,24 +218,18 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
             <div className="text-sm text-gray-600">
               {completedCount} / {totalCount} điểm dừng ({skippedCount} bỏ qua)
             </div>
-            <div className="text-2xl font-bold text-blue-600">
-              {progress.toFixed(0)}%
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{progress.toFixed(0)}%</div>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="h-3 w-full rounded-full bg-gray-200">
             <div
-              className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+              className="h-3 rounded-full bg-blue-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
 
           {completedCount === totalCount && (
-            <Button
-              onClick={handleCompleteSchedule}
-              disabled={isPending}
-              className="w-full"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
+            <Button onClick={handleCompleteSchedule} disabled={isPending} className="w-full">
+              <CheckCircle className="mr-2 h-4 w-4" />
               Hoàn thành lịch trình
             </Button>
           )}
@@ -250,23 +245,21 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
               activeStopId === stop.id
                 ? "border-blue-500 shadow-lg"
                 : stop.status === "COMPLETED"
-                ? "bg-green-50"
-                : stop.status === "CANCELLED"
-                ? "bg-red-50"
-                : ""
+                  ? "bg-green-50"
+                  : stop.status === "CANCELLED"
+                    ? "bg-red-50"
+                    : ""
             }
           >
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
                     {stop.stopOrder}
                   </div>
                   <div>
-                    <CardTitle className="text-lg">
-                      {stop.customer.companyName}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                    <CardTitle className="text-lg">{stop.customer.companyName}</CardTitle>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                       <MapPin className="h-3 w-3" />
                       {stop.customer.address}, {stop.customer.district}
                     </div>
@@ -310,7 +303,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                         variant="outline"
                         className="flex-1"
                       >
-                        <PlayCircle className="h-4 w-4 mr-2" />
+                        <PlayCircle className="mr-2 h-4 w-4" />
                         Bắt đầu
                       </Button>
                     </>
@@ -482,7 +475,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                         onClick={() => document.getElementById("photo-upload")?.click()}
                         disabled={isUploading}
                       >
-                        <Camera className="h-4 w-4 mr-2" />
+                        <Camera className="mr-2 h-4 w-4" />
                         {isUploading ? "Đang tải..." : "Tải ảnh lên"}
                       </Button>
                       <input
@@ -502,13 +495,13 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t">
+                  <div className="flex gap-2 border-t pt-4">
                     <Button
                       onClick={() => handleCompleteStop(stop.id)}
                       disabled={isPending}
                       className="flex-1"
                     >
-                      <CheckCircle className="h-4 w-4 mr-2" />
+                      <CheckCircle className="mr-2 h-4 w-4" />
                       Hoàn thành
                     </Button>
 
@@ -523,7 +516,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                       variant="destructive"
                       disabled={isPending}
                     >
-                      <XCircle className="h-4 w-4 mr-2" />
+                      <XCircle className="mr-2 h-4 w-4" />
                       Bỏ qua
                     </Button>
                   </div>
@@ -532,7 +525,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
 
               {/* Completed Info */}
               {stop.status === "COMPLETED" && stop.completedAt && (
-                <div className="text-sm text-gray-600 border-t pt-2">
+                <div className="border-t pt-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     Hoàn thành lúc {format(new Date(stop.completedAt), "HH:mm")}
@@ -542,7 +535,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
 
               {/* Skip Info */}
               {stop.status === "CANCELLED" && (
-                <div className="text-sm text-red-600 border-t pt-2">
+                <div className="border-t pt-2 text-sm text-red-600">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
                     {stop.skipReason || "Đã bỏ qua"}

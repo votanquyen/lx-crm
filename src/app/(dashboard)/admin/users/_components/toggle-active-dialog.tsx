@@ -51,9 +51,7 @@ export function ToggleActiveDialog({ user, open, onOpenChange }: ToggleActiveDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {newStatus ? "Kích hoạt" : "Vô hiệu hóa"} Tài khoản
-          </DialogTitle>
+          <DialogTitle>{newStatus ? "Kích hoạt" : "Vô hiệu hóa"} Tài khoản</DialogTitle>
           <DialogDescription>
             Bạn có chắc muốn {newStatus ? "kích hoạt" : "vô hiệu hóa"} tài khoản của{" "}
             <span className="font-medium">{user.name}</span>?
@@ -71,13 +69,14 @@ export function ToggleActiveDialog({ user, open, onOpenChange }: ToggleActiveDia
           </div>
 
           {!newStatus && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800 border border-red-200">
-              ⚠️ Người dùng sẽ bị đăng xuất ngay lập tức và không thể đăng nhập lại cho đến khi được kích hoạt.
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              ⚠️ Người dùng sẽ bị đăng xuất ngay lập tức và không thể đăng nhập lại cho đến khi được
+              kích hoạt.
             </div>
           )}
 
           {newStatus && (
-            <div className="rounded-md bg-green-50 p-3 text-sm text-green-800 border border-green-200">
+            <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-800">
               ✓ Người dùng sẽ có thể đăng nhập lại vào hệ thống.
             </div>
           )}
