@@ -79,7 +79,7 @@ export default async function RecordPaymentPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <PaymentForm
-            invoice={invoice as any}
+            invoice={invoice}
             remainingBalance={remainingBalance}
           />
         </CardContent>

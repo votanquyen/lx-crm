@@ -13,7 +13,7 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
   const { id } = await params;
 
   try {
-    const invoice = (await getInvoiceById(id)) as any;
+    const invoice = await getInvoiceById(id);
     return <InvoiceDetail invoice={invoice} />;
   } catch {
     notFound();

@@ -44,13 +44,15 @@ import type { CustomerStatus, CustomerTier, InvoiceStatus } from "@prisma/client
 
 // Prisma Decimal-like type for compatibility
 type DecimalLike = { toString(): string } | number | string;
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
 
 interface CustomerInvoice {
   id: string;
   invoiceNumber: string;
   status: InvoiceStatus;
-  issueDate: Date;
-  dueDate: Date;
+  issueDate: DateOrString;
+  dueDate: DateOrString;
   totalAmount: DecimalLike;
   paidAmount: DecimalLike;
   outstandingAmount: DecimalLike;
@@ -72,10 +74,10 @@ interface CustomerDetailProps {
     tier: CustomerTier;
     latitude: number | null;
     longitude: number | null;
-    aiNotes: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    createdBy: { id: string; name: string | null; email: string } | null;
+    aiNotes?: string | null;
+    createdAt: DateOrString;
+    updatedAt: DateOrString;
+    createdBy?: { id: string; name: string | null; email: string } | null;
     invoices: CustomerInvoice[];
     _count: {
       customerPlants: number;

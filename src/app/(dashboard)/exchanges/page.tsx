@@ -156,7 +156,7 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
           Chờ duyệt
         </Link>
         <Link
-          href="/exchanges?status=APPROVED"
+          href="/exchanges?status=SCHEDULED"
           className={`px-3 py-1.5 rounded-full text-sm ${
             status === "SCHEDULED" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}

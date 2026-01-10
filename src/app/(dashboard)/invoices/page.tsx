@@ -97,7 +97,7 @@ async function InvoiceList({
 
   return (
     <div className="space-y-4">
-      <InvoiceTable invoices={result.data as any} />
+      <InvoiceTable invoices={result.data} />
 
       {result.pagination.totalPages > 1 && (
         <Pagination

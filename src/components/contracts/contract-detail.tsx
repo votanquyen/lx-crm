@@ -46,17 +46,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { activateContract, cancelContract } from "@/actions/contracts";
 import type { ContractStatus, InvoiceStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type ContractDetail = {
   id: string;
   contractNumber: string;
   status: ContractStatus;
-  startDate: Date;
-  endDate: Date;
-  monthlyAmount: number;
-  totalAmount: number;
+  startDate: DateOrString;
+  endDate: DateOrString;
+  // Accept both field names for compatibility
+  monthlyAmount?: number;
+  monthlyFee?: number;
+  totalAmount?: number;
+  totalContractValue?: number | null;
+  totalMonthlyAmount?: number | null;
   depositAmount: number | null;
   paymentTerms: string | null;
-  notes: string | null;
+  notes?: string | null;
+  vatRate?: number;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
+  setupFee?: number | null;
   customer: {
     id: string;
     code: string;
@@ -71,25 +82,27 @@ type ContractDetail = {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    notes: string | null;
+    notes?: string | null;
+    discountRate?: number | null;
     plantType: {
       id: string;
       name: string;
       code: string;
       rentalPrice: number;
-    };
+    } | null;
   }[];
   invoices: {
     id: string;
     invoiceNumber: string;
     status: InvoiceStatus;
-    issueDate: Date;
-    dueDate: Date;
+    issueDate: DateOrString;
+    dueDate: DateOrString;
     totalAmount: number;
     outstandingAmount: number;
   }[];
-  renewedFrom: { id: string; contractNumber: string } | null;
-  renewedTo: { id: string; contractNumber: string } | null;
+  renewedFrom?: { id: string; contractNumber: string } | null;
+  renewedTo?: { id: string; contractNumber: string } | null;
+  previousContractId?: string | null;
 };
 
 const statusConfig: Record<ContractStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -319,7 +332,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <p className="text-sm text-muted-foreground">Giá trị/tháng</p>
                 <p className="text-lg font-bold text-primary flex items-center gap-1">
                   <DollarSign className="h-5 w-5" />
-                  {formatCurrency(contract.monthlyAmount)}
+                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
                 </p>
               </div>
               <div>
@@ -360,8 +373,8 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{item.plantType.name}</p>
-                      <p className="text-sm text-muted-foreground">{item.plantType.code}</p>
+                      <p className="font-medium">{item.plantType?.name ?? "N/A"}</p>
+                      <p className="text-sm text-muted-foreground">{item.plantType?.code ?? "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
@@ -379,7 +392,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                   Tổng cộng:
                 </TableCell>
                 <TableCell className="text-right text-lg font-bold text-primary">
-                  {formatCurrency(contract.monthlyAmount)}
+                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
                 </TableCell>
                 <TableCell />
               </TableRow>

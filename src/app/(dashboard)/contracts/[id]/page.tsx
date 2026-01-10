@@ -13,7 +13,7 @@ export default async function ContractDetailPage({ params }: ContractDetailPageP
   const { id } = await params;
 
   try {
-    const contract = (await getContractById(id)) as any;
+    const contract = await getContractById(id);
     return <ContractDetail contract={contract} />;
   } catch {
     notFound();

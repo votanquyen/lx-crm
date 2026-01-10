@@ -10,6 +10,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyDecimal } from "@/lib/db-utils";
 
+// Type for plant with optional inventory (present in non-search queries, absent in trigram search)
+type PlantWithInventory = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  rentalPrice: number;
+  depositPrice: number | null;
+  salePrice: number | null;
+  replacementPrice: number | null;
+  imageUrl: string | null;
+  thumbnailUrl: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  inventory?: {
+    totalStock: number;
+    availableStock: number;
+    rentedStock: number;
+  } | null;
+};
+
 interface PageProps {
   searchParams: Promise<{
     page?: string;
@@ -180,11 +203,11 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
                   {formatCurrencyDecimal(plant.rentalPrice)}/tháng
                 </span>
               </div>
-              {(plant as any).inventory?.totalStock !== undefined && (
+              {(plant as PlantWithInventory).inventory?.totalStock !== undefined && (
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Tồn kho</span>
                   <span>
-                    {(plant as any).inventory.availableStock}/{(plant as any).inventory.totalStock}
+                    {(plant as PlantWithInventory).inventory?.availableStock}/{(plant as PlantWithInventory).inventory?.totalStock}
                   </span>
                 </div>
               )}

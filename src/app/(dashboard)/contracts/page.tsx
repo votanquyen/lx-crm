@@ -93,7 +93,7 @@ async function ContractList({
 
   return (
     <div className="space-y-4">
-      <ContractTable contracts={result.data as any} />
+      <ContractTable contracts={result.data} />
 
       {result.pagination.totalPages > 1 && (
         <Pagination

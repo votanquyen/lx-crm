@@ -22,12 +22,15 @@ import {
 import { formatCurrency } from "@/lib/format";
 import type { InvoiceStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type Invoice = {
   id: string;
   invoiceNumber: string;
   status: InvoiceStatus;
-  issueDate: Date;
-  dueDate: Date;
+  issueDate: DateOrString;
+  dueDate: DateOrString;
   totalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
@@ -54,7 +57,7 @@ const statusConfig: Record<InvoiceStatus, { label: string; variant: "default" | 
 };
 
 /** Check if invoice is overdue */
-const isOverdue = (dueDate: Date, status: InvoiceStatus): boolean => {
+const isOverdue = (dueDate: DateOrString, status: InvoiceStatus): boolean => {
   if (["PAID", "CANCELLED"].includes(status)) return false;
   return new Date(dueDate) < new Date();
 };

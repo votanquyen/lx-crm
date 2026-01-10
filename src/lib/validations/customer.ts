@@ -6,9 +6,22 @@ import { z } from "zod";
 import { CustomerStatus, CustomerTier } from "@prisma/client";
 
 /**
- * Vietnamese phone number regex: 0[0-9]{9}
+ * Vietnamese phone number regex: accepts 0xxxxxxxxx or +84xxxxxxxxx (9-10 digits after prefix)
+ * Allows spaces, dashes, parentheses in input - will be sanitized by transform
  */
-const phoneRegex = /^0[0-9]{9}$/;
+const phoneRegex = /^(0|\+84)\d{9,10}$/;
+
+/**
+ * Phone validation schema with sanitization
+ * Removes spaces, dashes, parentheses before validation
+ */
+const phoneSchema = z
+  .string()
+  .transform((val) => val.replace(/[\s\-()]/g, ""))
+  .pipe(z.string().regex(phoneRegex, "Số điện thoại không hợp lệ"))
+  .optional()
+  .nullable()
+  .or(z.literal(""));
 
 /**
  * Base customer schema for create/update operations
@@ -31,12 +44,7 @@ export const customerSchema = z.object({
 
   // Primary Contact
   contactName: z.string().max(100).optional().nullable(),
-  contactPhone: z
-    .string()
-    .regex(phoneRegex, "Số điện thoại không hợp lệ (VD: 0901234567)")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contactPhone: phoneSchema,
   contactEmail: z
     .string()
     .email("Email không hợp lệ")
@@ -47,12 +55,7 @@ export const customerSchema = z.object({
 
   // Secondary Contact
   contact2Name: z.string().max(100).optional().nullable(),
-  contact2Phone: z
-    .string()
-    .regex(phoneRegex, "Số điện thoại không hợp lệ")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contact2Phone: phoneSchema,
   contact2Email: z
     .string()
     .email("Email không hợp lệ")
@@ -63,12 +66,7 @@ export const customerSchema = z.object({
 
   // Accounting Contact
   accountingContactName: z.string().max(100).optional().nullable(),
-  accountingContactPhone: z
-    .string()
-    .regex(phoneRegex, "Số điện thoại không hợp lệ")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  accountingContactPhone: phoneSchema,
   accountingContactEmail: z
     .string()
     .email("Email không hợp lệ")
