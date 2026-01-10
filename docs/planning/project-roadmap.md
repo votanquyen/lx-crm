@@ -1,13 +1,13 @@
 # Project Roadmap
 
 **Lộc Xanh CRM - Development Phases & Future Plans**
-**Last Updated**: December 22, 2025
+**Last Updated**: January 09, 2026
 
 ---
 
 ## 📍 Current Status
 
-### Phase Completion: 74%
+### Phase Completion: 85%
 
 | Phase | Status | Completion | Key Features |
 |-------|--------|------------|--------------|
@@ -15,8 +15,21 @@
 | **Phase 2** | ✅ Complete | 100% | Business logic, analytics |
 | **Phase 2.5** | 🚧 In Progress | 50% | Monthly statements (Bảng Kê) |
 | **Phase 3** | 🔄 Starting | 10% | Performance optimization |
-| **Phase 4** | 📋 Planned | 0% | Advanced features |
-| **Phase 5** | 📋 Future | 0% | Mobile & AI |
+| **Phase 4** | ✅ Complete | 95% | Operations module, Customer Map |
+| **Phase 5** | 📋 Planned | 50% | Intelligence module |
+| **Phase 6** | ✅ Complete | 95% | **Đổi Cây Module** - Exchange system |
+
+### 🎉 Latest Achievement (2026-01-09): Đổi Cây Module ~95% Complete
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Priority Scoring | ✅ Done | 0-100 scale (urgency + tier + quantity + age + keywords) |
+| Execution Workflow | ✅ Done | PENDING → SCHEDULED → COMPLETED flow |
+| Inventory Sync | ✅ Done | Transaction-based with atomic updates |
+| Customer Map | ✅ Done | Leaflet + OpenStreetMap with clustering |
+| Map Filters | ✅ Done | District, tier, status, exchanges toggle |
+
+**Remaining (~5%):** Map view toggle in exchanges page, unit/integration tests
 
 ---
 
@@ -109,6 +122,73 @@
 - **Server Actions**: 15+ complex operations
 - **Components**: 50+ React components
 - **Database Queries**: Optimized with raw SQL
+
+---
+
+## ✅ Phase 6: Đổi Cây (Plant Exchange) Module Complete
+
+**Timeline**: January 2026
+**Status**: 95% Complete
+**Priority**: High
+
+### Achievements (2026-01-09 Implementation Session)
+- ✅ **Priority Scoring Algorithm**: 0-100 scale scoring
+- ✅ **Execution Workflow**: PENDING → SCHEDULED → COMPLETED status flow
+- ✅ **Inventory Sync**: Transaction-based with atomic updates
+- ✅ **Customer Map**: Leaflet + OpenStreetMap integration
+- ✅ **Map Clustering**: MarkerClusterGroup for large datasets
+- ✅ **Map Filters**: District, tier, status, exchanges toggle
+
+### Technical Details
+
+#### Priority Scoring (0-100)
+```typescript
+// Weights distribution:
+// - Urgency (URGENT/HIGH/MEDIUM/LOW): 0-40 points
+// - Customer tier (VIP/PREMIUM/STANDARD): 0-25 points
+// - Plant quantity: 0-15 points
+// - Request age: 0-10 points
+// - Vietnamese urgent keywords: 0-10 points
+```
+
+#### Inventory Sync Flow
+```typescript
+// 1. Validate inventory availability before scheduling
+// 2. Atomic UPDATE with WHERE clause prevents race conditions
+// 3. Return removed plants to inventory (increase available)
+// 4. Deduct installed plants from inventory (decrease available)
+// 5. Update CustomerPlant quantities
+// 6. Log activity for audit trail
+```
+
+#### Customer Map Features
+```typescript
+// - SSR-safe dynamic import (ssr: false)
+// - Custom markers by customer tier (VIP=red, PREMIUM=blue, STANDARD=green)
+// - Priority score badges on exchange markers
+// - Click-to-create exchange from map popup
+// - Auto-fit bounds to visible customers
+```
+
+### Files Created
+```
+src/lib/exchange/priority-scoring.ts     # Priority calculation
+src/lib/exchange/inventory-sync.ts       # Transaction-based sync
+src/components/map/customer-map.tsx      # SSR-safe wrapper
+src/components/map/customer-map-client.tsx   # Leaflet implementation
+src/components/map/map-controls.tsx      # Filter controls
+src/components/map/index.ts              # Exports
+```
+
+### Remaining (~5%)
+- [ ] Wire map view toggle to exchanges page UI
+- [ ] Unit tests for priority scoring
+- [ ] Integration tests for inventory sync
+
+### Code Review Summary
+- **Quality Rating**: 8/10
+- **Race Condition**: ✅ Fixed with atomic $executeRaw UPDATE
+- **N+1 Query**: ✅ Fixed with batch queries
 
 ---
 
@@ -692,7 +772,7 @@ Q4 2026
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: December 22, 2025
+**Document Version**: 1.1
+**Last Updated**: January 09, 2026
 **Status**: Active Development
 **Next Review**: After Phase 2.5 completion (January 2026)

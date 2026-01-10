@@ -1,23 +1,17 @@
 /**
- * Invoice Table Component
+ * Invoice Table Component (Virtualized)
+ * Uses TanStack Virtual for smooth scrolling with large datasets
  */
 "use client";
 
-import React, { useCallback } from "react";
+import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Receipt, Eye, MoreHorizontal, Send, XCircle, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,64 +59,99 @@ const isOverdue = (dueDate: Date, status: InvoiceStatus): boolean => {
   return new Date(dueDate) < new Date();
 };
 
-/** Extract invoice number from format "752/9-12" -> "752" */
-const getInvoiceNo = (invoiceNumber: string): string => {
-  const match = invoiceNumber.match(/^(\d+)/);
-  return match?.[1] ?? invoiceNumber;
-};
-
-interface InvoiceRowProps {
-  invoice: Invoice;
+interface InvoiceTableProps {
+  invoices: Invoice[];
   onSend?: (id: string) => void;
   onCancel?: (id: string) => void;
   onRecordPayment?: (id: string) => void;
 }
 
-/** Memoized invoice table row to prevent unnecessary re-renders */
-const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: InvoiceRowProps) => {
+/** Memoized virtual row for invoice */
+const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
+  invoice,
+  virtualStart,
+  measureElement,
+  dataIndex,
+  onSend,
+  onCancel,
+  onRecordPayment,
+}: {
+  invoice: Invoice;
+  virtualStart: number;
+  measureElement: (el: Element | null) => void;
+  dataIndex: number;
+  onSend?: (id: string) => void;
+  onCancel?: (id: string) => void;
+  onRecordPayment?: (id: string) => void;
+}) {
   const status = statusConfig[invoice.status];
   const overdue = isOverdue(invoice.dueDate, invoice.status);
 
   return (
-    <TableRow>
-      <TableCell>
+    <div
+      data-index={dataIndex}
+      ref={measureElement}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        transform: `translateY(${virtualStart}px)`,
+      }}
+      className="flex items-center border-b hover:bg-muted/50 transition-colors"
+    >
+      {/* Invoice Number */}
+      <div className="flex-1 p-4">
         <Link
           href={`/invoices/${invoice.id}`}
           className="font-medium hover:underline"
         >
-          {getInvoiceNo(invoice.invoiceNumber)}
+          {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
         </Link>
         {invoice.contract && (
           <p className="text-sm text-muted-foreground">
             HĐ: {invoice.contract.contractNumber}
           </p>
         )}
-      </TableCell>
-      <TableCell>
+      </div>
+
+      {/* Customer */}
+      <div className="flex-1 p-4">
         <Link
           href={`/customers/${invoice.customer.id}`}
           className="font-medium hover:underline"
         >
           {invoice.customer.companyName}
         </Link>
-      </TableCell>
-      <TableCell>
+        <p className="text-sm text-muted-foreground">
+          {invoice.customer.code}
+        </p>
+      </div>
+
+      {/* Status */}
+      <div className="w-40 p-4">
         <Badge variant={status.variant}>{status.label}</Badge>
         {overdue && invoice.status !== "OVERDUE" && (
           <Badge variant="destructive" className="ml-2">
             Quá hạn
           </Badge>
         )}
-      </TableCell>
-      <TableCell>
+      </div>
+
+      {/* Due Date */}
+      <div className="w-32 p-4">
         <span className={overdue ? "text-destructive font-medium" : ""}>
           {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
         </span>
-      </TableCell>
-      <TableCell className="text-right">
+      </div>
+
+      {/* Total Amount */}
+      <div className="w-32 p-4 text-right">
         {formatCurrency(invoice.totalAmount)}
-      </TableCell>
-      <TableCell className="text-right font-medium">
+      </div>
+
+      {/* Outstanding */}
+      <div className="w-32 p-4 text-right font-medium">
         {invoice.outstandingAmount > 0 ? (
           <span className="text-orange-600">
             {formatCurrency(invoice.outstandingAmount)}
@@ -130,8 +159,10 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
         ) : (
           <span className="text-green-600">0</span>
         )}
-      </TableCell>
-      <TableCell>
+      </div>
+
+      {/* Actions */}
+      <div className="w-12 p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Mở menu thao tác">
@@ -172,151 +203,78 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
               )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </div>
+    </div>
   );
 });
-InvoiceRow.displayName = "InvoiceRow";
-
-interface InvoiceTableProps {
-  invoices: Invoice[];
-  onSend?: (id: string) => void;
-  onCancel?: (id: string) => void;
-  onRecordPayment?: (id: string) => void;
-}
 
 export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: InvoiceTableProps) {
-  // Memoized callbacks for stable references
-  const handleSend = useCallback((id: string) => onSend?.(id), [onSend]);
-  const handleCancel = useCallback((id: string) => onCancel?.(id), [onCancel]);
-  const handleRecordPayment = useCallback((id: string) => onRecordPayment?.(id), [onRecordPayment]);
+  const parentRef = React.useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: invoices.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 72, // Approximate row height with 2-line content
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // Empty state
+  if (invoices.length === 0) {
+    return (
+      <div className="rounded-md border p-8 text-center text-muted-foreground">
+        <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
+        Chưa có hóa đơn nào
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Số hóa đơn</TableHead>
-            <TableHead>Khách hàng</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Hạn thanh toán</TableHead>
-            <TableHead className="text-right">Tổng tiền</TableHead>
-            <TableHead className="text-right">Còn nợ</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                Chưa có hóa đơn nào
-              </TableCell>
-            </TableRow>
-          ) : (
-            invoices.map((invoice) => {
-              const status = statusConfig[invoice.status];
-              const overdue = isOverdue(invoice.dueDate, invoice.status);
+      {/* Sticky header */}
+      <div className="sticky top-0 z-10 bg-background border-b">
+        <div className="flex font-medium text-sm text-muted-foreground">
+          <div className="flex-1 p-4">Số hóa đơn</div>
+          <div className="flex-1 p-4">Khách hàng</div>
+          <div className="w-40 p-4">Trạng thái</div>
+          <div className="w-32 p-4">Hạn thanh toán</div>
+          <div className="w-32 p-4 text-right">Tổng tiền</div>
+          <div className="w-32 p-4 text-right">Còn nợ</div>
+          <div className="w-12 p-4"></div>
+        </div>
+      </div>
 
-              return (
-                <TableRow key={invoice.id}>
-                  <TableCell>
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
-                    </Link>
-                    {invoice.contract && (
-                      <p className="text-sm text-muted-foreground">
-                        HĐ: {invoice.contract.contractNumber}
-                      </p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/customers/${invoice.customer.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {invoice.customer.companyName}
-                    </Link>
-                    <p className="text-sm text-muted-foreground">
-                      {invoice.customer.code}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                    {overdue && invoice.status !== "OVERDUE" && (
-                      <Badge variant="destructive" className="ml-2">
-                        Quá hạn
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className={overdue ? "text-destructive font-medium" : ""}>
-                      {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(invoice.totalAmount)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {invoice.outstandingAmount > 0 ? (
-                      <span className="text-orange-600">
-                        {formatCurrency(invoice.outstandingAmount)}
-                      </span>
-                    ) : (
-                      <span className="text-green-600">0</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/invoices/${invoice.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Xem chi tiết
-                          </Link>
-                        </DropdownMenuItem>
-                        {invoice.status === "DRAFT" && onSend && (
-                          <DropdownMenuItem onClick={() => onSend(invoice.id)}>
-                            <Send className="mr-2 h-4 w-4" />
-                            Gửi hóa đơn
-                          </DropdownMenuItem>
-                        )}
-                        {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) &&
-                          onRecordPayment && (
-                            <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
-                              <DollarSign className="mr-2 h-4 w-4" />
-                              Ghi nhận thanh toán
-                            </DropdownMenuItem>
-                          )}
-                        <DropdownMenuSeparator />
-                        {invoice.status !== "CANCELLED" &&
-                          invoice._count.payments === 0 &&
-                          onCancel && (
-                            <DropdownMenuItem
-                              onClick={() => onCancel(invoice.id)}
-                              className="text-destructive"
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Hủy hóa đơn
-                            </DropdownMenuItem>
-                          )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+      {/* Virtualized body */}
+      <div
+        ref={parentRef}
+        className="overflow-auto"
+        style={{ maxHeight: "calc(100vh - 320px)" }}
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            position: "relative",
+          }}
+        >
+          {virtualItems.map((virtualRow) => {
+            const invoice = invoices[virtualRow.index];
+            if (!invoice) return null;
+            return (
+              <InvoiceVirtualRow
+                key={invoice.id}
+                invoice={invoice}
+                virtualStart={virtualRow.start}
+                measureElement={virtualizer.measureElement}
+                dataIndex={virtualRow.index}
+                onSend={onSend}
+                onCancel={onCancel}
+                onRecordPayment={onRecordPayment}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

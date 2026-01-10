@@ -1,11 +1,11 @@
 /**
  * Exchange Request Server Actions
- * CRUD with priority scoring
+ * CRUD with priority scoring and inventory sync
  */
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma, type ExchangePriority, type CustomerTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
@@ -16,37 +16,38 @@ import {
   exchangeSearchSchema,
   type ExchangeSearchParams,
 } from "@/lib/validations/exchange";
+import {
+  calculatePriorityScore as calculateEnhancedPriorityScore,
+  getPriorityLabel,
+} from "@/lib/exchange/priority-scoring";
+import {
+  syncInventoryOnExchangeCompletion,
+  validateInventoryForExchange,
+  type PlantExchangeItem,
+} from "@/lib/exchange/inventory-sync";
 
 /**
- * Calculate priority score based on priority and other factors
+ * Calculate priority score with enhanced algorithm
+ * Uses new priority-scoring module with age and keyword factors
  */
 function calculatePriorityScore(
-  priority: string,
+  priority: ExchangePriority,
   plantCount: number,
-  customerTier: string
+  customerTier: CustomerTier,
+  reason?: string | null,
+  createdAt?: Date
 ): number {
-  let score = 0;
-
-  // Priority weight (0-40)
-  switch (priority) {
-    case "URGENT": score += 40; break;
-    case "HIGH": score += 30; break;
-    case "MEDIUM": score += 15; break;
-    case "LOW": score += 5; break;
-  }
-
-  // Plant count weight (0-30)
-  score += Math.min(plantCount * 3, 30);
-
-  // Customer tier weight (0-30)
-  switch (customerTier) {
-    case "VIP": score += 30; break;
-    case "PREMIUM": score += 20; break;
-    case "STANDARD": score += 10; break;
-  }
-
-  return score;
+  return calculateEnhancedPriorityScore({
+    priority,
+    customerTier,
+    quantity: plantCount,
+    reason,
+    createdAt: createdAt || new Date(),
+  });
 }
+
+// Re-export for UI usage
+export { getPriorityLabel };
 
 /**
  * Get paginated list of exchange requests
@@ -174,11 +175,12 @@ export const createExchangeRequest = createAction(
     });
     if (!customer) throw new NotFoundError("Khách hàng");
 
-    // Calculate priority score
+    // Calculate priority score with enhanced algorithm
     const priorityScore = calculatePriorityScore(
       input.priority,
       input.quantity,
-      customer.tier
+      customer.tier,
+      input.reason
     );
 
     const request = await prisma.exchangeRequest.create({
@@ -238,14 +240,16 @@ export const updateExchangeRequest = createAction(
       throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
     }
 
-    // Recalculate priority if priority or quantity changed
+    // Recalculate priority if priority, quantity, or reason changed
     let priorityScore = existing.priorityScore;
-    if (updateData.priority || updateData.quantity) {
+    if (updateData.priority || updateData.quantity || updateData.reason) {
       const quantity = updateData.quantity || existing.quantity;
       priorityScore = calculatePriorityScore(
         updateData.priority || existing.priority,
         quantity,
-        existing.customer.tier
+        existing.customer.tier,
+        updateData.reason || existing.reason,
+        existing.createdAt
       );
     }
 
@@ -327,7 +331,8 @@ export const cancelExchangeRequest = createSimpleAction(
 );
 
 /**
- * Complete exchange (mark as done)
+ * Complete exchange (mark as done) - basic completion without inventory sync
+ * Use completeExchangeWithInventory for full inventory sync
  */
 export const completeExchangeRequest = createSimpleAction(async (id: string) => {
   const session = await auth();
@@ -342,7 +347,10 @@ export const completeExchangeRequest = createSimpleAction(async (id: string) => 
 
   const updated = await prisma.exchangeRequest.update({
     where: { id },
-    data: { status: "COMPLETED" },
+    data: {
+      status: "COMPLETED",
+      completedAt: new Date(),
+    },
   });
 
   // Log activity
@@ -358,6 +366,73 @@ export const completeExchangeRequest = createSimpleAction(async (id: string) => 
   revalidatePath("/exchanges");
   return updated;
 });
+
+/**
+ * Complete exchange request with inventory sync
+ * Full workflow: update inventory, customer plants, log history
+ */
+export interface CompleteExchangeWithInventoryInput {
+  exchangeRequestId: string;
+  removedPlants: PlantExchangeItem[];
+  installedPlants: PlantExchangeItem[];
+  completionNotes?: string;
+}
+
+export const completeExchangeWithInventory = createSimpleAction(
+  async (input: CompleteExchangeWithInventoryInput) => {
+    const session = await auth();
+    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+
+    const request = await prisma.exchangeRequest.findUnique({
+      where: { id: input.exchangeRequestId },
+      include: { customer: true },
+    });
+    if (!request) throw new NotFoundError("Yêu cầu đổi cây");
+
+    if (!["APPROVED", "SCHEDULED"].includes(request.status)) {
+      throw new AppError("Yêu cầu chưa được duyệt hoặc lên lịch", "INVALID_STATUS");
+    }
+
+    // Validate inventory before completion
+    if (input.installedPlants.length > 0) {
+      const insufficientStock = await validateInventoryForExchange(input.installedPlants);
+      if (insufficientStock.length > 0) {
+        const errorItems = insufficientStock
+          .map((item) => `${item.name}: cần ${item.required}, có ${item.available}`)
+          .join(", ");
+        throw new AppError(
+          `Không đủ số lượng cây trong kho: ${errorItems}`,
+          "INSUFFICIENT_STOCK"
+        );
+      }
+    }
+
+    // Sync inventory with transaction
+    await syncInventoryOnExchangeCompletion({
+      exchangeRequestId: input.exchangeRequestId,
+      customerId: request.customerId,
+      removedPlants: input.removedPlants,
+      installedPlants: input.installedPlants,
+      completionNotes: input.completionNotes,
+      completedByUserId: session.user.id,
+    });
+
+    revalidatePath("/exchanges");
+    revalidatePath(`/customers/${request.customerId}`);
+    revalidatePath("/inventory");
+
+    // Return updated request
+    return await prisma.exchangeRequest.findUnique({
+      where: { id: input.exchangeRequestId },
+      include: {
+        customer: { select: { id: true, companyName: true } },
+      },
+    });
+  }
+);
+
+// Re-export validateInventoryForExchange for UI usage
+export { validateInventoryForExchange };
 
 /**
  * Get exchange statistics

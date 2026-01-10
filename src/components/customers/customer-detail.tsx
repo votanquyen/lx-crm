@@ -41,7 +41,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { CustomerStatus, CustomerTier, InvoiceStatus } from "@prisma/client";
-import type { Decimal } from "@prisma/client/runtime/library";
+
+// Prisma Decimal-like type for compatibility
+type DecimalLike = { toString(): string } | number | string;
 
 interface CustomerInvoice {
   id: string;
@@ -49,9 +51,9 @@ interface CustomerInvoice {
   status: InvoiceStatus;
   issueDate: Date;
   dueDate: Date;
-  totalAmount: Decimal;
-  paidAmount: Decimal;
-  outstandingAmount: Decimal;
+  totalAmount: DecimalLike;
+  paidAmount: DecimalLike;
+  outstandingAmount: DecimalLike;
 }
 
 interface CustomerDetailProps {

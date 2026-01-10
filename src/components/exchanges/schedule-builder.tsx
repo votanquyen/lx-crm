@@ -1,28 +1,19 @@
 /**
  * Schedule Builder Component
  * Drag-and-drop interface for building daily routes
- * Using dnd-kit for React 19 compatibility
+ * Using @hello-pangea/dnd for simple drag-and-drop
  */
 "use client";
 
 import { useState } from "react";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
-import { SortableStopCard } from "./sortable-stop-card";
+import { StopCard } from "./stop-card";
 import { Shuffle, Save } from "lucide-react";
 import { toast } from "sonner";
 import type { Stop } from "@/lib/maps/route-optimizer";
@@ -47,22 +38,19 @@ export function ScheduleBuilder({
   const [stops, setStops] = useState<Stop[]>(initialStops);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const sourceIndex = result.source.index;
+    const destIndex = result.destination.index;
 
-    if (over && active.id !== over.id) {
-      setStops((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+    if (sourceIndex === destIndex) return;
+
+    const newStops = Array.from(stops);
+    const [removed] = newStops.splice(sourceIndex, 1);
+    if (removed) {
+      newStops.splice(destIndex, 0, removed);
+      setStops(newStops);
       setHasChanges(true);
     }
   };
@@ -131,28 +119,44 @@ export function ScheduleBuilder({
       </div>
 
       {/* Drag and Drop List */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={stops.map(s => s.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2 min-h-[200px] p-4 rounded-lg border-2 border-dashed border-gray-200 bg-white">
-            {stops.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
-                Chưa có điểm dừng nào. Thêm yêu cầu đổi cây vào lịch trình.
-              </div>
-            ) : (
-              stops.map((stop, index) => (
-                <SortableStopCard
-                  key={stop.id}
-                  stop={{ ...stop, stopOrder: index + 1 }}
-                />
-              ))
-            )}
-          </div>
-        </SortableContext>
-      </DndContext>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="stops">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`space-y-2 min-h-[200px] p-4 rounded-lg border-2 border-dashed bg-white ${
+                snapshot.isDraggingOver ? "border-blue-400 bg-blue-50" : "border-gray-200"
+              }`}
+            >
+              {stops.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  Chưa có điểm dừng nào. Thêm yêu cầu đổi cây vào lịch trình.
+                </div>
+              ) : (
+                stops.map((stop, index) => (
+                  <Draggable key={stop.id} draggableId={stop.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        style={provided.draggableProps.style}
+                      >
+                        <StopCard
+                          stop={{ ...stop, stopOrder: index + 1 }}
+                          isDragging={snapshot.isDragging}
+                          dragHandleProps={provided.dragHandleProps}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ))
+              )}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       {/* Help Text */}
       <p className="text-sm text-gray-500 text-center">

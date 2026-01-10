@@ -2,17 +2,19 @@
  * Shared formatting utilities
  * Single source of truth for all formatting functions
  */
-import type { Decimal } from "@prisma/client/runtime/library";
+
+// Prisma Decimal-like type for compatibility
+type DecimalLike = { toString(): string } | number | string;
 
 /**
  * Format number as Vietnamese currency
  * Supports number, string, or Prisma Decimal
  */
 export function formatCurrency(
-  value: number | string | Decimal,
+  value: DecimalLike,
   options?: { compact?: boolean; style?: "currency" | "decimal" }
 ): string {
-  const num = typeof value === "object" ? Number(value) : Number(value);
+  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
   if (isNaN(num)) return "0 ₫";
 
   return new Intl.NumberFormat("vi-VN", {
@@ -28,7 +30,7 @@ export function formatCurrency(
  * Format currency as numeric string only (no currency symbol)
  * For Excel/CSV exports
  */
-export function formatCurrencyNumeric(value: number | Decimal): string {
+export function formatCurrencyNumeric(value: DecimalLike): string {
   return formatCurrency(value, { style: "decimal" });
 }
 
@@ -36,8 +38,8 @@ export function formatCurrencyNumeric(value: number | Decimal): string {
  * Format currency for Excel CSV export
  * Uses regular spaces instead of non-breaking spaces for better compatibility
  */
-export function formatCurrencyForExcel(amount: number | Decimal): string {
-  const num = typeof amount === "object" ? Number(amount) : amount;
+export function formatCurrencyForExcel(amount: DecimalLike): string {
+  const num = typeof amount === "object" ? Number(amount.toString()) : Number(amount);
   return num.toLocaleString("vi-VN", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -47,8 +49,8 @@ export function formatCurrencyForExcel(amount: number | Decimal): string {
 /**
  * Format number with Vietnamese locale
  */
-export function formatNumber(value: number | string | Decimal): string {
-  const num = typeof value === "object" ? Number(value) : Number(value);
+export function formatNumber(value: DecimalLike): string {
+  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
@@ -99,8 +101,8 @@ export function formatPhone(phone: string): string {
  * @param value - Decimal value (0-100)
  * @returns Formatted percentage (e.g., "8,5%")
  */
-export function formatPercentage(value: number | string | Decimal): string {
-  const num = typeof value === "object" ? Number(value) : Number(value);
+export function formatPercentage(value: DecimalLike): string {
+  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
   return new Intl.NumberFormat("vi-VN", {
     style: "percent",
     minimumFractionDigits: 0,

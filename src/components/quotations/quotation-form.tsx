@@ -4,10 +4,10 @@
  */
 "use client";
 
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { addDays } from "date-fns";
@@ -74,14 +74,13 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
     name: "items",
   });
 
-  // Watch values for calculations
-  const items = form.watch("items");
-  const discountRate = form.watch("discountRate") || 0;
-  const vatRate = form.watch("vatRate") || 10;
+  // Use targeted useWatch for specific fields to minimize re-renders
+  const items = useWatch({ control: form.control, name: "items" }) || [];
+  const discountRate = useWatch({ control: form.control, name: "discountRate" }) || 0;
+  const vatRate = useWatch({ control: form.control, name: "vatRate" }) || 10;
 
-  // Calculate totals
-  useEffect(() => {
-    // Calculate subtotal from items
+  // Memoize totals calculation (computed from watched values)
+  const calculatedTotals = useMemo(() => {
     const subtotal = items.reduce((sum, item) => {
       const quantity = item.quantity || 0;
       const unitPrice = item.unitPrice || 0;
@@ -90,21 +89,23 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
       return sum + itemTotal;
     }, 0);
 
-    // Calculate discount
     const discountAmount = subtotal * (discountRate / 100);
     const subtotalAfterDiscount = subtotal - discountAmount;
-
-    // Calculate VAT
     const vatAmount = subtotalAfterDiscount * (vatRate / 100);
-
-    // Calculate total
     const totalAmount = subtotalAfterDiscount + vatAmount;
 
-    form.setValue("subtotal", subtotal);
-    form.setValue("discountAmount", discountAmount);
-    form.setValue("vatAmount", vatAmount);
-    form.setValue("totalAmount", totalAmount);
-  }, [items, discountRate, vatRate, form]);
+    return { subtotal, discountAmount, vatAmount, totalAmount };
+  }, [items, discountRate, vatRate]);
+
+  // Update form values when totals change (still needed for form submission)
+  // Use shouldValidate: false to prevent re-render loop
+  useEffect(() => {
+    const options = { shouldValidate: false, shouldDirty: false };
+    form.setValue("subtotal", calculatedTotals.subtotal, options);
+    form.setValue("discountAmount", calculatedTotals.discountAmount, options);
+    form.setValue("vatAmount", calculatedTotals.vatAmount, options);
+    form.setValue("totalAmount", calculatedTotals.totalAmount, options);
+  }, [calculatedTotals, form]);
 
   function addItem() {
     append({
@@ -236,11 +237,11 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                 </TableHeader>
                 <TableBody>
                   {fields.map((field, index) => {
-                    const quantity = form.watch(`items.${index}.quantity`) || 0;
-                    const unitPrice =
-                      form.watch(`items.${index}.unitPrice`) || 0;
-                    const itemDiscount =
-                      form.watch(`items.${index}.discountRate`) || 0;
+                    // Use already-watched items array instead of form.watch() in loop
+                    const item = items[index];
+                    const quantity = item?.quantity || 0;
+                    const unitPrice = item?.unitPrice || 0;
+                    const itemDiscount = item?.discountRate || 0;
                     const total =
                       quantity * unitPrice * (1 - itemDiscount / 100);
 
@@ -248,7 +249,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                       <TableRow key={field.id}>
                         <TableCell>
                           <Select
-                            value={form.watch(`items.${index}.plantTypeId`)}
+                            value={item?.plantTypeId || ""}
                             onValueChange={(value) => {
                               form.setValue(`items.${index}.plantTypeId`, value);
                               // Auto-fill unit price
@@ -359,7 +360,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tạm tính:</span>
               <span className="font-medium">
-                {formatCurrency(form.watch("subtotal") || 0)}
+                {formatCurrency(calculatedTotals.subtotal)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
@@ -367,19 +368,19 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                 Chiết khấu ({discountRate}%):
               </span>
               <span className="font-medium text-green-600">
-                -{formatCurrency(form.watch("discountAmount") || 0)}
+                -{formatCurrency(calculatedTotals.discountAmount)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">VAT ({vatRate}%):</span>
               <span className="font-medium">
-                {formatCurrency(form.watch("vatAmount") || 0)}
+                {formatCurrency(calculatedTotals.vatAmount)}
               </span>
             </div>
             <div className="flex justify-between border-t pt-2 text-lg font-bold">
               <span>Tổng cộng:</span>
               <span className="text-primary">
-                {formatCurrency(form.watch("totalAmount") || 0)}
+                {formatCurrency(calculatedTotals.totalAmount)}
               </span>
             </div>
           </div>

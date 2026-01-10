@@ -4,6 +4,8 @@
  */
 "use client";
 
+import { memo } from "react";
+
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { MapPin, Calendar, Package, User } from "lucide-react";
@@ -22,7 +24,7 @@ interface ExchangeRequestCardProps {
   onView?: (id: string) => void;
 }
 
-export function ExchangeRequestCard({
+export function ExchangeRequestCardComponent({
   request,
   onApprove,
   onCancel,
@@ -127,3 +129,6 @@ export function ExchangeRequestCard({
     </Card>
   );
 }
+
+// Memoize to prevent re-renders when parent list changes but this card's props don't
+export const ExchangeRequestCard = memo(ExchangeRequestCardComponent);

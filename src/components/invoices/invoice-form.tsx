@@ -72,7 +72,10 @@ export function InvoiceForm({
   });
 
   const selectedCustomerId = form.watch("customerId");
-  const filteredContracts = contracts.filter((c) => c.customerId === selectedCustomerId);
+  const filteredContracts = useMemo(
+    () => contracts.filter((c) => c.customerId === selectedCustomerId),
+    [contracts, selectedCustomerId]
+  );
 
   const watchItems = form.watch("items");
   const total = useMemo(
