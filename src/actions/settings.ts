@@ -228,16 +228,17 @@ export async function testApiKey(
       };
     }
 
-    // Perform real API validation for Groq
-    if (provider === "groq") {
-      return await testGroqApiKey(keyStr);
+    // Perform real API validation for each provider
+    switch (provider) {
+      case "groq":
+        return await testGroqApiKey(keyStr);
+      case "gemini":
+        return await testGeminiApiKey(keyStr);
+      case "maps":
+        return await testMapsApiKey(keyStr);
+      case "openrouter":
+        return await testOpenRouterApiKey(keyStr);
     }
-
-    // Fallback for other providers (format check only)
-    return {
-      success: true,
-      data: { valid: true, message: "API key có định dạng hợp lệ" },
-    };
   } catch (error) {
     return {
       success: false,
@@ -291,6 +292,157 @@ async function testGroqApiKey(
       return {
         success: true,
         data: { valid: false, message: "Timeout - Groq không phản hồi" },
+      };
+    }
+    return {
+      success: true,
+      data: { valid: false, message: "Lỗi kết nối mạng" },
+    };
+  }
+}
+
+/**
+ * Test Gemini API key by calling /models endpoint
+ */
+async function testGeminiApiKey(
+  apiKey: string
+): Promise<ActionResponse<{ valid: boolean; message: string }>> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: { valid: true, message: "Kết nối Gemini thành công" },
+      };
+    }
+
+    if (response.status === 400 || response.status === 403) {
+      return {
+        success: true,
+        data: { valid: false, message: "API key không hợp lệ" },
+      };
+    }
+
+    return {
+      success: true,
+      data: { valid: false, message: `Lỗi Gemini API: ${response.status}` },
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        success: true,
+        data: { valid: false, message: "Timeout - Gemini không phản hồi" },
+      };
+    }
+    return {
+      success: true,
+      data: { valid: false, message: "Lỗi kết nối mạng" },
+    };
+  }
+}
+
+/**
+ * Test Google Maps API key by calling Geocoding endpoint
+ */
+async function testMapsApiKey(
+  apiKey: string
+): Promise<ActionResponse<{ valid: boolean; message: string }>> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=Hanoi&key=${apiKey}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+    const data = await response.json();
+
+    if (data.status === "OK" || data.status === "ZERO_RESULTS") {
+      return {
+        success: true,
+        data: { valid: true, message: "Kết nối Google Maps thành công" },
+      };
+    }
+
+    if (data.status === "REQUEST_DENIED") {
+      return {
+        success: true,
+        data: { valid: false, message: "API key không hợp lệ hoặc chưa bật Geocoding API" },
+      };
+    }
+
+    return {
+      success: true,
+      data: { valid: false, message: `Lỗi Maps API: ${data.status}` },
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        success: true,
+        data: { valid: false, message: "Timeout - Maps không phản hồi" },
+      };
+    }
+    return {
+      success: true,
+      data: { valid: false, message: "Lỗi kết nối mạng" },
+    };
+  }
+}
+
+/**
+ * Test OpenRouter API key by calling /models endpoint
+ */
+async function testOpenRouterApiKey(
+  apiKey: string
+): Promise<ActionResponse<{ valid: boolean; message: string }>> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch("https://openrouter.ai/api/v1/models", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      return {
+        success: true,
+        data: { valid: true, message: "Kết nối OpenRouter thành công" },
+      };
+    }
+
+    if (response.status === 401) {
+      return {
+        success: true,
+        data: { valid: false, message: "API key không hợp lệ" },
+      };
+    }
+
+    return {
+      success: true,
+      data: { valid: false, message: `Lỗi OpenRouter: ${response.status}` },
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return {
+        success: true,
+        data: { valid: false, message: "Timeout - OpenRouter không phản hồi" },
       };
     }
     return {
