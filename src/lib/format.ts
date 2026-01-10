@@ -14,7 +14,7 @@ export function formatCurrency(
   value: NumericValue,
   options?: { compact?: boolean; style?: "currency" | "decimal" }
 ): string {
-  const num = typeof value === "object" ? Number(value) : Number(value);
+  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
   if (isNaN(num)) return "0 ₫";
 
   return new Intl.NumberFormat("vi-VN", {

@@ -998,7 +998,7 @@ model CareSchedule {
   // Work Report
   workNotes     String?   @db.Text
   issuesFound   String?   @db.Text
-  actionsToken  String?   @db.Text
+  actionsTaken  String?   @db.Text @map("actionsToken") // Renamed from actionsToken for clarity
   plantCount    Int?      // Number of plants serviced
   
   // Plant Conditions (JSON array of assessments)

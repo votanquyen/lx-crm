@@ -27,14 +27,39 @@ import {
 import { createPayment, updatePayment } from "@/actions/payments";
 import { createPaymentSchema } from "@/lib/validations/payment";
 import type { z } from "zod";
-import type { Payment, Invoice, Customer, PaymentMethod } from "@prisma/client";
+import type { Payment, Customer, PaymentMethod, InvoiceStatus } from "@prisma/client";
 
 type FormValues = z.infer<typeof createPaymentSchema>;
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
+// Flexible type that accepts serialized invoice data
+type InvoiceData = {
+  id: string;
+  invoiceNumber: string;
+  status: InvoiceStatus;
+  issueDate: DateOrString;
+  dueDate: DateOrString;
+  totalAmount: unknown; // Decimal or number
+  paidAmount: unknown;
+  outstandingAmount: unknown;
+  customerId?: string;
+  contractId?: string | null;
+  subtotal?: unknown;
+  taxAmount?: unknown; // Optional - may use vatAmount instead
+  vatAmount?: unknown;
+  vatRate?: unknown;
+  discountAmount?: unknown;
+  notes?: string | null;
+  createdAt?: DateOrString;
+  updatedAt?: DateOrString;
+  createdById?: string | null;
+  customer: Pick<Customer, "id" | "code" | "companyName">;
+};
+
 interface PaymentFormProps {
-  invoice: Invoice & {
-    customer: Pick<Customer, "id" | "code" | "companyName">;
-  };
+  invoice: InvoiceData;
   payment?: Payment;
   remainingBalance: number;
 }

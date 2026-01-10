@@ -1,11 +1,11 @@
 /**
  * Exchange Request Server Actions
- * CRUD with priority scoring
+ * CRUD with priority scoring and inventory sync
  */
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma, type ExchangePriority, type CustomerTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
@@ -16,6 +16,15 @@ import {
   exchangeSearchSchema,
   type ExchangeSearchParams,
 } from "@/lib/validations/exchange";
+import {
+  calculatePriorityScore as calculateEnhancedPriorityScore,
+  getPriorityLabel,
+} from "@/lib/exchange/priority-scoring";
+import {
+  syncInventoryOnExchangeCompletion,
+  validateInventoryForExchange,
+  type PlantExchangeItem,
+} from "@/lib/exchange/inventory-sync";
 
 /**
  * Calculate priority score based on priority and plant count
@@ -47,6 +56,9 @@ function calculatePriorityScore(priority: string, plantCount: number): number {
 
   return score;
 }
+
+// Re-export for UI usage
+export { getPriorityLabel };
 
 /**
  * Get paginated list of exchange requests
@@ -315,7 +327,8 @@ export const cancelExchangeRequest = createSimpleAction(
 );
 
 /**
- * Complete exchange (mark as done)
+ * Complete exchange (mark as done) - basic completion without inventory sync
+ * Use completeExchangeWithInventory for full inventory sync
  */
 export const completeExchangeRequest = createSimpleAction(async (id: string) => {
   const session = await auth();
@@ -330,7 +343,10 @@ export const completeExchangeRequest = createSimpleAction(async (id: string) => 
 
   const updated = await prisma.exchangeRequest.update({
     where: { id },
-    data: { status: "COMPLETED" },
+    data: {
+      status: "COMPLETED",
+      completedAt: new Date(),
+    },
   });
 
   // Log activity
@@ -346,6 +362,73 @@ export const completeExchangeRequest = createSimpleAction(async (id: string) => 
   revalidatePath("/exchanges");
   return updated;
 });
+
+/**
+ * Complete exchange request with inventory sync
+ * Full workflow: update inventory, customer plants, log history
+ */
+export interface CompleteExchangeWithInventoryInput {
+  exchangeRequestId: string;
+  removedPlants: PlantExchangeItem[];
+  installedPlants: PlantExchangeItem[];
+  completionNotes?: string;
+}
+
+export const completeExchangeWithInventory = createSimpleAction(
+  async (input: CompleteExchangeWithInventoryInput) => {
+    const session = await auth();
+    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+
+    const request = await prisma.exchangeRequest.findUnique({
+      where: { id: input.exchangeRequestId },
+      include: { customer: true },
+    });
+    if (!request) throw new NotFoundError("Yêu cầu đổi cây");
+
+    if (!["APPROVED", "SCHEDULED"].includes(request.status)) {
+      throw new AppError("Yêu cầu chưa được duyệt hoặc lên lịch", "INVALID_STATUS");
+    }
+
+    // Validate inventory before completion
+    if (input.installedPlants.length > 0) {
+      const insufficientStock = await validateInventoryForExchange(input.installedPlants);
+      if (insufficientStock.length > 0) {
+        const errorItems = insufficientStock
+          .map((item) => `${item.name}: cần ${item.required}, có ${item.available}`)
+          .join(", ");
+        throw new AppError(
+          `Không đủ số lượng cây trong kho: ${errorItems}`,
+          "INSUFFICIENT_STOCK"
+        );
+      }
+    }
+
+    // Sync inventory with transaction
+    await syncInventoryOnExchangeCompletion({
+      exchangeRequestId: input.exchangeRequestId,
+      customerId: request.customerId,
+      removedPlants: input.removedPlants,
+      installedPlants: input.installedPlants,
+      completionNotes: input.completionNotes,
+      completedByUserId: session.user.id,
+    });
+
+    revalidatePath("/exchanges");
+    revalidatePath(`/customers/${request.customerId}`);
+    revalidatePath("/inventory");
+
+    // Return updated request
+    return await prisma.exchangeRequest.findUnique({
+      where: { id: input.exchangeRequestId },
+      include: {
+        customer: { select: { id: true, companyName: true } },
+      },
+    });
+  }
+);
+
+// Re-export validateInventoryForExchange for UI usage
+export { validateInventoryForExchange };
 
 /**
  * Get exchange statistics

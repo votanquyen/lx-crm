@@ -2,8 +2,8 @@
 
 **Lộc Xanh CRM - Plant Rental Management System**
 **Version**: 4.0.0
-**Status**: Phase 2.5 (Bảng Kê) 50% Complete
-**Last Updated**: December 22, 2025
+**Status**: Phase 6 (Đổi Cây) 95% Complete | Phase 2.5 (Bảng Kê) 50% Complete
+**Last Updated**: January 09, 2026
 
 ---
 
@@ -174,8 +174,7 @@ totalAmount: Decimal @db.Decimal(12, 0)
 - **Dynamic Imports**: Code splitting for heavy charts
 
 ### 8. AI-Powered Features
-
-**Priority**: Medium | **Status**: ✅ Complete
+**Priority**: Medium | **Status**: ✅ Complete (Core) / 📋 Planned (Predictions)
 
 #### Functional Requirements
 
@@ -189,6 +188,83 @@ totalAmount: Decimal @db.Decimal(12, 0)
 - **Sticky Notes**: Automatic analysis on creation
 - **Exchange Requests**: Priority scoring suggestions
 - **Care Reports**: Issue identification and recommendations
+
+### 8.1 AI Prediction Features (NEW)
+**Priority**: P1-P2 | **Status**: 📋 Planned
+
+#### Churn Prediction (P1)
+Identify customers at risk of not renewing contracts using hybrid approach.
+
+**Data Sources:**
+| Data Type | Source | Signals |
+|-----------|--------|---------|
+| Payment behavior | `Invoice`, `Payment` | Late payments, overdue count |
+| Exchange frequency | `ExchangeRequest` | Frequent exchanges = dissatisfaction |
+| Care feedback | `CareSchedule` | Satisfaction ratings, complaints |
+| Notes/complaints | `StickyNote` | Sentiment analysis via Gemini |
+
+**Scoring Algorithm (0-100):**
+```typescript
+// Rule-based scoring (0-60 points)
+- Payment signals: overdue count, avg days late (0-25)
+- Exchange/complaint signals: frequency, issues (0-20)
+- Satisfaction signals: ratings (0-15)
+
+// LLM sentiment analysis (0-40 points)
+- Analyze recent sticky notes via Gemini
+- Extract negative sentiment score
+- Identify concern keywords
+```
+
+**Risk Levels:**
+- CRITICAL (75-100): Immediate intervention needed
+- HIGH (50-74): Schedule retention call
+- MEDIUM (25-49): Monitor closely
+- LOW (0-24): Normal engagement
+
+**Output:**
+- Risk score with contributing factors
+- Recommended retention actions (Vietnamese)
+- Dashboard widget for at-risk customers
+
+#### Exchange/Maintenance Prediction (P2)
+Predict when plants need exchange based on health scoring.
+
+**Data Sources:**
+| Data Type | Source | Signals |
+|-----------|--------|---------|
+| Plant type | `PlantType` | Expected lifespan |
+| Installation date | `CustomerPlant` | Age calculation |
+| Exchange history | `ExchangeRequest` | Historical patterns |
+| Care observations | `CareSchedule` | Health notes |
+
+**Health Scoring Algorithm:**
+```typescript
+// Base lifespan by plant type
+- Indoor foliage: 180 days
+- Outdoor palm: 365 days
+- Flowering: 90 days
+- Succulent: 365 days
+
+// Condition multipliers
+- Indoor: 1.0x
+- Outdoor: 0.8x (shorter life)
+- Mixed: 0.9x
+
+// Early warning keywords
+- Vietnamese: "vàng lá", "héo", "sâu bệnh", "thối rễ"
+```
+
+**Urgency Levels:**
+- URGENT: Overdue (>100% lifespan)
+- RECOMMENDED: 85-100% lifespan
+- UPCOMING: 70-85% lifespan
+- NONE: <70% lifespan
+
+**Output:**
+- Health score per plant (0-100)
+- Days remaining estimate
+- Exchange suggestion widget
 
 ### 9. File Storage & Security
 

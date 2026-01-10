@@ -54,18 +54,25 @@ import { sendInvoice, cancelInvoice, recordPayment } from "@/actions/invoices";
 import { formatCurrency } from "@/lib/format";
 import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type InvoiceDetail = {
   id: string;
   invoiceNumber: string;
   status: InvoiceStatus;
-  issueDate: Date;
-  dueDate: Date;
+  issueDate: DateOrString;
+  dueDate: DateOrString;
   subtotal: number;
-  taxAmount: number;
+  // Accept both field names for compatibility
+  taxAmount?: number;
+  vatAmount?: number;
+  vatRate?: number;
+  discountAmount?: number | null;
   totalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
-  notes: string | null;
+  notes?: string | null;
   customer: {
     id: string;
     code: string;
@@ -87,9 +94,12 @@ type InvoiceDetail = {
   payments: {
     id: string;
     amount: number;
-    paymentDate: Date;
-    method: PaymentMethod;
-    reference: string | null;
+    paymentDate: DateOrString;
+    // Accept both field names for compatibility
+    method?: PaymentMethod;
+    paymentMethod?: PaymentMethod;
+    reference?: string | null;
+    bankRef?: string | null;
     notes: string | null;
   }[];
 };
@@ -342,13 +352,13 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                   {formatCurrency(invoice.subtotal)}
                 </TableCell>
               </TableRow>
-              {invoice.taxAmount > 0 && (
+              {(invoice.taxAmount ?? invoice.vatAmount ?? 0) > 0 && (
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-semibold">
                     Thuế:
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatCurrency(invoice.taxAmount)}
+                    {formatCurrency(invoice.taxAmount ?? invoice.vatAmount ?? 0)}
                   </TableCell>
                 </TableRow>
               )}
@@ -391,8 +401,8 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     <TableCell>
                       {format(new Date(payment.paymentDate), "dd/MM/yyyy HH:mm", { locale: vi })}
                     </TableCell>
-                    <TableCell>{paymentMethodLabels[payment.method]}</TableCell>
-                    <TableCell>{payment.reference || "-"}</TableCell>
+                    <TableCell>{paymentMethodLabels[(payment.method ?? payment.paymentMethod) as PaymentMethod] ?? "-"}</TableCell>
+                    <TableCell>{payment.reference ?? payment.bankRef ?? "-"}</TableCell>
                     <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(payment.amount)}
                     </TableCell>

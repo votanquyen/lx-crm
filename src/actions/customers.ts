@@ -568,3 +568,116 @@ export async function getCustomerStats() {
     withDebt: Number(stats[0].with_debt),
   };
 }
+
+/**
+ * Get customers for map display
+ * Optimized query with only required fields for map markers
+ */
+export async function getCustomersForMap(filters?: {
+  district?: string;
+  tier?: "VIP" | "PREMIUM" | "STANDARD";
+  status?: "ACTIVE" | "INACTIVE" | "LEAD" | "TERMINATED";
+}) {
+  await requireAuth();
+
+  const where: Prisma.CustomerWhereInput = {
+    status: filters?.status ?? { not: "TERMINATED" },
+    latitude: { not: null },
+    longitude: { not: null },
+  };
+
+  if (filters?.district) where.district = filters.district;
+  if (filters?.tier) where.tier = filters.tier;
+
+  const customers = await prisma.customer.findMany({
+    where,
+    select: {
+      id: true,
+      code: true,
+      companyName: true,
+      address: true,
+      district: true,
+      latitude: true,
+      longitude: true,
+      contactPhone: true,
+      tier: true,
+      status: true,
+      _count: {
+        select: {
+          customerPlants: { where: { status: "ACTIVE" } },
+        },
+      },
+    },
+    orderBy: { companyName: "asc" },
+  });
+
+  // Get customers with pending exchanges
+  const pendingExchanges = await prisma.exchangeRequest.findMany({
+    where: {
+      status: { in: ["PENDING", "SCHEDULED"] },
+    },
+    select: {
+      customerId: true,
+    },
+  });
+
+  const customersWithExchanges = new Set(pendingExchanges.map((e) => e.customerId));
+
+  return customers.map((c) => ({
+    id: c.id,
+    code: c.code,
+    companyName: c.companyName,
+    address: c.address,
+    district: c.district ?? "",
+    latitude: c.latitude,
+    longitude: c.longitude,
+    contactPhone: c.contactPhone,
+    tier: c.tier,
+    status: c.status,
+    plantCount: c._count.customerPlants,
+    hasPendingExchange: customersWithExchanges.has(c.id),
+  }));
+}
+
+/**
+ * Get exchange requests for map display
+ */
+export async function getExchangeRequestsForMap() {
+  await requireAuth();
+
+  const requests = await prisma.exchangeRequest.findMany({
+    where: {
+      status: { in: ["PENDING", "SCHEDULED"] },
+      customer: {
+        latitude: { not: null },
+        longitude: { not: null },
+      },
+    },
+    select: {
+      id: true,
+      customerId: true,
+      priority: true,
+      priorityScore: true,
+      status: true,
+      customer: {
+        select: {
+          companyName: true,
+          latitude: true,
+          longitude: true,
+        },
+      },
+    },
+    orderBy: { priorityScore: "desc" },
+  });
+
+  return requests.map((r) => ({
+    id: r.id,
+    customerId: r.customerId,
+    priority: r.priority,
+    priorityScore: r.priorityScore,
+    status: r.status,
+    latitude: r.customer.latitude!,
+    longitude: r.customer.longitude!,
+    customerName: r.customer.companyName,
+  }));
+}

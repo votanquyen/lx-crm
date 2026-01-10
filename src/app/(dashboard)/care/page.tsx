@@ -91,7 +91,7 @@ async function CareList({
 
   return (
     <div className="space-y-4">
-      <CareScheduleList schedules={result.data as any} />
+      <CareScheduleList schedules={result.data} />
 
       {result.pagination.totalPages > 1 && (
         <Pagination

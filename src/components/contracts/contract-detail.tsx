@@ -47,17 +47,28 @@ import { activateContract, cancelContract } from "@/actions/contracts";
 import { formatCurrency } from "@/lib/format";
 import type { ContractStatus, InvoiceStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type ContractDetail = {
   id: string;
   contractNumber: string;
   status: ContractStatus;
-  startDate: Date;
-  endDate: Date;
-  monthlyAmount: number;
-  totalAmount: number;
+  startDate: DateOrString;
+  endDate: DateOrString;
+  // Accept both field names for compatibility
+  monthlyAmount?: number;
+  monthlyFee?: number;
+  totalAmount?: number;
+  totalContractValue?: number | null;
+  totalMonthlyAmount?: number | null;
   depositAmount: number | null;
   paymentTerms: string | null;
-  notes: string | null;
+  notes?: string | null;
+  vatRate?: number;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
+  setupFee?: number | null;
   customer: {
     id: string;
     code: string;
@@ -72,25 +83,27 @@ type ContractDetail = {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    notes: string | null;
+    notes?: string | null;
+    discountRate?: number | null;
     plantType: {
       id: string;
       name: string;
       code: string;
       rentalPrice: number;
-    };
+    } | null;
   }[];
   invoices: {
     id: string;
     invoiceNumber: string;
     status: InvoiceStatus;
-    issueDate: Date;
-    dueDate: Date;
+    issueDate: DateOrString;
+    dueDate: DateOrString;
     totalAmount: number;
     outstandingAmount: number;
   }[];
-  renewedFrom: { id: string; contractNumber: string } | null;
-  renewedTo: { id: string; contractNumber: string } | null;
+  renewedFrom?: { id: string; contractNumber: string } | null;
+  renewedTo?: { id: string; contractNumber: string } | null;
+  previousContractId?: string | null;
 };
 
 const statusConfig: Record<
@@ -317,7 +330,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <p className="text-muted-foreground text-sm">Giá trị/tháng</p>
                 <p className="text-primary flex items-center gap-1 text-lg font-bold">
                   <DollarSign className="h-5 w-5" />
-                  {formatCurrency(contract.monthlyAmount)}
+                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
                 </p>
               </div>
               <div>

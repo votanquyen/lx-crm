@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, addDays, isSameDay, addWeeks, subWeeks } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -37,17 +37,53 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: CareCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
 
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 }); // Monday
-  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
+  // Memoize today to avoid creating new Date() on each render
+  const today = useMemo(() => new Date(), []);
 
-  // Generate array of days in current week
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Memoize weekStart/weekEnd based on currentWeek to avoid new Date objects each render
+  const { weekStart, weekEnd } = useMemo(() => ({
+    weekStart: startOfWeek(currentWeek, { weekStartsOn: 1 }),
+    weekEnd: endOfWeek(currentWeek, { weekStartsOn: 1 }),
+  }), [currentWeek]);
 
-  // Group schedules by day
-  const schedulesByDay = weekDays.map((day) => ({
-    date: day,
-    schedules: schedules.filter((s) => isSameDay(new Date(s.scheduledDate), day)),
-  }));
+  // Generate array of days in current week (memoized to avoid new array each render)
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
+    [weekStart]
+  );
+
+  // Pre-group schedules by date string for O(1) lookup (memoized)
+  const schedulesByDateKey = useMemo(() => {
+    const grouped = new Map<string, CareScheduleWithRelations[]>();
+    schedules.forEach((s) => {
+      const dateKey = format(new Date(s.scheduledDate), "yyyy-MM-dd");
+      const existing = grouped.get(dateKey) || [];
+      existing.push(s);
+      grouped.set(dateKey, existing);
+    });
+    return grouped;
+  }, [schedules]);
+
+  // Build schedulesByDay using pre-grouped data (O(1) per day instead of O(n))
+  const schedulesByDay = useMemo(
+    () =>
+      weekDays.map((day) => ({
+        date: day,
+        schedules: schedulesByDateKey.get(format(day, "yyyy-MM-dd")) || [],
+      })),
+    [weekDays, schedulesByDateKey]
+  );
+
+  // Memoize summary stats to avoid recalculating on every render
+  const summaryStats = useMemo(
+    () => ({
+      total: schedules.length,
+      scheduled: schedules.filter((s) => s.status === "SCHEDULED").length,
+      inProgress: schedules.filter((s) => s.status === "IN_PROGRESS").length,
+      completed: schedules.filter((s) => s.status === "COMPLETED").length,
+    }),
+    [schedules]
+  );
 
   const handlePrevWeek = () => {
     setCurrentWeek((prev) => subWeeks(prev, 1));
@@ -93,7 +129,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
         <div className="grid grid-cols-7 gap-2">
           {/* Day Headers */}
           {weekDays.map((day) => {
-            const isToday = isSameDay(day, new Date());
+            const isToday = isSameDay(day, today);
             return (
               <div
                 key={day.toISOString()}
@@ -111,7 +147,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
 
           {/* Day Cells */}
           {schedulesByDay.map(({ date, schedules: daySchedules }) => {
-            const isToday = isSameDay(date, new Date());
+            const isToday = isSameDay(date, today);
             return (
               <div
                 key={date.toISOString()}
@@ -193,24 +229,24 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
         {/* Summary Stats */}
         <div className="mt-4 grid grid-cols-4 gap-4 rounded-lg bg-gray-50 p-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{schedules.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{summaryStats.total}</div>
             <div className="text-xs text-gray-600">Tổng lịch</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {schedules.filter((s) => s.status === "SCHEDULED").length}
+              {summaryStats.scheduled}
             </div>
             <div className="text-xs text-gray-600">Chờ thực hiện</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {schedules.filter((s) => s.status === "IN_PROGRESS").length}
+              {summaryStats.inProgress}
             </div>
             <div className="text-xs text-gray-600">Đang thực hiện</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {schedules.filter((s) => s.status === "COMPLETED").length}
+              {summaryStats.completed}
             </div>
             <div className="text-xs text-gray-600">Hoàn thành</div>
           </div>

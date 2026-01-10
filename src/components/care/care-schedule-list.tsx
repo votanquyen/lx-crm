@@ -27,14 +27,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CareStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type CareSchedule = {
   id: string;
-  scheduledDate: Date;
-  scheduledTime: string | null;
+  scheduledDate: DateOrString;
+  scheduledTime: DateOrString | string | null;
   status: CareStatus;
   notes: string | null;
-  checkInTime: Date | null;
-  checkOutTime: Date | null;
+  checkInTime?: DateOrString | null;
+  checkOutTime?: DateOrString | null;
   customer: {
     id: string;
     code: string;

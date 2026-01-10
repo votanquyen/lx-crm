@@ -1,5 +1,6 @@
 /**
- * Invoice Table Component
+ * Invoice Table Component (Virtualized)
+ * Uses TanStack Virtual for smooth scrolling with large datasets
  */
 "use client";
 
@@ -7,17 +8,10 @@ import React, { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Receipt, Eye, MoreHorizontal, Send, XCircle, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,12 +22,15 @@ import {
 import { formatCurrency } from "@/lib/format";
 import type { InvoiceStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type Invoice = {
   id: string;
   invoiceNumber: string;
   status: InvoiceStatus;
-  issueDate: Date;
-  dueDate: Date;
+  issueDate: DateOrString;
+  dueDate: DateOrString;
   totalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
@@ -63,26 +60,36 @@ const statusConfig: Record<
 };
 
 /** Check if invoice is overdue */
-const isOverdue = (dueDate: Date, status: InvoiceStatus): boolean => {
+const isOverdue = (dueDate: DateOrString, status: InvoiceStatus): boolean => {
   if (["PAID", "CANCELLED"].includes(status)) return false;
   return new Date(dueDate) < new Date();
 };
 
-/** Extract invoice number from format "752/9-12" -> "752" */
-const getInvoiceNo = (invoiceNumber: string): string => {
-  const match = invoiceNumber.match(/^(\d+)/);
-  return match?.[1] ?? invoiceNumber;
-};
-
-interface InvoiceRowProps {
-  invoice: Invoice;
+interface InvoiceTableProps {
+  invoices: Invoice[];
   onSend?: (id: string) => void;
   onCancel?: (id: string) => void;
   onRecordPayment?: (id: string) => void;
 }
 
-/** Memoized invoice table row to prevent unnecessary re-renders */
-const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: InvoiceRowProps) => {
+/** Memoized virtual row for invoice */
+const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
+  invoice,
+  virtualStart,
+  measureElement,
+  dataIndex,
+  onSend,
+  onCancel,
+  onRecordPayment,
+}: {
+  invoice: Invoice;
+  virtualStart: number;
+  measureElement: (el: Element | null) => void;
+  dataIndex: number;
+  onSend?: (id: string) => void;
+  onCancel?: (id: string) => void;
+  onRecordPayment?: (id: string) => void;
+}) {
   const status = statusConfig[invoice.status];
   const overdue = isOverdue(invoice.dueDate, invoice.status);
 
@@ -100,16 +107,23 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
         <Link href={`/customers/${invoice.customer.id}`} className="font-medium hover:underline">
           {invoice.customer.companyName}
         </Link>
-      </TableCell>
-      <TableCell>
+        <p className="text-sm text-muted-foreground">
+          {invoice.customer.code}
+        </p>
+      </div>
+
+      {/* Status */}
+      <div className="w-40 p-4">
         <Badge variant={status.variant}>{status.label}</Badge>
         {overdue && invoice.status !== "OVERDUE" && (
           <Badge variant="destructive" className="ml-2">
             Quá hạn
           </Badge>
         )}
-      </TableCell>
-      <TableCell>
+      </div>
+
+      {/* Due Date */}
+      <div className="w-32 p-4">
         <span className={overdue ? "text-destructive font-medium" : ""}>
           {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
         </span>
@@ -121,8 +135,10 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
         ) : (
           <span className="text-green-600">0</span>
         )}
-      </TableCell>
-      <TableCell>
+      </div>
+
+      {/* Actions */}
+      <div className="w-12 p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Mở menu thao tác">
@@ -157,18 +173,10 @@ const InvoiceRow = React.memo(({ invoice, onSend, onCancel, onRecordPayment }: I
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </div>
+    </div>
   );
 });
-InvoiceRow.displayName = "InvoiceRow";
-
-interface InvoiceTableProps {
-  invoices: Invoice[];
-  onSend?: (id: string) => void;
-  onCancel?: (id: string) => void;
-  onRecordPayment?: (id: string) => void;
-}
 
 export const InvoiceTable = memo(function InvoiceTable({
   invoices,

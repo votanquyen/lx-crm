@@ -2,6 +2,7 @@
  * Customer Card Component
  * Display customer info in a compact card/row format
  */
+import { memo } from "react";
 import Link from "next/link";
 import { MapPin, Phone, Mail, Leaf, FileText, StickyNote, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -147,3 +148,6 @@ export function CustomerCard({ customer }: CustomerCardProps) {
     </div>
   );
 }
+
+// Memoize to prevent re-renders when parent list changes but this card's props don't
+export const CustomerCard = memo(CustomerCardComponent);

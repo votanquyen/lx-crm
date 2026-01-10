@@ -29,12 +29,15 @@ import {
 import { formatCurrency } from "@/lib/format";
 import type { ContractStatus } from "@prisma/client";
 
+// Accept both Date and string for serialization compatibility
+type DateOrString = Date | string;
+
 type Contract = {
   id: string;
   contractNumber: string;
   status: ContractStatus;
-  startDate: Date;
-  endDate: Date;
+  startDate: DateOrString;
+  endDate: DateOrString;
   monthlyAmount: number;
   totalAmount: number;
   customer: {
@@ -77,7 +80,7 @@ export const ContractTable = memo(function ContractTable({
     return items.reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  const getDaysRemaining = (endDate: Date) => {
+  const getDaysRemaining = (endDate: DateOrString) => {
     const now = new Date();
     const end = new Date(endDate);
     const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

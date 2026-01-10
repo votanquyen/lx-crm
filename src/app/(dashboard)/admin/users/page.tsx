@@ -6,6 +6,10 @@ import { UserFilters } from "./_components/user-filters";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Valid role values for type safety
+const VALID_ROLES = ["ADMIN", "MANAGER", "ACCOUNTANT", "STAFF", "VIEWER"] as const;
+type ValidRole = (typeof VALID_ROLES)[number];
+
 interface PageProps {
   searchParams: Promise<{
     page?: string;
