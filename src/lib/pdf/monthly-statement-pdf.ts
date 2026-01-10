@@ -23,7 +23,19 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
   // Setup Vietnamese fonts
   setupVietnameseFonts(doc);
 
-  const { customer, year, month, periodStart, periodEnd, contactName, plants, subtotal, vatRate, vatAmount, total } = statement;
+  const {
+    customer,
+    year,
+    month,
+    periodStart,
+    periodEnd,
+    contactName,
+    plants,
+    subtotal,
+    vatRate,
+    vatAmount,
+    total,
+  } = statement;
 
   // Company Header
   doc.setFontSize(14);
@@ -39,7 +51,9 @@ export function generateMonthlyStatementPDF(statement: StatementDTO): jsPDF {
   // Title
   doc.setFontSize(16);
   doc.setFont("Roboto", "bold");
-  doc.text(`DANH SÁCH CÂY XANH CÔNG TY ${customer?.companyName.toUpperCase() || ""}`, 105, 52, { align: "center" });
+  doc.text(`DANH SÁCH CÂY XANH CÔNG TY ${customer?.companyName.toUpperCase() || ""}`, 105, 52, {
+    align: "center",
+  });
 
   // Customer Info
   doc.setFontSize(11);

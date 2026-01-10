@@ -50,7 +50,8 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
 
   const page = parseInt(params.page ?? "1", 10);
   const limit = parseInt(params.limit ?? "20", 10);
-  const isActive = params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
+  const isActive =
+    params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
 
   const [plantsResult, categories, inventoryStats] = await Promise.all([
     getPlantTypes({
@@ -163,15 +164,11 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {plantsResult.plantTypes.map((plant) => (
           <Card key={plant.id} className="overflow-hidden">
-            <div className="aspect-square relative bg-muted">
+            <div className="bg-muted relative aspect-square">
               {plant.imageUrl ? (
-                <img
-                  src={plant.imageUrl}
-                  alt={plant.name}
-                  className="object-cover w-full h-full"
-                />
+                <img src={plant.imageUrl} alt={plant.name} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="text-muted-foreground flex h-full items-center justify-center">
                   <Package className="h-12 w-12" />
                 </div>
               )}
@@ -183,8 +180,8 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
             </div>
             <CardHeader className="p-4">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="text-base truncate">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="truncate text-base">
                     <Link href={`/plant-types/${plant.id}`} className="hover:underline">
                       {plant.name}
                     </Link>
@@ -196,15 +193,15 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-2">
+            <CardContent className="space-y-2 p-4 pt-0">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm text-muted-foreground">Giá thuê</span>
+                <span className="text-muted-foreground text-sm">Giá thuê</span>
                 <span className="font-semibold text-green-600">
                   {formatCurrencyDecimal(plant.rentalPrice)}/tháng
                 </span>
               </div>
-              {(plant as PlantWithInventory).inventory?.totalStock !== undefined && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
+              {(plant as any).inventory?.totalStock !== undefined && (
+                <div className="text-muted-foreground flex items-center justify-between text-xs">
                   <span>Tồn kho</span>
                   <span>
                     {(plant as PlantWithInventory).inventory?.availableStock}/{(plant as PlantWithInventory).inventory?.totalStock}
@@ -225,14 +222,14 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
       {plantsResult.plantTypes.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Chưa có loại cây nào</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <Package className="text-muted-foreground mb-4 h-12 w-12" />
+            <h3 className="mb-2 text-lg font-semibold">Chưa có loại cây nào</h3>
+            <p className="text-muted-foreground mb-4 text-center">
               Bắt đầu bằng cách thêm loại cây đầu tiên vào danh mục
             </p>
             <Button asChild>
               <Link href="/plant-types/new">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Thêm loại cây
               </Link>
             </Button>
@@ -248,7 +245,7 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
               <Link
                 key={pageNum}
                 href={`?page=${pageNum}${params.search ? `&search=${params.search}` : ""}${params.category ? `&category=${params.category}` : ""}`}
-                className={`px-3 py-1 rounded ${
+                className={`rounded px-3 py-1 ${
                   pageNum === page
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary hover:bg-secondary/80"

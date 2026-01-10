@@ -62,38 +62,45 @@ bun add jspdf jspdf-autotable
 ```
 
 **Installed versions:**
+
 - jspdf: ^2.5.2
 - jspdf-autotable: ^3.8.4
 
 ### Files Created
 
 **1. PDF Generation Utility**
+
 ```
 src/lib/pdf/morning-briefing.ts
 ```
 
 **Functions:**
+
 - `generateMorningBriefingPDF(schedule)` - Creates jsPDF document
 - `downloadMorningBriefing(schedule)` - Triggers browser download
 - `generateMorningBriefingBlob(schedule)` - Returns PDF as Blob
 
 **2. API Route**
+
 ```
 src/app/api/schedules/[id]/briefing/route.ts
 ```
 
 **Endpoint:** `GET /api/schedules/[id]/briefing`
+
 - Fetches schedule with customer details
 - Generates PDF using utility
 - Returns PDF file with proper headers
 - Filename format: `lich-trinh-YYYY-MM-DD.pdf`
 
 **3. UI Integration**
+
 ```
 src/components/exchanges/daily-schedule-builder.tsx
 ```
 
 **Added:**
+
 - Import Printer icon from lucide-react
 - `handlePrintBriefing()` function - Opens PDF in new tab
 - "In lịch trình" button (visible when status = APPROVED)
@@ -124,6 +131,7 @@ src/components/exchanges/daily-schedule-builder.tsx
 ### Technical Details
 
 **PDF Specifications:**
+
 - Format: A4 portrait
 - Font: Helvetica
 - Header: 20pt bold
@@ -131,6 +139,7 @@ src/components/exchanges/daily-schedule-builder.tsx
 - Layout: Auto-table with optimized column widths
 
 **Column Widths:**
+
 - #: 10mm (centered)
 - Customer: 45mm
 - Address: 50mm
@@ -140,6 +149,7 @@ src/components/exchanges/daily-schedule-builder.tsx
 - Duration: 20mm (centered)
 
 **Vietnamese Support:**
+
 - Uses date-fns/locale/vi for date formatting
 - Vietnamese text displays correctly (no special encoding needed)
 - All labels in Vietnamese
@@ -153,18 +163,22 @@ src/components/exchanges/daily-schedule-builder.tsx
 **Description:** Generate and download morning briefing PDF for a daily schedule.
 
 **Parameters:**
+
 - `id` (path) - Daily schedule ID (cuid)
 
 **Response:**
+
 ```
 Content-Type: application/pdf
 Content-Disposition: attachment; filename="lich-trinh-2025-12-19.pdf"
 ```
 
 **Success (200):**
+
 - PDF binary data
 
 **Error (404):**
+
 ```json
 {
   "error": "Schedule not found"
@@ -172,6 +186,7 @@ Content-Disposition: attachment; filename="lich-trinh-2025-12-19.pdf"
 ```
 
 **Error (500):**
+
 ```json
 {
   "error": "Failed to generate PDF"
@@ -319,6 +334,7 @@ const url = URL.createObjectURL(blob);
 ### Prisma Schema
 
 **DailySchedule Model:**
+
 ```prisma
 model DailySchedule {
   id           String    @id @default(cuid())
@@ -331,6 +347,7 @@ model DailySchedule {
 ```
 
 **ScheduledExchange Model:**
+
 ```prisma
 model ScheduledExchange {
   id                    String @id @default(cuid())
@@ -348,6 +365,7 @@ model ScheduledExchange {
 ### Server Actions
 
 Uses existing actions from `src/actions/daily-schedules.ts`:
+
 - `getDailyScheduleByDate()` - Fetch schedule
 - `approveSchedule()` - Change status to APPROVED
 
@@ -356,14 +374,17 @@ Uses existing actions from `src/actions/daily-schedules.ts`:
 ## Performance
 
 **PDF Generation Time:**
+
 - Typical schedule (5-10 stops): <100ms
 - Large schedule (15-20 stops): <200ms
 
 **File Size:**
+
 - Typical PDF: 15-25 KB
 - With many stops: 30-40 KB
 
 **Browser Rendering:**
+
 - Opens in new tab immediately
 - No noticeable delay
 
@@ -372,14 +393,17 @@ Uses existing actions from `src/actions/daily-schedules.ts`:
 ## Security Considerations
 
 **Authentication:**
+
 - API route requires authenticated user (implied)
 - No public access to schedule PDFs
 
 **Data Validation:**
+
 - Schedule ID validated via Prisma query
 - Returns 404 if schedule not found
 
 **Content Safety:**
+
 - No user-generated HTML rendering
 - Text content auto-escaped by jsPDF
 
@@ -414,6 +438,7 @@ Uses existing actions from `src/actions/daily-schedules.ts`:
 ✅ **Morning Briefing PDF feature complete**
 
 **What Works:**
+
 - Professional PDF generation with jsPDF
 - Vietnamese date formatting
 - Auto-table with optimized layout

@@ -22,13 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createCustomer, updateCustomer } from "@/actions/customers";
 import {
   createCustomerSchema,
@@ -36,7 +30,8 @@ import {
   type CreateCustomerInput,
   type UpdateCustomerInput,
 } from "@/lib/validations/customer";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
+import { HCM_DISTRICTS } from "@/config/districts";
 
 interface CustomerFormProps {
   customer?: {
@@ -49,19 +44,11 @@ interface CustomerFormProps {
     contactPhone: string | null;
     contactEmail: string | null;
     taxCode: string | null;
-    tier: CustomerTier;
     status: CustomerStatus;
     latitude: number | null;
     longitude: number | null;
   };
 }
-
-const DISTRICTS = [
-  "Quận 1", "Quận 2", "Quận 3", "Quận 4", "Quận 5", "Quận 6", "Quận 7", "Quận 8",
-  "Quận 9", "Quận 10", "Quận 11", "Quận 12", "Bình Thạnh", "Gò Vấp", "Phú Nhuận",
-  "Tân Bình", "Tân Phú", "Thủ Đức", "Bình Tân", "Nhà Bè", "Hóc Môn", "Củ Chi",
-  "Cần Giờ", "Bình Chánh",
-];
 
 export function CustomerForm({ customer }: CustomerFormProps) {
   const router = useRouter();
@@ -70,7 +57,9 @@ export function CustomerForm({ customer }: CustomerFormProps) {
   const isEditing = !!customer;
 
   const form = useForm<CreateCustomerInput | UpdateCustomerInput>({
-    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema) as Resolver<CreateCustomerInput | UpdateCustomerInput>,
+    resolver: zodResolver(isEditing ? updateCustomerSchema : createCustomerSchema) as Resolver<
+      CreateCustomerInput | UpdateCustomerInput
+    >,
     defaultValues: isEditing
       ? {
           id: customer.id,
@@ -82,7 +71,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           contactPhone: customer.contactPhone ?? undefined,
           contactEmail: customer.contactEmail ?? undefined,
           taxCode: customer.taxCode ?? undefined,
-          tier: customer.tier,
           status: customer.status,
           latitude: customer.latitude ?? undefined,
           longitude: customer.longitude ?? undefined,
@@ -96,7 +84,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           contactPhone: undefined,
           contactEmail: undefined,
           taxCode: undefined,
-          tier: "STANDARD",
         },
   });
 
@@ -120,49 +107,52 @@ export function CustomerForm({ customer }: CustomerFormProps) {
     });
   };
 
-  const geocodeAddress = useDebouncedCallback(async () => {
-    const address = form.getValues("address");
-    if (!address) {
-      toast.error("Vui lòng nhập địa chỉ trước");
-      return;
-    }
-
-    setIsGeocoding(true);
-    try {
-      const params = new URLSearchParams({
-        q: `${address}, Ho Chi Minh, Vietnam`,
-        format: "json",
-        limit: "1",
-      });
-
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params}`,
-        { headers: { "User-Agent": "LocXanh-CRM/4.0" } }
-      );
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          toast.error("Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút");
-          return;
-        }
-        throw new Error(`Geocoding failed: ${res.status}`);
-      }
-
-      const data = await res.json();
-      if (data.length === 0) {
-        toast.warning("Không tìm thấy tọa độ cho địa chỉ này");
+  const geocodeAddress = useDebouncedCallback(
+    async () => {
+      const address = form.getValues("address");
+      if (!address) {
+        toast.error("Vui lòng nhập địa chỉ trước");
         return;
       }
 
-      form.setValue("latitude", parseFloat(data[0].lat));
-      form.setValue("longitude", parseFloat(data[0].lon));
-      toast.success("Đã lấy tọa độ thành công");
-    } catch {
-      toast.error("Lỗi khi lấy tọa độ");
-    } finally {
-      setIsGeocoding(false);
-    }
-  }, 1000, { leading: true, trailing: false });
+      setIsGeocoding(true);
+      try {
+        const params = new URLSearchParams({
+          q: `${address}, Ho Chi Minh, Vietnam`,
+          format: "json",
+          limit: "1",
+        });
+
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+          headers: { "User-Agent": "LocXanh-CRM/4.0" },
+        });
+
+        if (!res.ok) {
+          if (res.status === 429) {
+            toast.error("Quá nhiều yêu cầu. Vui lòng thử lại sau 1 phút");
+            return;
+          }
+          throw new Error(`Geocoding failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.length === 0) {
+          toast.warning("Không tìm thấy tọa độ cho địa chỉ này");
+          return;
+        }
+
+        form.setValue("latitude", parseFloat(data[0].lat));
+        form.setValue("longitude", parseFloat(data[0].lon));
+        toast.success("Đã lấy tọa độ thành công");
+      } catch {
+        toast.error("Lỗi khi lấy tọa độ");
+      } finally {
+        setIsGeocoding(false);
+      }
+    },
+    1000,
+    { leading: true, trailing: false }
+  );
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -181,7 +171,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
               {...form.register("companyName")}
             />
             {form.formState.errors.companyName && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {form.formState.errors.companyName.message}
               </p>
             )}
@@ -211,9 +201,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
               </Button>
             </div>
             {form.formState.errors.address && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.address.message}
-              </p>
+              <p className="text-destructive text-sm">{form.formState.errors.address.message}</p>
             )}
           </div>
 
@@ -227,7 +215,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                 <SelectValue placeholder="Chọn quận/huyện" />
               </SelectTrigger>
               <SelectContent>
-                {DISTRICTS.map((d) => (
+                {HCM_DISTRICTS.map((d) => (
                   <SelectItem key={d} value={d}>
                     {d}
                   </SelectItem>
@@ -238,37 +226,12 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="city">Thành phố</Label>
-            <Input
-              id="city"
-              placeholder="TP.HCM"
-              {...form.register("city")}
-            />
+            <Input id="city" placeholder="TP.HCM" {...form.register("city")} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="taxCode">Mã số thuế</Label>
-            <Input
-              id="taxCode"
-              placeholder="0123456789"
-              {...form.register("taxCode")}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tier">Hạng khách hàng</Label>
-            <Select
-              value={form.watch("tier")}
-              onValueChange={(v) => form.setValue("tier", v as CustomerTier)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn hạng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="STANDARD">Standard</SelectItem>
-                <SelectItem value="PREMIUM">Premium</SelectItem>
-                <SelectItem value="VIP">VIP</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input id="taxCode" placeholder="0123456789" {...form.register("taxCode")} />
           </div>
 
           {isEditing && (
@@ -301,22 +264,14 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="contactName">Tên người liên hệ</Label>
-            <Input
-              id="contactName"
-              placeholder="Nguyễn Văn A"
-              {...form.register("contactName")}
-            />
+            <Input id="contactName" placeholder="Nguyễn Văn A" {...form.register("contactName")} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="contactPhone">Số điện thoại</Label>
-            <Input
-              id="contactPhone"
-              placeholder="0901234567"
-              {...form.register("contactPhone")}
-            />
+            <Input id="contactPhone" placeholder="0901234567" {...form.register("contactPhone")} />
             {form.formState.errors.contactPhone && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {form.formState.errors.contactPhone.message}
               </p>
             )}
@@ -331,7 +286,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
               {...form.register("contactEmail")}
             />
             {form.formState.errors.contactEmail && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {form.formState.errors.contactEmail.message}
               </p>
             )}
@@ -375,12 +330,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditing ? "Cập nhật" : "Thêm khách hàng"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isPending}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>
           Hủy
         </Button>
       </div>

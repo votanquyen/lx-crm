@@ -29,10 +29,7 @@ export async function GET(request: NextRequest) {
     const exportType = searchParams.get("type");
 
     if (!exportType) {
-      return NextResponse.json(
-        { error: "Export type required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Export type required" }, { status: 400 });
     }
 
     let csvData = "";
@@ -60,10 +57,7 @@ export async function GET(request: NextRequest) {
         break;
 
       default:
-        return NextResponse.json(
-          { error: "Invalid export type" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid export type" }, { status: 400 });
     }
 
     // Return CSV file with UTF-8 BOM for Excel compatibility
@@ -76,10 +70,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Export error:", error);
-    return NextResponse.json(
-      { error: "Failed to export data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to export data" }, { status: 500 });
   }
 }
 
@@ -143,9 +134,7 @@ async function exportMonthlyRevenue() {
     }
   });
 
-  const data = Array.from(monthlyData.values()).sort((a, b) =>
-    a.month.localeCompare(b.month)
-  );
+  const data = Array.from(monthlyData.values()).sort((a, b) => a.month.localeCompare(b.month));
 
   const csvData = generateMonthlyRevenueCSV(data);
   const filename = `doanh-thu-theo-thang-${new Date().toISOString().split("T")[0]}.csv`;
@@ -233,7 +222,6 @@ async function exportTopCustomers() {
     select: {
       code: true,
       companyName: true,
-      tier: true,
       invoices: {
         select: {
           totalAmount: true,
@@ -250,17 +238,13 @@ async function exportTopCustomers() {
   });
 
   const data: TopCustomerData[] = customers.map((customer) => {
-    const totalRevenue = customer.invoices.reduce(
-      (sum, inv) => sum + Number(inv.totalAmount),
-      0
-    );
+    const totalRevenue = customer.invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0);
     const paidInvoices = customer.invoices.filter((i) => i.status === "PAID").length;
     const overdueInvoices = customer.invoices.filter((i) => i.status === "OVERDUE").length;
 
     return {
       code: customer.code,
       companyName: customer.companyName,
-      tier: customer.tier,
       totalRevenue,
       activeContracts: customer.contracts.length,
       totalInvoices: customer.invoices.length,

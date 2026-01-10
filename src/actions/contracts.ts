@@ -47,7 +47,11 @@ async function generateContractNumber(): Promise<string> {
 }
 
 /**
- * Get paginated list of contracts with filters
+ * Retrieves paginated list of contracts with optional filters.
+ *
+ * @param params - Search parameters including page, limit, search, status, customerId, expiringDays
+ * @returns Paginated contract list with customer and item details, Decimal fields serialized to numbers
+ * @throws {AppError} If authentication fails
  */
 export async function getContracts(params: ContractSearchParams) {
   await requireAuth();
@@ -136,8 +140,11 @@ export async function getContracts(params: ContractSearchParams) {
 }
 
 /**
- * Get a single contract by ID with full details
- * Returns serialized Decimal fields for client components
+ * Retrieves a single contract with full details including customer, items, and recent invoices.
+ *
+ * @param id - Contract UUID
+ * @returns Contract with customer info, items with plant types, and last 10 invoices
+ * @throws {NotFoundError} If contract does not exist
  */
 export async function getContractById(id: string) {
   await requireAuth();
@@ -208,7 +215,12 @@ export async function getContractById(id: string) {
 }
 
 /**
- * Create a new contract
+ * Creates a new contract in DRAFT status with auto-generated contract number.
+ *
+ * @param input - Contract data with customerId, dates, items, deposit, payment terms
+ * @returns Created contract with customer and item details
+ * @throws {NotFoundError} If customer does not exist
+ * @throws {AppError} If customer is terminated, dates invalid, or plant types not found
  */
 export const createContract = createAction(createContractSchema, async (input) => {
   const session = await requireAuth();
@@ -245,8 +257,8 @@ export const createContract = createAction(createContractSchema, async (input) =
   });
 
   if (plantTypes.length !== plantTypeIds.length) {
-    const foundIds = new Set(plantTypes.map(pt => pt.id));
-    const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+    const foundIds = new Set(plantTypes.map((pt) => pt.id));
+    const missingIds = plantTypeIds.filter((id) => !foundIds.has(id));
     throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
   }
 
@@ -314,7 +326,12 @@ export const createContract = createAction(createContractSchema, async (input) =
 });
 
 /**
- * Update contract (only DRAFT contracts can be updated)
+ * Updates a contract. Only DRAFT status contracts can be modified.
+ *
+ * @param input - Update data with contract id, optional dates, items, deposit, payment terms
+ * @returns Updated contract with customer and item details
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract not in DRAFT status, dates invalid, or plant types not found
  */
 export const updateContract = createAction(updateContractSchema, async (input) => {
   const session = await requireAuth();
@@ -361,8 +378,8 @@ export const updateContract = createAction(updateContractSchema, async (input) =
     });
 
     if (plantTypes.length !== plantTypeIds.length) {
-      const foundIds = new Set(plantTypes.map(pt => pt.id));
-      const missingIds = plantTypeIds.filter(id => !foundIds.has(id));
+      const foundIds = new Set(plantTypes.map((pt) => pt.id));
+      const missingIds = plantTypeIds.filter((id) => !foundIds.has(id));
       throw new AppError(`Loại cây không tồn tại: ${missingIds.join(", ")}`, "INVALID_PLANT_TYPES");
     }
 
@@ -388,32 +405,34 @@ export const updateContract = createAction(updateContractSchema, async (input) =
   // Update contract
   const contract = await prisma.$transaction(
     async (tx) => {
-    // Delete existing items if new items provided
-    if (itemsData) {
-      await tx.contractItem.deleteMany({ where: { contractId: id } });
-    }
+      // Delete existing items if new items provided
+      if (itemsData) {
+        await tx.contractItem.deleteMany({ where: { contractId: id } });
+      }
 
-    return tx.contract.update({
-      where: { id },
-      data: {
-        startDate,
-        endDate,
-        monthlyFee: monthlyFee ? toNumber(monthlyFee) : existing.monthlyFee,
-        totalContractValue: totalContractValue ? toNumber(totalContractValue) : existing.totalContractValue,
-        depositAmount: updateData.depositAmount ?? existing.depositAmount,
-        paymentTerms: updateData.paymentTerms ?? existing.paymentTerms,
-        termsNotes: updateData.notes ?? existing.termsNotes,
-        ...(itemsData && {
-          items: { createMany: { data: itemsData } },
-        }),
-      },
-      include: {
-        customer: { select: { id: true, companyName: true } },
-        items: {
-          include: { plantType: { select: { id: true, name: true } } },
+      return tx.contract.update({
+        where: { id },
+        data: {
+          startDate,
+          endDate,
+          monthlyFee: monthlyFee ? toNumber(monthlyFee) : existing.monthlyFee,
+          totalContractValue: totalContractValue
+            ? toNumber(totalContractValue)
+            : existing.totalContractValue,
+          depositAmount: updateData.depositAmount ?? existing.depositAmount,
+          paymentTerms: updateData.paymentTerms ?? existing.paymentTerms,
+          termsNotes: updateData.notes ?? existing.termsNotes,
+          ...(itemsData && {
+            items: { createMany: { data: itemsData } },
+          }),
         },
-      },
-    });
+        include: {
+          customer: { select: { id: true, companyName: true } },
+          items: {
+            include: { plantType: { select: { id: true, name: true } } },
+          },
+        },
+      });
     },
     { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
   );
@@ -436,8 +455,13 @@ export const updateContract = createAction(updateContractSchema, async (input) =
 });
 
 /**
- * Activate a contract (DRAFT/PENDING -> ACTIVE)
- * Requires ADMIN or MANAGER role
+ * Activates a contract, creating customer plants and updating inventory.
+ * Transitions DRAFT/PENDING to ACTIVE status. Requires ADMIN or MANAGER role.
+ *
+ * @param id - Contract UUID
+ * @returns Activated contract
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If status not DRAFT/PENDING, or insufficient inventory stock
  */
 export const activateContract = createSimpleAction(async (id: string) => {
   // Validate ID format and require role
@@ -460,60 +484,60 @@ export const activateContract = createSimpleAction(async (id: string) => {
   // Update contract and inventory atomically in transaction
   const updated = await prisma.$transaction(
     async (tx) => {
-    // Fetch inventories inside transaction for atomicity
-    const inventories = await tx.inventory.findMany({
-      where: { plantTypeId: { in: plantTypeIds } },
-    });
+      // Fetch inventories inside transaction for atomicity
+      const inventories = await tx.inventory.findMany({
+        where: { plantTypeId: { in: plantTypeIds } },
+      });
 
-    // Verify all items have sufficient stock
-    for (const item of contract.items) {
-      const inventory = inventories.find((inv) => inv.plantTypeId === item.plantTypeId);
-      if (!inventory || inventory.availableStock < item.quantity) {
-        throw new AppError(
-          `Không đủ cây trong kho (cần ${item.quantity}, có ${inventory?.availableStock ?? 0})`,
-          "INSUFFICIENT_STOCK"
-        );
+      // Verify all items have sufficient stock
+      for (const item of contract.items) {
+        const inventory = inventories.find((inv) => inv.plantTypeId === item.plantTypeId);
+        if (!inventory || inventory.availableStock < item.quantity) {
+          throw new AppError(
+            `Không đủ cây trong kho (cần ${item.quantity}, có ${inventory?.availableStock ?? 0})`,
+            "INSUFFICIENT_STOCK"
+          );
+        }
       }
-    }
 
-    // Update contract status
-    const updatedContract = await tx.contract.update({
-      where: { id },
-      data: { status: "ACTIVE" },
-    });
-
-    // Create customer plants and update inventory
-    for (const item of contract.items) {
-      // Create CustomerPlant records (without contractId field)
-      await tx.customerPlant.create({
-        data: {
-          customerId: contract.customerId,
-          plantTypeId: item.plantTypeId,
-          quantity: item.quantity,
-          status: "ACTIVE",
-          installedAt: new Date(),
-        },
-      });
-
-      // Update inventory
-      await tx.inventory.update({
-        where: { plantTypeId: item.plantTypeId },
-        data: {
-          availableStock: { decrement: item.quantity },
-          rentedStock: { increment: item.quantity },
-        },
-      });
-    }
-
-    // Update customer status if lead
-    if (contract.customer.status === "LEAD") {
-      await tx.customer.update({
-        where: { id: contract.customerId },
+      // Update contract status
+      const updatedContract = await tx.contract.update({
+        where: { id },
         data: { status: "ACTIVE" },
       });
-    }
 
-    return updatedContract;
+      // Create customer plants and update inventory
+      for (const item of contract.items) {
+        // Create CustomerPlant records (without contractId field)
+        await tx.customerPlant.create({
+          data: {
+            customerId: contract.customerId,
+            plantTypeId: item.plantTypeId,
+            quantity: item.quantity,
+            status: "ACTIVE",
+            installedAt: new Date(),
+          },
+        });
+
+        // Update inventory
+        await tx.inventory.update({
+          where: { plantTypeId: item.plantTypeId },
+          data: {
+            availableStock: { decrement: item.quantity },
+            rentedStock: { increment: item.quantity },
+          },
+        });
+      }
+
+      // Update customer status if lead
+      if (contract.customer.status === "LEAD") {
+        await tx.customer.update({
+          where: { id: contract.customerId },
+          data: { status: "ACTIVE" },
+        });
+      }
+
+      return updatedContract;
     },
     { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
   );
@@ -535,29 +559,33 @@ export const activateContract = createSimpleAction(async (id: string) => {
 });
 
 /**
- * Cancel a contract
- * Requires ADMIN or MANAGER role
+ * Cancels a contract and returns inventory if previously active.
+ * Requires ADMIN or MANAGER role.
+ *
+ * @param data - Object with contract id and optional cancellation reason
+ * @returns Cancelled contract
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract already cancelled
  */
-export const cancelContract = createSimpleAction(
-  async (data: { id: string; reason?: string }) => {
-    uuidSchema.parse(data.id);
-    const session = await requireRole("ADMIN", "MANAGER");
+export const cancelContract = createSimpleAction(async (data: { id: string; reason?: string }) => {
+  uuidSchema.parse(data.id);
+  const session = await requireRole("ADMIN", "MANAGER");
 
-    const contract = await prisma.contract.findUnique({
-      where: { id: data.id },
-      include: { items: true },
-    });
-    if (!contract) throw new NotFoundError("Hợp đồng");
+  const contract = await prisma.contract.findUnique({
+    where: { id: data.id },
+    include: { items: true },
+  });
+  if (!contract) throw new NotFoundError("Hợp đồng");
 
-    if (contract.status === "CANCELLED") {
-      throw new AppError("Hợp đồng đã bị hủy", "ALREADY_CANCELLED");
-    }
+  if (contract.status === "CANCELLED") {
+    throw new AppError("Hợp đồng đã bị hủy", "ALREADY_CANCELLED");
+  }
 
-    // If active, return inventory
-    const wasActive = contract.status === "ACTIVE";
+  // If active, return inventory
+  const wasActive = contract.status === "ACTIVE";
 
-    const updated = await prisma.$transaction(
-      async (tx) => {
+  const updated = await prisma.$transaction(
+    async (tx) => {
       // Update contract
       const updatedContract = await tx.contract.update({
         where: { id: data.id },
@@ -594,30 +622,35 @@ export const cancelContract = createSimpleAction(
       }
 
       return updatedContract;
-      },
-      { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
-    );
+    },
+    { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
+  );
 
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CANCEL",
-        entityType: "Contract",
-        entityId: data.id,
-        newValues: { reason: data.reason } as Prisma.JsonObject,
-      },
-    });
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CANCEL",
+      entityType: "Contract",
+      entityId: data.id,
+      newValues: { reason: data.reason } as Prisma.JsonObject,
+    },
+  });
 
-    revalidatePath(`/contracts/${data.id}`);
-    revalidatePath("/contracts");
-    return updated;
-  }
-);
+  revalidatePath(`/contracts/${data.id}`);
+  revalidatePath("/contracts");
+  return updated;
+});
 
 /**
- * Renew a contract (creates new contract linked to old)
- * Requires ADMIN or MANAGER role
+ * Renews a contract by creating a new DRAFT contract linked to the original.
+ * Original contract is terminated. Requires ADMIN or MANAGER role.
+ *
+ * @param data - Object with contract id, new dates, and optional item adjustments
+ * @returns New contract in DRAFT status
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract not ACTIVE/EXPIRED, or dates invalid
+ * @throws {ConflictError} If contract was already renewed
  */
 export const renewContract = createSimpleAction(
   async (data: {
@@ -636,7 +669,10 @@ export const renewContract = createSimpleAction(
     if (!oldContract) throw new NotFoundError("Hợp đồng");
 
     if (!["ACTIVE", "EXPIRED"].includes(oldContract.status)) {
-      throw new AppError("Chỉ có thể gia hạn hợp đồng đang hoạt động hoặc hết hạn", "INVALID_STATUS");
+      throw new AppError(
+        "Chỉ có thể gia hạn hợp đồng đang hoạt động hoặc hết hạn",
+        "INVALID_STATUS"
+      );
     }
 
     // Validate dates (duplicate check moved inside transaction to prevent race condition)
@@ -679,45 +715,45 @@ export const renewContract = createSimpleAction(
     // Create new contract and update old (with atomic duplicate check inside transaction)
     const newContract = await prisma.$transaction(
       async (tx) => {
-      // Check for existing renewal inside transaction to prevent race condition
-      const existingRenewal = await tx.contract.findFirst({
-        where: { previousContractId: oldContract.id },
-      });
-      if (existingRenewal) {
-        throw new ConflictError("Hợp đồng đã được gia hạn trước đó");
-      }
+        // Check for existing renewal inside transaction to prevent race condition
+        const existingRenewal = await tx.contract.findFirst({
+          where: { previousContractId: oldContract.id },
+        });
+        if (existingRenewal) {
+          throw new ConflictError("Hợp đồng đã được gia hạn trước đó");
+        }
 
-      // Create new contract
-      const created = await tx.contract.create({
-        data: {
-          contractNumber,
-          customerId: oldContract.customerId,
-          status: "DRAFT",
-          startDate: data.startDate,
-          endDate: data.endDate,
-          monthlyFee: toNumber(monthlyAmount),
-          totalContractValue: toNumber(totalAmount),
-          depositAmount: oldContract.depositAmount,
-          paymentTerms: oldContract.paymentTerms,
-          termsNotes: `Gia hạn từ hợp đồng ${oldContract.contractNumber}`,
-          previousContractId: oldContract.id, // Use previousContractId instead of renewedFromId
-          items: {
-            create: itemsData,
+        // Create new contract
+        const created = await tx.contract.create({
+          data: {
+            contractNumber,
+            customerId: oldContract.customerId,
+            status: "DRAFT",
+            startDate: data.startDate,
+            endDate: data.endDate,
+            monthlyFee: toNumber(monthlyAmount),
+            totalContractValue: toNumber(totalAmount),
+            depositAmount: oldContract.depositAmount,
+            paymentTerms: oldContract.paymentTerms,
+            termsNotes: `Gia hạn từ hợp đồng ${oldContract.contractNumber}`,
+            previousContractId: oldContract.id, // Use previousContractId instead of renewedFromId
+            items: {
+              create: itemsData,
+            },
           },
-        },
-        include: {
-          customer: { select: { id: true, companyName: true } },
-          items: true,
-        },
-      });
+          include: {
+            customer: { select: { id: true, companyName: true } },
+            items: true,
+          },
+        });
 
-      // Update old contract status (use TERMINATED instead of non-existent RENEWED)
-      await tx.contract.update({
-        where: { id: data.id },
-        data: { status: "TERMINATED", terminationReason: "Renewed" },
-      });
+        // Update old contract status (use TERMINATED instead of non-existent RENEWED)
+        await tx.contract.update({
+          where: { id: data.id },
+          data: { status: "TERMINATED", terminationReason: "Renewed" },
+        });
 
-      return created;
+        return created;
       },
       { timeout: TRANSACTION.DEFAULT_TIMEOUT_MS }
     );
@@ -750,12 +786,16 @@ const getCachedContractStats = unstable_cache(
     thirtyDaysFromNow.setDate(now.getDate() + 30);
 
     // Single query with FILTER instead of 4 separate queries
-    const stats = await prisma.$queryRaw<[{
-      total: bigint;
-      active: bigint;
-      expiring_soon: bigint;
-      monthly_recurring: string | null; // PostgreSQL Decimal returns as string
-    }]>`
+    const stats = await prisma.$queryRaw<
+      [
+        {
+          total: bigint;
+          active: bigint;
+          expiring_soon: bigint;
+          monthly_recurring: string | null; // PostgreSQL Decimal returns as string
+        },
+      ]
+    >`
       SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'ACTIVE') as active,

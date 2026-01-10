@@ -22,19 +22,26 @@ export const idParamSchema = z.object({
  */
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(PAGINATION.DEFAULT_PAGE),
-  limit: z.coerce.number().int().min(PAGINATION.MIN_PAGE_SIZE).max(PAGINATION.MAX_PAGE_SIZE).default(PAGINATION.DEFAULT_PAGE_SIZE),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(PAGINATION.MIN_PAGE_SIZE)
+    .max(PAGINATION.MAX_PAGE_SIZE)
+    .default(PAGINATION.DEFAULT_PAGE_SIZE),
 });
 
 /**
  * Date range schema
  */
-export const dateRangeSchema = z.object({
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-}).refine((data) => data.endDate >= data.startDate, {
-  message: "Ngày kết thúc phải sau ngày bắt đầu",
-  path: ["endDate"],
-});
+export const dateRangeSchema = z
+  .object({
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+  })
+  .refine((data) => data.endDate >= data.startDate, {
+    message: "Ngày kết thúc phải sau ngày bắt đầu",
+    path: ["endDate"],
+  });
 
 /**
  * Vietnamese phone number validation
@@ -42,10 +49,7 @@ export const dateRangeSchema = z.object({
  */
 export const phoneSchema = z
   .string()
-  .regex(
-    /^(\+84|0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-9]|9[0-9])[0-9]{7}$/,
-    "Số điện thoại không hợp lệ"
-  )
+  .regex(/^(\+84|0)(3[2-9]|5[6|8|9]|7[0|6-9]|8[1-9]|9[0-9])[0-9]{7}$/, "Số điện thoại không hợp lệ")
   .transform((val) => val.replace(/\s+/g, ""));
 
 /**

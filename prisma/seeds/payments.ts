@@ -124,7 +124,9 @@ export async function seedPayments() {
         },
       });
 
-      console.log(`  ✅ Created payment: ${paymentAmount.toLocaleString()}đ for ${invoice.invoiceNumber} (${data.paymentMethod})`);
+      console.log(
+        `  ✅ Created payment: ${paymentAmount.toLocaleString()}đ for ${invoice.invoiceNumber} (${data.paymentMethod})`
+      );
       createdCount++;
     } catch (error) {
       console.error(`  ❌ Error creating payment for ${invoice.invoiceNumber}:`, error);

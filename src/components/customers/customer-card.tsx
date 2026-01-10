@@ -4,21 +4,11 @@
  */
 import { memo } from "react";
 import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Leaf,
-  FileText,
-  StickyNote,
-  Crown,
-  Star,
-} from "lucide-react";
+import { MapPin, Phone, Mail, Leaf, FileText, StickyNote, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
 
 interface CustomerCardProps {
   customer: {
@@ -31,7 +21,6 @@ interface CustomerCardProps {
     contactPhone: string | null;
     contactEmail: string | null;
     status: CustomerStatus;
-    tier: CustomerTier;
     _count?: {
       customerPlants: number;
       stickyNotes: number;
@@ -40,46 +29,32 @@ interface CustomerCardProps {
   };
 }
 
-const statusConfig: Record<CustomerStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  CustomerStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   LEAD: { label: "Tiềm năng", variant: "secondary" },
   ACTIVE: { label: "Hoạt động", variant: "default" },
   INACTIVE: { label: "Ngưng", variant: "outline" },
   TERMINATED: { label: "Đã xóa", variant: "destructive" },
 };
 
-const tierConfig: Record<CustomerTier, { label: string; icon: typeof Crown; color: string }> = {
-  VIP: { label: "VIP", icon: Crown, color: "text-amber-500" },
-  PREMIUM: { label: "Premium", icon: Star, color: "text-purple-500" },
-  STANDARD: { label: "Standard", icon: Star, color: "text-muted-foreground" },
-};
-
-function CustomerCardComponent({ customer }: CustomerCardProps) {
+export function CustomerCard({ customer }: CustomerCardProps) {
   const status = statusConfig[customer.status];
-  const tier = tierConfig[customer.tier];
-  const TierIcon = tier.icon;
 
   return (
-    <div className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
-      {/* Tier indicator */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn("flex h-10 w-10 items-center justify-center rounded-full bg-muted", tier.color)}>
-              <TierIcon className="h-5 w-5" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Hạng {tier.label}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+    <div className="group bg-card hover:bg-accent/50 flex items-center gap-4 rounded-lg border p-4 transition-colors">
+      {/* Company icon */}
+      <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full">
+        <Building2 className="h-5 w-5" />
+      </div>
 
       {/* Main info */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <Link
             href={`/customers/${customer.id}`}
-            className="font-medium text-foreground hover:underline truncate"
+            className="text-foreground truncate font-medium hover:underline"
           >
             {customer.companyName}
           </Link>
@@ -91,13 +66,11 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
           </Badge>
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[200px]">{customer.address}</span>
-            {customer.district && (
-              <span className="text-xs">({customer.district})</span>
-            )}
+            <span className="max-w-[200px] truncate">{customer.address}</span>
+            {customer.district && <span className="text-xs">({customer.district})</span>}
           </span>
           {customer.contactPhone && (
             <span className="flex items-center gap-1">
@@ -108,7 +81,7 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
           {customer.contactEmail && (
             <span className="flex items-center gap-1">
               <Mail className="h-3.5 w-3.5" />
-              <span className="truncate max-w-[150px]">{customer.contactEmail}</span>
+              <span className="max-w-[150px] truncate">{customer.contactEmail}</span>
             </span>
           )}
         </div>
@@ -116,7 +89,7 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
 
       {/* Stats */}
       {customer._count && (
-        <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="text-muted-foreground hidden items-center gap-4 text-sm md:flex">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

@@ -5,46 +5,46 @@
  * used by session-init.cjs and dev-rules-reminder.cjs
  */
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
-const LOCAL_CONFIG_PATH = '.claude/.ck.json';
-const GLOBAL_CONFIG_PATH = path.join(os.homedir(), '.claude', '.ck.json');
+const LOCAL_CONFIG_PATH = ".claude/.ck.json";
+const GLOBAL_CONFIG_PATH = path.join(os.homedir(), ".claude", ".ck.json");
 
 // Legacy export for backward compatibility
 const CONFIG_PATH = LOCAL_CONFIG_PATH;
 
 const DEFAULT_CONFIG = {
   plan: {
-    namingFormat: '{date}-{issue}-{slug}',
-    dateFormat: 'YYMMDD-HHmm',
+    namingFormat: "{date}-{issue}-{slug}",
+    dateFormat: "YYMMDD-HHmm",
     issuePrefix: null,
-    reportsDir: 'reports',
+    reportsDir: "reports",
     resolution: {
       // CHANGED: Removed 'mostRecent' - only explicit session state activates plans
       // Branch matching now returns 'suggested' not 'active'
-      order: ['session', 'branch'],
-      branchPattern: '(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)'
-    }
+      order: ["session", "branch"],
+      branchPattern: "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)",
+    },
   },
   paths: {
-    docs: 'docs',
-    plans: 'plans'
+    docs: "docs",
+    plans: "plans",
   },
   locale: {
-    responseLanguage: null
+    responseLanguage: null,
   },
   trust: {
     passphrase: null,
-    enabled: false
+    enabled: false,
   },
   project: {
-    type: 'auto',
-    packageManager: 'auto',
-    framework: 'auto'
+    type: "auto",
+    packageManager: "auto",
+    framework: "auto",
   },
-  assertions: []
+  assertions: [],
 };
 
 /**
@@ -55,8 +55,8 @@ const DEFAULT_CONFIG = {
  * @returns {Object} Merged object
  */
 function deepMerge(target, source) {
-  if (!source || typeof source !== 'object') return target;
-  if (!target || typeof target !== 'object') return source;
+  if (!source || typeof source !== "object") return target;
+  if (!target || typeof target !== "object") return source;
 
   const result = { ...target };
   for (const key of Object.keys(source)) {
@@ -68,7 +68,7 @@ function deepMerge(target, source) {
       result[key] = [...sourceVal];
     }
     // Objects: recurse (but not null)
-    else if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+    else if (sourceVal !== null && typeof sourceVal === "object" && !Array.isArray(sourceVal)) {
       result[key] = deepMerge(targetVal || {}, sourceVal);
     }
     // Primitives: source wins
@@ -87,7 +87,7 @@ function deepMerge(target, source) {
 function loadConfigFromPath(configPath) {
   try {
     if (!fs.existsSync(configPath)) return null;
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    return JSON.parse(fs.readFileSync(configPath, "utf8"));
   } catch (e) {
     return null;
   }
@@ -112,7 +112,7 @@ function readSessionState(sessionId) {
   const tempPath = getSessionTempPath(sessionId);
   try {
     if (!fs.existsSync(tempPath)) return null;
-    return JSON.parse(fs.readFileSync(tempPath, 'utf8'));
+    return JSON.parse(fs.readFileSync(tempPath, "utf8"));
   } catch (e) {
     return null;
   }
@@ -127,13 +127,17 @@ function readSessionState(sessionId) {
 function writeSessionState(sessionId, state) {
   if (!sessionId) return false;
   const tempPath = getSessionTempPath(sessionId);
-  const tmpFile = tempPath + '.' + Math.random().toString(36).slice(2);
+  const tmpFile = tempPath + "." + Math.random().toString(36).slice(2);
   try {
     fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2));
     fs.renameSync(tmpFile, tempPath);
     return true;
   } catch (e) {
-    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
+    try {
+      fs.unlinkSync(tmpFile);
+    } catch (_) {
+      /* ignore */
+    }
     return false;
   }
 }
@@ -144,8 +148,11 @@ function writeSessionState(sessionId, state) {
  * @returns {string} Sanitized slug
  */
 function sanitizeSlug(slug) {
-  if (!slug) return '';
-  return slug.replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').slice(0, 100);
+  if (!slug) return "";
+  return slug
+    .replace(/[^a-z0-9-]/gi, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 100);
 }
 
 /**
@@ -173,8 +180,8 @@ function findMostRecentPlan(plansDir) {
     if (!fs.existsSync(plansDir)) return null;
     const entries = fs.readdirSync(plansDir, { withFileTypes: true });
     const planDirs = entries
-      .filter(e => e.isDirectory() && /^\d{6}/.test(e.name))
-      .map(e => e.name)
+      .filter((e) => e.isDirectory() && /^\d{6}/.test(e.name))
+      .map((e) => e.name)
       .sort()
       .reverse();
     return planDirs.length > 0 ? path.join(plansDir, planDirs[0]) : null;
@@ -191,14 +198,14 @@ function findMostRecentPlan(plansDir) {
  */
 function execSafe(cmd) {
   // Whitelist of safe read-only commands
-  const allowedCommands = ['git branch --show-current', 'git rev-parse --abbrev-ref HEAD'];
+  const allowedCommands = ["git branch --show-current", "git rev-parse --abbrev-ref HEAD"];
   if (!allowedCommands.includes(cmd)) {
     return null;
   }
 
   try {
-    return require('child_process')
-      .execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] })
+    return require("child_process")
+      .execSync(cmd, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] })
       .trim();
   } catch (e) {
     return null;
@@ -218,35 +225,36 @@ function execSafe(cmd) {
  * @returns {{ path: string|null, resolvedBy: 'session'|'branch'|null }} Resolution result with tracking
  */
 function resolvePlanPath(sessionId, config) {
-  const plansDir = config?.paths?.plans || 'plans';
+  const plansDir = config?.paths?.plans || "plans";
   const resolution = config?.plan?.resolution || {};
-  const order = resolution.order || ['session', 'branch'];
+  const order = resolution.order || ["session", "branch"];
   const branchPattern = resolution.branchPattern;
 
   for (const method of order) {
     switch (method) {
-      case 'session': {
+      case "session": {
         const state = readSessionState(sessionId);
         if (state?.activePlan) {
           // Only use session state if CWD matches session origin (monorepo support)
           if (state.sessionOrigin && state.sessionOrigin !== process.cwd()) {
-            break;  // Fall through to branch
+            break; // Fall through to branch
           }
-          return { path: state.activePlan, resolvedBy: 'session' };
+          return { path: state.activePlan, resolvedBy: "session" };
         }
         break;
       }
-      case 'branch': {
+      case "branch": {
         try {
-          const branch = execSafe('git branch --show-current');
+          const branch = execSafe("git branch --show-current");
           const slug = extractSlugFromBranch(branch, branchPattern);
           if (slug && fs.existsSync(plansDir)) {
-            const entries = fs.readdirSync(plansDir, { withFileTypes: true })
-              .filter(e => e.isDirectory() && e.name.includes(slug));
+            const entries = fs
+              .readdirSync(plansDir, { withFileTypes: true })
+              .filter((e) => e.isDirectory() && e.name.includes(slug));
             if (entries.length > 0) {
               return {
                 path: path.join(plansDir, entries[entries.length - 1].name),
-                resolvedBy: 'branch'
+                resolvedBy: "branch",
               };
             }
           }
@@ -265,7 +273,7 @@ function resolvePlanPath(sessionId, config) {
  * Sanitize path values (prevent path traversal)
  */
 function sanitizePath(pathValue, projectRoot) {
-  if (!pathValue || typeof pathValue !== 'string') return pathValue;
+  if (!pathValue || typeof pathValue !== "string") return pathValue;
   const resolved = path.resolve(projectRoot, pathValue);
   if (!resolved.startsWith(projectRoot + path.sep) && resolved !== projectRoot) {
     return null;
@@ -287,7 +295,7 @@ function sanitizeConfig(config, projectRoot) {
     // Merge resolution defaults
     result.plan.resolution = {
       ...DEFAULT_CONFIG.plan.resolution,
-      ...result.plan.resolution
+      ...result.plan.resolution,
     };
   }
 
@@ -343,7 +351,7 @@ function loadConfig(options = {}) {
     // Build result with optional sections
     const result = {
       plan: merged.plan || DEFAULT_CONFIG.plan,
-      paths: merged.paths || DEFAULT_CONFIG.paths
+      paths: merged.paths || DEFAULT_CONFIG.paths,
     };
 
     if (includeLocale) {
@@ -370,7 +378,7 @@ function loadConfig(options = {}) {
 function getDefaultConfig(includeProject = true, includeAssertions = true, includeLocale = true) {
   const result = {
     plan: { ...DEFAULT_CONFIG.plan },
-    paths: { ...DEFAULT_CONFIG.paths }
+    paths: { ...DEFAULT_CONFIG.paths },
   };
   if (includeLocale) {
     result.locale = { ...DEFAULT_CONFIG.locale };
@@ -388,8 +396,8 @@ function getDefaultConfig(includeProject = true, includeAssertions = true, inclu
  * Escape shell special characters for env file values
  */
 function escapeShellValue(str) {
-  if (typeof str !== 'string') return str;
-  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$');
+  if (typeof str !== "string") return str;
+  return str.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\$/g, "\\$");
 }
 
 /**
@@ -415,7 +423,7 @@ function writeEnv(envFile, key, value) {
  */
 function getReportsPath(planPath, resolvedBy, planConfig, pathsConfig) {
   // Only use plan-specific reports path if explicitly active (session state)
-  if (planPath && resolvedBy === 'session') {
+  if (planPath && resolvedBy === "session") {
     return `${planPath}/${planConfig.reportsDir}/`;
   }
   // Default path for no plan or suggested (branch-matched) plans
@@ -435,11 +443,7 @@ function formatIssueId(issueId, planConfig) {
  */
 function extractIssueFromBranch(branch) {
   if (!branch) return null;
-  const patterns = [
-    /(?:issue|gh|fix|feat|bug)[/-]?(\d+)/i,
-    /[/-](\d+)[/-]/,
-    /#(\d+)/
-  ];
+  const patterns = [/(?:issue|gh|fix|feat|bug)[/-]?(\d+)/i, /[/-](\d+)[/-]/, /#(\d+)/];
   for (const pattern of patterns) {
     const match = branch.match(pattern);
     if (match) return match[1];
@@ -467,5 +471,5 @@ module.exports = {
   findMostRecentPlan,
   getReportsPath,
   formatIssueId,
-  extractIssueFromBranch
+  extractIssueFromBranch,
 };

@@ -25,8 +25,18 @@ export async function getPayments(params: PaymentSearchParams) {
   await requireAuth();
 
   const validated = paymentSearchSchema.parse(params);
-  const { page, limit, invoiceId, customerId, paymentMethod, isVerified, dateFrom, dateTo, minAmount, maxAmount } =
-    validated;
+  const {
+    page,
+    limit,
+    invoiceId,
+    customerId,
+    paymentMethod,
+    isVerified,
+    dateFrom,
+    dateTo,
+    minAmount,
+    maxAmount,
+  } = validated;
 
   const skip = (page - 1) * limit;
 
@@ -297,10 +307,7 @@ export async function updatePayment(id: string, data: unknown) {
         select: { amount: true },
       });
 
-      const totalPaid = allPayments.reduce(
-        (sum, p) => addDecimal(sum, p.amount),
-        toDecimal(0)
-      );
+      const totalPaid = allPayments.reduce((sum, p) => addDecimal(sum, p.amount), toDecimal(0));
 
       const remainingBalance = subtractDecimal(existing.invoice.totalAmount, totalPaid);
 
@@ -412,10 +419,7 @@ export async function deletePayment(id: string) {
       select: { amount: true },
     });
 
-    const totalPaid = remainingPayments.reduce(
-      (sum, p) => addDecimal(sum, p.amount),
-      toDecimal(0)
-    );
+    const totalPaid = remainingPayments.reduce((sum, p) => addDecimal(sum, p.amount), toDecimal(0));
 
     const remainingBalance = subtractDecimal(payment.invoice.totalAmount, totalPaid);
 

@@ -57,12 +57,10 @@ async function NewCareFormContent({ searchParams }: NewCarePageProps) {
   const defaultCustomerId = params.customerId;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Tạo lịch chăm sóc mới</h1>
-        <p className="text-gray-600 mt-1">
-          Lên lịch chăm sóc cây thuê tại khách hàng
-        </p>
+        <p className="mt-1 text-gray-600">Lên lịch chăm sóc cây thuê tại khách hàng</p>
       </div>
 
       <CareScheduleForm
@@ -79,7 +77,7 @@ export default async function NewCarePage(props: NewCarePageProps) {
   return (
     <Suspense
       fallback={
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="mx-auto max-w-4xl space-y-6">
           <Skeleton className="h-12 w-64" />
           <Skeleton className="h-96 w-full" />
         </div>

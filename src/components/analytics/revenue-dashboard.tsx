@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 
 interface RevenueData {
   totalRevenue: number;
@@ -35,14 +36,6 @@ interface RevenueDashboardProps {
 }
 
 export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const isGrowthPositive = overview.revenueGrowth >= 0;
 
   return (
@@ -53,15 +46,11 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(overview.totalRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Tất cả các hóa đơn đã thanh toán
-            </p>
+            <div className="text-2xl font-bold">{formatCurrency(overview.totalRevenue)}</div>
+            <p className="text-muted-foreground mt-1 text-xs">Tất cả các hóa đơn đã thanh toán</p>
           </CardContent>
         </Card>
 
@@ -69,15 +58,11 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Doanh thu năm nay</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(overview.ytdRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Từ đầu năm đến nay
-            </p>
+            <div className="text-2xl font-bold">{formatCurrency(overview.ytdRevenue)}</div>
+            <p className="text-muted-foreground mt-1 text-xs">Từ đầu năm đến nay</p>
           </CardContent>
         </Card>
 
@@ -85,17 +70,15 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Doanh thu tháng này</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(overview.mtdRevenue)}
-            </div>
-            <div className="flex items-center text-xs mt-1">
+            <div className="text-2xl font-bold">{formatCurrency(overview.mtdRevenue)}</div>
+            <div className="mt-1 flex items-center text-xs">
               {isGrowthPositive ? (
-                <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
+                <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
               ) : (
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
+                <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
               )}
               <span className={isGrowthPositive ? "text-green-500" : "text-red-500"}>
                 {Math.abs(overview.revenueGrowth)}%
@@ -109,15 +92,11 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Giá trị hợp đồng TB</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(overview.avgContractValue)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Trung bình mỗi hợp đồng/tháng
-            </p>
+            <div className="text-2xl font-bold">{formatCurrency(overview.avgContractValue)}</div>
+            <p className="text-muted-foreground mt-1 text-xs">Trung bình mỗi hợp đồng/tháng</p>
           </CardContent>
         </Card>
       </div>
@@ -140,9 +119,7 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
               />
               <YAxis
                 tick={{ fontSize: 12 }}
-                tickFormatter={(value) =>
-                  `${(value / 1000000).toFixed(1)}M`
-                }
+                tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
               />
               <Tooltip
                 formatter={(value: number | undefined) => [formatCurrency(value ?? 0), "Doanh thu"]}

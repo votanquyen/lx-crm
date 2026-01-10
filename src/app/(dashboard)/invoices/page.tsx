@@ -37,7 +37,7 @@ async function InvoiceStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tổng hóa đơn</CardTitle>
-          <Receipt className="h-4 w-4 text-muted-foreground" />
+          <Receipt className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
@@ -61,7 +61,7 @@ async function InvoiceStats() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-red-600">{stats.overdue}</div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {formatCurrency(Number(stats.overdueAmount))}
           </p>
         </CardContent>
@@ -123,9 +123,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Hóa đơn</h1>
-          <p className="text-muted-foreground">
-            Quản lý hóa đơn và thanh toán
-          </p>
+          <p className="text-muted-foreground">Quản lý hóa đơn và thanh toán</p>
         </div>
         <Button asChild>
           <Link href="/invoices/new">
@@ -155,10 +153,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </Suspense>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         <Link
           href="/invoices"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             !status && !overdueOnly ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -166,7 +164,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </Link>
         <Link
           href="/invoices?status=SENT"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "SENT" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -174,7 +172,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </Link>
         <Link
           href="/invoices?status=PARTIAL"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "PARTIAL" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -182,7 +180,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </Link>
         <Link
           href="/invoices?overdueOnly=true"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             overdueOnly ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -190,7 +188,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </Link>
         <Link
           href="/invoices?status=PAID"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "PAID" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -198,7 +196,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         </Link>
         <Link
           href="/invoices?status=DRAFT"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "DRAFT" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >

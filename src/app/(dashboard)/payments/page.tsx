@@ -130,7 +130,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
               <Link
                 key={payment.id}
                 href={`/payments/${payment.id}`}
-                className="block rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                className="hover:bg-muted/50 block rounded-lg border p-4 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
@@ -138,7 +138,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                       <span className="font-semibold">
                         {payment.invoice
                           ? `${payment.invoice.invoiceNumber}/${new Date(payment.invoice.issueDate).getDate()}-${new Date(payment.invoice.issueDate).getMonth() + 1}`
-                          : 'N/A'}
+                          : "N/A"}
                       </span>
                       <Badge variant={payment.isVerified ? "default" : "secondary"}>
                         {payment.isVerified ? "Đã xác minh" : "Chưa xác minh"}
@@ -146,14 +146,12 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                       <Badge variant="outline">{paymentMethodLabels[payment.paymentMethod]}</Badge>
                     </div>
 
-                    <div className="text-sm text-muted-foreground">
-                      {payment.invoice?.customer.companyName ?? 'Không xác định'}
+                    <div className="text-muted-foreground text-sm">
+                      {payment.invoice?.customer.companyName ?? "Không xác định"}
                     </div>
 
                     <div className="flex items-center gap-4 text-sm">
-                      <span>
-                        Ngày: {new Date(payment.paymentDate).toLocaleDateString("vi-VN")}
-                      </span>
+                      <span>Ngày: {new Date(payment.paymentDate).toLocaleDateString("vi-VN")}</span>
                       {payment.bankRef && <span>Ref: {payment.bankRef}</span>}
                       {payment.receivedBy && <span>Người nhận: {payment.receivedBy}</span>}
                     </div>
@@ -164,7 +162,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                       {formatCurrencyDecimal(payment.amount)}
                     </div>
                     {payment.recordedBy && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-muted-foreground text-sm">
                         Bởi: {payment.recordedBy.name}
                       </div>
                     )}
@@ -174,9 +172,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
             ))}
 
             {paymentsResult.payments.length === 0 && (
-              <div className="py-12 text-center text-muted-foreground">
-                Chưa có thanh toán nào
-              </div>
+              <div className="text-muted-foreground py-12 text-center">Chưa có thanh toán nào</div>
             )}
           </div>
         </CardContent>
@@ -190,7 +186,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
               <Link
                 key={pageNum}
                 href={`?page=${pageNum}${params.paymentMethod ? `&paymentMethod=${params.paymentMethod}` : ""}${params.isVerified ? `&isVerified=${params.isVerified}` : ""}`}
-                className={`px-3 py-1 rounded ${
+                className={`rounded px-3 py-1 ${
                   pageNum === page
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary hover:bg-secondary/80"
@@ -234,9 +230,7 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${variant ? colors[variant] : ""}`}>{value}</div>
-        {count !== undefined && (
-          <p className="text-xs text-muted-foreground">{count} thanh toán</p>
-        )}
+        {count !== undefined && <p className="text-muted-foreground text-xs">{count} thanh toán</p>}
       </CardContent>
     </Card>
   );

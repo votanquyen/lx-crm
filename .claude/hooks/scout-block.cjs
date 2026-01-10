@@ -25,30 +25,30 @@
  * - 2: Command blocked or error occurred
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+const { execSync } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 // __dirname and __filename are already available in CommonJS
 
 try {
   // Read stdin synchronously
-  const hookInput = fs.readFileSync(0, 'utf-8');
+  const hookInput = fs.readFileSync(0, "utf-8");
 
   // Validate input not empty
   if (!hookInput || hookInput.trim().length === 0) {
-    console.error('ERROR: Empty input');
+    console.error("ERROR: Empty input");
     process.exit(2);
   }
 
   // Validate JSON structure (basic check)
   try {
     const data = JSON.parse(hookInput);
-    if (!data.tool_input || typeof data.tool_input !== 'object') {
-      console.error('ERROR: Invalid JSON structure');
+    if (!data.tool_input || typeof data.tool_input !== "object") {
+      console.error("ERROR: Invalid JSON structure");
       process.exit(2);
     }
   } catch (parseError) {
-    console.error('ERROR: JSON parse failed:', parseError.message);
+    console.error("ERROR: JSON parse failed:", parseError.message);
     process.exit(2);
   }
 
@@ -56,9 +56,9 @@ try {
   const platform = process.platform;
   const scriptDir = __dirname;
 
-  if (platform === 'win32') {
+  if (platform === "win32") {
     // Windows: Use PowerShell implementation
-    const psScript = path.join(scriptDir, 'scout-block', 'scout-block.ps1');
+    const psScript = path.join(scriptDir, "scout-block", "scout-block.ps1");
 
     // Check if PowerShell script exists
     if (!fs.existsSync(psScript)) {
@@ -69,12 +69,12 @@ try {
     // Execute PowerShell script with stdin piped
     execSync(`powershell -NoProfile -ExecutionPolicy Bypass -File "${psScript}"`, {
       input: hookInput,
-      stdio: ['pipe', 'inherit', 'inherit'],
-      encoding: 'utf-8'
+      stdio: ["pipe", "inherit", "inherit"],
+      encoding: "utf-8",
     });
   } else {
     // Unix (Linux, macOS, WSL): Use bash implementation
-    const bashScript = path.join(scriptDir, 'scout-block', 'scout-block.sh');
+    const bashScript = path.join(scriptDir, "scout-block", "scout-block.sh");
 
     // Check if bash script exists
     if (!fs.existsSync(bashScript)) {
@@ -85,14 +85,14 @@ try {
     // Execute bash script with stdin piped
     execSync(`bash "${bashScript}"`, {
       input: hookInput,
-      stdio: ['pipe', 'inherit', 'inherit'],
-      encoding: 'utf-8'
+      stdio: ["pipe", "inherit", "inherit"],
+      encoding: "utf-8",
     });
   }
 } catch (error) {
   // Log error details for debugging
   if (error.message) {
-    console.error('ERROR:', error.message);
+    console.error("ERROR:", error.message);
   }
 
   // Exit with error code from child process, or 2 if undefined

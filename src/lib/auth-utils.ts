@@ -32,11 +32,7 @@ export async function requireRole(...roles: (UserRole | UserRole[])[]) {
   const allowedRoles = roles.flat() as UserRole[];
 
   if (!allowedRoles.includes(session.user.role as UserRole)) {
-    throw new AppError(
-      "Bạn không có quyền thực hiện thao tác này",
-      "FORBIDDEN",
-      403
-    );
+    throw new AppError("Bạn không có quyền thực hiện thao tác này", "FORBIDDEN", 403);
   }
 
   return session;

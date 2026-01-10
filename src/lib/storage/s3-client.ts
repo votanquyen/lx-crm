@@ -25,17 +25,29 @@ const s3Client = new S3Client({
 const BUCKET = process.env.MINIO_BUCKET || "locxanh-photos";
 const PUBLIC_URL = process.env.MINIO_PUBLIC_URL; // External URL for public access
 
+/** Presigned URL expiry times in seconds */
+const PRESIGNED_URL_EXPIRY = {
+  /** Default: 1 hour for general files */
+  DEFAULT: 3600,
+  /** Care photos: 24 hours (need longer access for review) */
+  CARE_PHOTOS: 86400,
+  /** Exchange photos: 24 hours */
+  EXCHANGE_PHOTOS: 86400,
+} as const;
+
 /**
  * Upload a file to MinIO
  * @param file - File buffer or stream
  * @param key - S3 object key (path/filename)
  * @param contentType - MIME type
+ * @param expiresIn - Presigned URL expiry in seconds (default: 1 hour)
  * @returns Public URL (external MinIO host) or presigned URL
  */
 export async function uploadToS3(
   file: Buffer | Uint8Array,
   key: string,
-  contentType: string
+  contentType: string,
+  expiresIn: number = PRESIGNED_URL_EXPIRY.DEFAULT
 ): Promise<string> {
   const command = new PutObjectCommand({
     Bucket: BUCKET,
@@ -52,12 +64,12 @@ export async function uploadToS3(
     return `${PUBLIC_URL}/${key}`;
   }
 
-  // Generate presigned URL (expires in 7 days) for private access
+  // Generate presigned URL with configurable expiry (default: 1 hour)
   const getCommand = new GetObjectCommand({
     Bucket: BUCKET,
     Key: key,
   });
-  return await getSignedUrl(s3Client, getCommand, { expiresIn: 604800 });
+  return await getSignedUrl(s3Client, getCommand, { expiresIn });
 }
 
 /**
@@ -79,16 +91,18 @@ export function generateFileKey(filename: string, prefix?: string): string {
 
 /**
  * Upload care schedule photo
+ * Uses 24-hour presigned URL expiry for care photo review
  */
 export async function uploadCarePhoto(file: Buffer, filename: string): Promise<string> {
   const key = generateFileKey(filename, "care");
-  return await uploadToS3(file, key, "image/jpeg");
+  return await uploadToS3(file, key, "image/jpeg", PRESIGNED_URL_EXPIRY.CARE_PHOTOS);
 }
 
 /**
  * Upload exchange photo
+ * Uses 24-hour presigned URL expiry for exchange photo review
  */
 export async function uploadExchangePhoto(file: Buffer, filename: string): Promise<string> {
   const key = generateFileKey(filename, "exchange");
-  return await uploadToS3(file, key, "image/jpeg");
+  return await uploadToS3(file, key, "image/jpeg", PRESIGNED_URL_EXPIRY.EXCHANGE_PHOTOS);
 }

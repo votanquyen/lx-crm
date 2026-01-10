@@ -7,11 +7,13 @@ Think strategically about parallelization.
 Activate `planning` skill.
 
 ## Your mission
+
 <task>
 $ARGUMENTS
 </task>
 
 ## Workflow
+
 1. Create a directory named `plans/{date}-plan-name` (date format from `$CK_PLAN_DATE_FORMAT`).
    Make sure you pass the directory path to every subagent during the process.
 2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
@@ -25,6 +27,7 @@ $ARGUMENTS
 ## Special Requirements for Parallel Execution
 
 **CRITICAL:** The planner subagent must create phases that:
+
 1. **Can be executed independently** - Each phase should be self-contained with no runtime dependencies on other phases
 2. **Have clear boundaries** - No file overlap between phases (each file should only be modified in ONE phase)
 3. **Separate concerns logically** - Group by architectural layer, feature domain, or technology stack
@@ -32,6 +35,7 @@ $ARGUMENTS
 5. **Include dependency matrix** - Clearly document which phases must run sequentially vs in parallel
 
 **Parallelization Strategy:**
+
 - Group frontend/backend/database work into separate phases when possible
 - Separate infrastructure setup from application logic
 - Isolate different feature domains (e.g., auth vs profile vs payments)
@@ -39,6 +43,7 @@ $ARGUMENTS
 - Create independent test phases per module
 
 **Phase Organization Example:**
+
 ```
 Phase 01: Database Schema (can run independently)
 Phase 02: Backend API Layer (can run independently)
@@ -49,6 +54,7 @@ Phase 04: Integration Tests (depends on 01, 02, 03)
 ## Output Requirements
 
 **Plan Directory Structure**
+
 ```
 plans/
 └── {date}-plan-name/
@@ -67,9 +73,11 @@ plans/
 ```
 
 **Research Output Requirements**
+
 - Ensure every research markdown report remains concise (≤150 lines) while covering all requested topics and citations.
 
 **Plan File Specification**
+
 - Save the overview access point at `plans/{date}-plan-name/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status, progress, parallelization group, and links to phase files.
 - For each phase, create `plans/{date}-plan-name/phase-XX-phase-name-here.md` containing the following sections in order:
   - Context links (reference parent plan, dependencies, docs)
@@ -89,11 +97,13 @@ plans/
   - Next steps
 
 **Main plan.md must include:**
+
 - Dependency graph showing which phases can run in parallel
 - Execution strategy (e.g., "Phases 1-3 parallel, then Phase 4")
 - File ownership matrix (which phase owns which files)
 
 ## Important Notes
+
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.

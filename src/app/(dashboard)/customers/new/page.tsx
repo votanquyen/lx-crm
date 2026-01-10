@@ -17,9 +17,7 @@ export default function NewCustomerPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Thêm khách hàng mới</h1>
-          <p className="text-muted-foreground">
-            Điền thông tin để tạo khách hàng mới
-          </p>
+          <p className="text-muted-foreground">Điền thông tin để tạo khách hàng mới</p>
         </div>
       </div>
 

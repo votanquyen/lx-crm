@@ -19,27 +19,29 @@
 ## Database Verification ✅
 
 ### Plant Types Data
+
 Successfully verified 15 plant types in database:
 
-| Code | Name | Category | Price | Inventory |
-|------|------|----------|-------|-----------|
-| BD | Cây Bạch Đàn | Outdoor | 120,000đ | 32/34 |
-| CAU-HANH-PHUC | Cau Hạnh Phúc | Cây văn phòng | 250,000đ | 30/50 |
-| KIM-NGAN | Kim Ngân | Cây phong thủy | 180,000đ | 30/50 |
-| KT | Cây Kim Tiền | Indoor | 50,000đ | 17/49 |
-| LA | Cây Lan Ý | Indoor | 100,000đ | 8/25 |
-| LAN-Y | Lan Ý | Cây thanh lọc | 120,000đ | 30/50 |
-| LOC-VUNG | Lộc Vừng | Bonsai | 350,000đ | 30/50 |
-| PT | Cây Phát Tài | Indoor | 80,000đ | 20/20 |
-| RP | Cây Rơi Phượng | Outdoor | 70,000đ | 7/11 |
-| SN | Cây Sen Đá | Indoor | 20,000đ | 24/37 |
-| TB | Cây Trúc Bách Hợp | Indoor | 60,000đ | 32/31 |
-| TRAU-BA | Trầu Bà | Cây dây leo | 80,000đ | 30/50 |
-| TT | Cây Thiết Thụ | Indoor | 45,000đ | 28/43 |
-| VT | Cây Vạn Tuế | Indoor | 35,000đ | 5/28 |
-| XD | Cây Xương Rồng | Indoor | 25,000đ | 33/46 |
+| Code          | Name              | Category       | Price    | Inventory |
+| ------------- | ----------------- | -------------- | -------- | --------- |
+| BD            | Cây Bạch Đàn      | Outdoor        | 120,000đ | 32/34     |
+| CAU-HANH-PHUC | Cau Hạnh Phúc     | Cây văn phòng  | 250,000đ | 30/50     |
+| KIM-NGAN      | Kim Ngân          | Cây phong thủy | 180,000đ | 30/50     |
+| KT            | Cây Kim Tiền      | Indoor         | 50,000đ  | 17/49     |
+| LA            | Cây Lan Ý         | Indoor         | 100,000đ | 8/25      |
+| LAN-Y         | Lan Ý             | Cây thanh lọc  | 120,000đ | 30/50     |
+| LOC-VUNG      | Lộc Vừng          | Bonsai         | 350,000đ | 30/50     |
+| PT            | Cây Phát Tài      | Indoor         | 80,000đ  | 20/20     |
+| RP            | Cây Rơi Phượng    | Outdoor        | 70,000đ  | 7/11      |
+| SN            | Cây Sen Đá        | Indoor         | 20,000đ  | 24/37     |
+| TB            | Cây Trúc Bách Hợp | Indoor         | 60,000đ  | 32/31     |
+| TRAU-BA       | Trầu Bà           | Cây dây leo    | 80,000đ  | 30/50     |
+| TT            | Cây Thiết Thụ     | Indoor         | 45,000đ  | 28/43     |
+| VT            | Cây Vạn Tuế       | Indoor         | 35,000đ  | 5/28      |
+| XD            | Cây Xương Rồng    | Indoor         | 25,000đ  | 33/46     |
 
 ### Inventory Statistics
+
 - **Total Stock:** 574 units
 - **Available:** 356 units (62%)
 - **Rented:** 180 units (31%)
@@ -51,6 +53,7 @@ Successfully verified 15 plant types in database:
 ## Route Structure Verification ✅
 
 ### Page Files Exist
+
 ```
 src/app/(dashboard)/plant-types/
 ├── page.tsx                    ✅ List page
@@ -63,18 +66,21 @@ src/app/(dashboard)/plant-types/
 ```
 
 ### Component Files Exist
+
 ```
 src/components/plant-types/
 └── plant-type-form.tsx        ✅ Reusable form
 ```
 
 ### Action Files Exist
+
 ```
 src/actions/
 └── plant-types.ts             ✅ Server actions (CRUD)
 ```
 
 ### Validation Files Exist
+
 ```
 src/lib/validations/
 └── plant-type.ts              ✅ Zod schemas
@@ -85,12 +91,14 @@ src/lib/validations/
 ## Authentication & Authorization ✅
 
 ### Protected Routes
+
 - **List Page:** `/plant-types` → Redirects to login ✅
 - **Create Page:** `/plant-types/new` → Redirects to login ✅
 - **Detail Page:** `/plant-types/[id]` → Redirects to login ✅
 - **Edit Page:** `/plant-types/[id]/edit` → Redirects to login ✅
 
 ### Authorization Check
+
 ```bash
 curl -I http://localhost:3001/plant-types
 # HTTP/1.1 307 Temporary Redirect
@@ -104,6 +112,7 @@ curl -I http://localhost:3001/plant-types
 ## Manual Testing Instructions
 
 ### 1. Login to Application
+
 ```
 1. Navigate to http://localhost:3001
 2. Login with admin credentials
@@ -111,7 +120,9 @@ curl -I http://localhost:3001/plant-types
 ```
 
 ### 2. Test List Page (`/plant-types`)
+
 **Expected Features:**
+
 - ✅ Grid view of 15 plant types
 - ✅ Inventory stats dashboard (5 stat cards)
   - Total Stock: 574
@@ -126,6 +137,7 @@ curl -I http://localhost:3001/plant-types
 - ✅ "Thêm loại cây" button
 
 **Test Cases:**
+
 ```
 Search: "kim"      → Should find "Cây Kim Tiền" + "Kim Ngân"
 Search: "phat tai" → Should find "Cây Phát Tài" (without accents)
@@ -135,7 +147,9 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 ### 3. Test Create Page (`/plant-types/new`)
+
 **Expected Features:**
+
 - ✅ Form with sections:
   - Thông tin cơ bản (Basic Info)
   - Thông số kỹ thuật (Specifications)
@@ -148,6 +162,7 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 - ✅ "Tạo loại cây" and "Hủy" buttons
 
 **Test Cases:**
+
 ```
 1. Click "Thêm loại cây" button
 2. Leave required fields empty → Should show validation errors
@@ -161,7 +176,9 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 ### 4. Test Detail Page (`/plant-types/[id]`)
+
 **Expected Features:**
+
 - ✅ Full plant information display
 - ✅ Pricing card (rental, deposit, sale, replacement)
 - ✅ Specifications card (height, pot size)
@@ -178,6 +195,7 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 - ✅ "Chỉnh sửa" and "Quay lại" buttons
 
 **Test Cases:**
+
 ```
 1. Click on "Cây Kim Tiền" card from list
 2. Verify all information displays correctly
@@ -187,7 +205,9 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 ### 5. Test Edit Page (`/plant-types/[id]/edit`)
+
 **Expected Features:**
+
 - ✅ Same form as create page
 - ✅ Pre-filled with current values
 - ✅ Code field disabled (immutable)
@@ -195,6 +215,7 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 - ✅ "Cập nhật" and "Hủy" buttons
 
 **Test Cases:**
+
 ```
 1. Navigate to edit page for "Cây Kim Tiền"
 2. Verify code field is disabled
@@ -205,7 +226,9 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 ### 6. Test Search Functionality
+
 **Vietnamese Fuzzy Search:**
+
 ```
 ✅ "kim tien" → Finds "Cây Kim Tiền"
 ✅ "phat tai" → Finds "Cây Phát Tài"
@@ -215,7 +238,9 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 ### 7. Test Filters
+
 **Category Filter:**
+
 ```
 ✅ "Tất cả danh mục" → Shows all 15 plants
 ✅ "Indoor" → Shows 8 plants
@@ -224,6 +249,7 @@ Filter: "Outdoor"  → Should show 2 outdoor plants
 ```
 
 **Status Filter:**
+
 ```
 ✅ "Tất cả trạng thái" → Shows all 15 plants
 ✅ "Đang hoạt động" → Shows all 15 (all active)
@@ -239,6 +265,7 @@ bunx tsc --noEmit
 ```
 
 **Result:** ✅ Clean compilation
+
 - Only 2 minor warnings in test files (pre-existing)
 - No errors in plant-types code
 
@@ -251,6 +278,7 @@ bun run build
 ```
 
 **Result:** ✅ Build successful
+
 - TypeScript check passed
 - 17 static pages generated
 - Only Windows symlink warning (expected, not a code issue)
@@ -260,16 +288,19 @@ bun run build
 ## Performance Checks ✅
 
 ### Page Load Times (Estimated)
+
 - List page: ~200-300ms (with 15 items)
 - Detail page: ~150-200ms
 - Create/Edit forms: ~100-150ms
 
 ### Database Query Performance
+
 - Trigram search: Fast (indexed with pg_trgm)
 - Regular list: Fast (indexed fields)
 - Detail with relations: Acceptable (< 100ms)
 
 ### UI Responsiveness
+
 - Mobile breakpoint: sm (640px)
 - Tablet breakpoint: md (768px)
 - Desktop breakpoint: lg (1024px)
@@ -280,22 +311,26 @@ bun run build
 ## Security Verification ✅
 
 ### Authentication
+
 - ✅ All routes require login
 - ✅ Redirects to `/login` with callback URL
 - ✅ Session management working
 
 ### Authorization
+
 - ✅ Create/Update/Delete require `MANAGER` role
 - ✅ View operations require `USER` role
 - ✅ Checked in server actions with `requireAuth()` / `requireManager()`
 
 ### Input Validation
+
 - ✅ Zod schema validation on all inputs
 - ✅ SQL injection prevention (Prisma parameterized queries)
 - ✅ XSS prevention (React escaping)
 - ✅ Code format validation (uppercase alphanumeric)
 
 ### Data Integrity
+
 - ✅ Soft delete (preserves historical data)
 - ✅ Protection against deleting plants in use
 - ✅ Foreign key constraints
@@ -306,12 +341,14 @@ bun run build
 ## Accessibility ✅
 
 ### Form Accessibility
+
 - ✅ All inputs have proper labels
 - ✅ Required fields marked with `*`
 - ✅ Error messages displayed
 - ✅ Keyboard navigation works
 
 ### Semantic HTML
+
 - ✅ Proper heading hierarchy (h1 → h2 → h3)
 - ✅ Form elements properly labeled
 - ✅ Buttons have descriptive text
@@ -321,6 +358,7 @@ bun run build
 ## Known Issues & Limitations
 
 ### Non-Blocking Issues
+
 1. **Unused test variables** (pre-existing)
    - `totalAmount` in invoice tests
    - `PUBLIC_ROUTES` in routes tests
@@ -336,6 +374,7 @@ bun run build
    - Could improve with better types
 
 ### Missing Features (Planned)
+
 1. Image upload functionality
 2. Dedicated inventory management page
 3. Bulk import from Excel
@@ -346,19 +385,19 @@ bun run build
 
 ## Test Summary
 
-| Test Category | Status | Notes |
-|---------------|--------|-------|
-| Database Verification | ✅ PASS | 15 plant types, 574 units inventory |
-| Route Structure | ✅ PASS | All 4 pages exist |
-| Authentication | ✅ PASS | Routes protected |
-| Authorization | ✅ PASS | Manager-only edits |
-| TypeScript Compilation | ✅ PASS | Clean build |
-| Build Process | ✅ PASS | Successful build |
-| Seed Data | ✅ PASS | 10 new plants added |
-| Form Validation | ✅ PASS | Zod schemas working |
-| Search Functionality | ✅ PASS | Vietnamese fuzzy search |
-| Security | ✅ PASS | Input validation, SQL injection prevention |
-| Accessibility | ✅ PASS | Proper labels, keyboard nav |
+| Test Category          | Status  | Notes                                      |
+| ---------------------- | ------- | ------------------------------------------ |
+| Database Verification  | ✅ PASS | 15 plant types, 574 units inventory        |
+| Route Structure        | ✅ PASS | All 4 pages exist                          |
+| Authentication         | ✅ PASS | Routes protected                           |
+| Authorization          | ✅ PASS | Manager-only edits                         |
+| TypeScript Compilation | ✅ PASS | Clean build                                |
+| Build Process          | ✅ PASS | Successful build                           |
+| Seed Data              | ✅ PASS | 10 new plants added                        |
+| Form Validation        | ✅ PASS | Zod schemas working                        |
+| Search Functionality   | ✅ PASS | Vietnamese fuzzy search                    |
+| Security               | ✅ PASS | Input validation, SQL injection prevention |
+| Accessibility          | ✅ PASS | Proper labels, keyboard nav                |
 
 ---
 
@@ -390,6 +429,7 @@ For full browser testing after login:
 **Overall Status:** ✅ READY FOR PRODUCTION
 
 All critical functionality verified:
+
 - ✅ Database has correct data
 - ✅ Routes properly structured
 - ✅ Authentication/authorization working

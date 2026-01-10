@@ -3,10 +3,11 @@ description: Create a quick design
 argument-hint: [tasks]
 ---
 
-Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules: 
+Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
 ## Required Skills (Priority Order)
+
 1. **`ui-ux-pro-max`** - Design intelligence database (ALWAYS ACTIVATE FIRST)
 2. **`aesthetic`** - Design principles
 3. **`frontend-design`** - Quick implementation
@@ -14,6 +15,7 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 **Ensure token efficiency while maintaining high quality.**
 
 ## Workflow:
+
 1. **FIRST**: Run `ui-ux-pro-max` searches to gather design intelligence:
    ```bash
    python3 $HOME/.claude/skills/ui-ux-pro-max/scripts/search.py "<product-type>" --domain product
@@ -27,6 +29,7 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 5. If user approves the changes, update the `./docs/design-guidelines.md` docs if needed.
 
 ## Notes:
+
 - Remember that you have the capability to generate images, videos, edit images, etc. with `ai-multimodal` skills. Use them to create the design and real assets.
 - Always review, analyze and double check generated assets with `ai-multimodal` skills to verify quality.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.

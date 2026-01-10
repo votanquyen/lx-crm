@@ -29,6 +29,7 @@
 **Current Project Status:** Phase 2.5 (Bảng Kê) 50% Complete, 74% Overall
 
 **Deployment Strategy:**
+
 - **Development:** Local Docker Compose for development
 - **Staging:** Automatic deployment on push to `dev` branch
 - **Production:** Manual approval required, blue-green deployment
@@ -39,11 +40,12 @@
 **Environment Matrix:**
 | Environment | Branch | URL | Purpose | Status |
 |-------------|--------|-----|---------|--------|
-| Development | feature/* | localhost:3000 | Local development | Active |
+| Development | feature/\* | localhost:3000 | Local development | Active |
 | Staging | dev | staging.locxanh.vn | Integration testing | Active |
 | Production | main | locxanh.vn | Live application | Active |
 
 **Tech Stack for Deployment:**
+
 - **Runtime:** Next.js 16 (Node.js 22 LTS)
 - **Database:** PostgreSQL 17 + PostGIS 3.5 + pg_trgm + unaccent
 - **Caching:** Redis (ready for implementation)
@@ -58,6 +60,7 @@
 ### Server Requirements
 
 **Development (Local):**
+
 - Docker Desktop 4.25+ or Docker Engine 24.0+
 - Docker Compose 2.20+
 - Node.js 22 LTS
@@ -65,6 +68,7 @@
 - 20GB disk space
 
 **Staging Server:**
+
 - OS: Ubuntu 22.04 LTS or newer
 - CPU: 2 cores minimum
 - RAM: 4GB minimum (8GB recommended)
@@ -73,6 +77,7 @@
 - PostgreSQL 17 with PostGIS extension
 
 **Production Server:**
+
 - OS: Ubuntu 22.04 LTS or newer
 - CPU: 4 cores minimum (8 recommended)
 - RAM: 8GB minimum (16GB recommended)
@@ -85,6 +90,7 @@
 ### Required Environment Variables
 
 **GitHub Secrets (for CI/CD):**
+
 ```bash
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/locxanh
@@ -118,6 +124,7 @@ SENTRY_DSN=your_sentry_dsn
 ### 1. Local Development Setup
 
 **Clone and configure:**
+
 ```bash
 git clone https://github.com/your-org/locxanh.vn.git
 cd locxanh.vn
@@ -142,6 +149,7 @@ bun dev
 ```
 
 **Docker Compose Services:**
+
 - `app`: Next.js application (port 3000)
 - `db`: PostgreSQL 17 with PostGIS
 - `minio`: S3-compatible storage (port 9000)
@@ -150,6 +158,7 @@ bun dev
 ### 2. Staging/Production Server Setup
 
 **Initial server provisioning:**
+
 ```bash
 # Create deployment user
 sudo adduser deploy
@@ -171,6 +180,7 @@ ssh-keygen -t ed25519 -C "deploy@locxanh" -f ~/.ssh/locxanh_deploy
 ```
 
 **Directory structure on server:**
+
 ```
 /opt/locxanh/
 ├── docker-compose.prod.yml
@@ -199,6 +209,7 @@ For detailed step-by-step instructions, see: **[Coolify Deployment Guide](./cool
 ### Why Choose Coolify?
 
 **Advantages:**
+
 - ✅ **Zero Configuration SSL** - Automatic Let's Encrypt certificates
 - ✅ **Built-in Monitoring** - Real-time logs, metrics, and health checks
 - ✅ **Easy Rollbacks** - One-click rollback to previous versions
@@ -209,6 +220,7 @@ For detailed step-by-step instructions, see: **[Coolify Deployment Guide](./cool
 - ✅ **Multi-environment** - Dev, staging, production in one dashboard
 
 **Best For:**
+
 - Teams wanting modern deployment without DevOps complexity
 - Projects needing quick setup and easy maintenance
 - Environments requiring built-in monitoring and alerting
@@ -216,19 +228,20 @@ For detailed step-by-step instructions, see: **[Coolify Deployment Guide](./cool
 
 ### Coolify vs Traditional Docker
 
-| Feature | Coolify | Traditional Docker |
-|---------|---------|-------------------|
-| Setup Time | 15 minutes | 1-2 hours |
-| SSL Certificates | Automatic | Manual (Certbot) |
-| Monitoring | Built-in | Manual setup |
-| Rollbacks | One-click | Manual commands |
-| Scaling | GUI slider | Manual config |
-| Database | Managed | Manual setup |
-| Complexity | Low | Medium-High |
+| Feature          | Coolify    | Traditional Docker |
+| ---------------- | ---------- | ------------------ |
+| Setup Time       | 15 minutes | 1-2 hours          |
+| SSL Certificates | Automatic  | Manual (Certbot)   |
+| Monitoring       | Built-in   | Manual setup       |
+| Rollbacks        | One-click  | Manual commands    |
+| Scaling          | GUI slider | Manual config      |
+| Database         | Managed    | Manual setup       |
+| Complexity       | Low        | Medium-High        |
 
 ### When to Use Traditional Docker
 
 Choose traditional Docker deployment if:
+
 - You need full control over infrastructure
 - You have existing Docker workflows
 - You're deploying to custom infrastructure
@@ -242,6 +255,7 @@ Choose traditional Docker deployment if:
 ### Local Development
 
 **Start all services:**
+
 ```bash
 docker-compose up -d
 
@@ -257,6 +271,7 @@ docker-compose down -v
 ```
 
 **Database access:**
+
 ```bash
 # Connect to PostgreSQL
 docker exec -it locxanh-db psql -U postgres -d locxanh
@@ -271,6 +286,7 @@ docker exec -it locxanh-app bunx prisma studio
 ### Staging Deployment
 
 **Docker Compose Staging:**
+
 ```yaml
 # docker-compose.staging.yml
 services:
@@ -309,6 +325,7 @@ volumes:
 ```
 
 **Deploy to staging:**
+
 ```bash
 # On staging server
 cd /opt/locxanh
@@ -328,6 +345,7 @@ curl https://staging.locxanh.vn/api/health
 ### Production Deployment (Blue-Green)
 
 **Docker Compose Production:**
+
 ```yaml
 # docker-compose.prod.yml
 services:
@@ -366,6 +384,7 @@ services:
 ```
 
 **Blue-Green Deployment:**
+
 ```bash
 # On production server
 cd /opt/locxanh
@@ -398,6 +417,7 @@ curl http://localhost:3000/api/health
 ### GitHub Actions Workflows
 
 **1. Development Workflow (.github/workflows/dev.yml):**
+
 ```yaml
 name: Development CI
 
@@ -436,6 +456,7 @@ jobs:
 ```
 
 **2. Staging Deployment (.github/workflows/deploy-staging.yml):**
+
 ```yaml
 name: Deploy to Staging
 
@@ -472,6 +493,7 @@ jobs:
 ```
 
 **3. Production Deployment (.github/workflows/deploy-production.yml):**
+
 ```yaml
 name: Deploy to Production
 
@@ -479,7 +501,7 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Deployment reason'
+        description: "Deployment reason"
         required: true
 
 jobs:
@@ -542,6 +564,7 @@ jobs:
 ### Migrations
 
 **Development:**
+
 ```bash
 # Create migration from schema changes
 bunx prisma migrate dev --name add_monthly_statement_model
@@ -551,6 +574,7 @@ bunx prisma migrate reset
 ```
 
 **Production/Staging:**
+
 ```bash
 # Check migration status
 bunx prisma migrate status
@@ -565,6 +589,7 @@ bunx prisma migrate deploy
 ### Backups
 
 **Automated backup script (`scripts/backup.sh`):**
+
 ```bash
 #!/bin/bash
 BACKUP_DIR="/opt/locxanh/backups"
@@ -582,6 +607,7 @@ ls -lh $BACKUP_FILE
 ```
 
 **Manual backup:**
+
 ```bash
 # Create backup
 ./scripts/backup.sh
@@ -597,6 +623,7 @@ docker exec -i locxanh-db psql -U postgres locxanh
 ### Performance Monitoring
 
 **Database queries:**
+
 ```bash
 # Active connections
 docker exec locxanh-db psql -U postgres -c "SELECT count(*) FROM pg_stat_activity;"
@@ -615,12 +642,14 @@ docker exec locxanh-db psql -U postgres -c "SELECT schemaname, tablename, indexn
 ### Health Checks
 
 **Application health endpoint:**
+
 ```bash
 curl https://locxanh.vn/api/health
 # Expected: {"status":"ok","timestamp":"2025-12-22T10:00:00Z","version":"1.0.0"}
 ```
 
 **Container health:**
+
 ```bash
 docker ps --filter name=locxanh --format "table {{.Names}}\t{{.Status}}\t{{.Health}}"
 ```
@@ -628,6 +657,7 @@ docker ps --filter name=locxanh --format "table {{.Names}}\t{{.Status}}\t{{.Heal
 ### Logs
 
 **View application logs:**
+
 ```bash
 # Real-time
 docker-compose -f docker-compose.prod.yml logs -f app
@@ -643,6 +673,7 @@ docker logs -f locxanh-app-1
 ```
 
 **Structured logging format:**
+
 ```json
 {
   "timestamp": "2025-12-22T10:00:00Z",
@@ -660,6 +691,7 @@ docker logs -f locxanh-app-1
 ### Metrics
 
 **Resource usage:**
+
 ```bash
 # CPU and Memory
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -673,6 +705,7 @@ docker network stats locxanh_default
 ```
 
 **Application metrics (custom):**
+
 ```bash
 # API response times
 curl https://locxanh.vn/api/metrics/response-times
@@ -687,12 +720,14 @@ curl https://locxanh.vn/api/metrics/active-users
 ### Monitoring Tools
 
 **Recommended setup:**
+
 1. **Application monitoring:** Sentry or DataDog
 2. **Infrastructure:** Prometheus + Grafana
 3. **Log aggregation:** ELK Stack or Loki
 4. **Uptime monitoring:** UptimeRobot or Pingdom
 
 **Quick setup with docker-compose:**
+
 ```yaml
 # Add to docker-compose.monitoring.yml
 services:
@@ -716,12 +751,14 @@ services:
 ### Automatic Rollback
 
 **Trigger conditions:**
+
 - Health check fails after deployment
 - Application crashes within 5 minutes
 - Database migration fails
 - Error rate exceeds threshold
 
 **Automatic rollback (configured in CI/CD):**
+
 ```yaml
 update_config:
   failure_action: rollback
@@ -731,6 +768,7 @@ update_config:
 ### Manual Rollback
 
 **Quick rollback to previous version:**
+
 ```bash
 # On production server
 cd /opt/locxanh
@@ -748,6 +786,7 @@ curl https://locxanh.vn/api/health
 ```
 
 **Rollback with database restore:**
+
 ```bash
 # 1. Stop application
 docker-compose -f docker-compose.prod.yml stop app
@@ -765,6 +804,7 @@ curl https://locxanh.vn/api/health
 ```
 
 **Emergency rollback (no CI/CD):**
+
 ```bash
 # Direct docker commands on server
 docker stop locxanh-app-prod
@@ -786,6 +826,7 @@ docker run -d --name locxanh-app-prod \
 **Symptom:** Application won't start, "connection refused" errors
 
 **Solution:**
+
 ```bash
 # Check database container
 docker ps | grep db
@@ -806,6 +847,7 @@ docker-compose restart db
 **Symptom:** "Migration failed: table already exists"
 
 **Solution:**
+
 ```bash
 # Check migration status
 docker exec locxanh-app bunx prisma migrate status
@@ -824,6 +866,7 @@ docker exec -it locxanh-db psql -U postgres locxanh
 **Symptom:** Container exits immediately
 
 **Solution:**
+
 ```bash
 # Check logs
 docker logs locxanh-app
@@ -843,6 +886,7 @@ docker inspect locxanh-app --format='{{.State.Error}}'
 **Symptom:** "no space left on device"
 
 **Solution:**
+
 ```bash
 # Check disk usage
 df -h
@@ -864,6 +908,7 @@ docker logs --since 24h locxanh-app > /dev/null
 **Symptom:** High response times, slow queries
 
 **Solution:**
+
 ```bash
 # Check database connections
 docker exec locxanh-db psql -U postgres -c "SELECT count(*) FROM pg_stat_activity;"
@@ -883,6 +928,7 @@ docker-compose restart app
 **Symptom:** Load balancer marks container as unhealthy
 
 **Solution:**
+
 ```bash
 # Test health endpoint manually
 docker exec locxanh-app curl -f http://localhost:3000/api/health
@@ -902,6 +948,7 @@ docker-compose restart app
 **Symptom:** Uploads fail, "access denied" errors
 
 **Solution:**
+
 ```bash
 # Check MinIO/S3 service
 docker ps | grep minio
@@ -923,6 +970,7 @@ docker-compose restart minio
 **Symptom:** Login fails, "invalid credentials" or "session expired"
 
 **Solution:**
+
 ```bash
 # Check NextAuth secret
 echo $NEXTAUTH_SECRET
@@ -941,6 +989,7 @@ docker exec locxanh-db psql -U postgres -c "DELETE FROM session;"
 ### Advanced Troubleshooting
 
 **Debug mode:**
+
 ```bash
 # Enable debug logging
 export DEBUG=locxanh:*
@@ -951,6 +1000,7 @@ docker-compose up app
 ```
 
 **Database debugging:**
+
 ```bash
 # Connection pool status
 docker exec locxanh-db psql -U postgres -c "SELECT * FROM pg_stat_activity;"
@@ -963,6 +1013,7 @@ docker exec locxanh-db psql -U postgres -c "SHOW log_min_duration_statement;"
 ```
 
 **Application debugging:**
+
 ```bash
 # Memory usage
 docker exec locxanh-app ps aux --sort=-%mem
@@ -981,6 +1032,7 @@ docker exec locxanh-app cat /proc/sys/fs/file-nr
 ### Database Optimization
 
 **Index strategy:**
+
 ```sql
 -- Vietnamese search optimization
 CREATE INDEX idx_customer_name_trgm ON customers USING gin(company_name_norm gin_trgm_ops);
@@ -996,6 +1048,7 @@ CREATE INDEX idx_activity_log_created ON activity_logs(createdAt);
 ```
 
 **Query optimization:**
+
 ```bash
 # Use raw SQL for complex aggregations (60% faster)
 # Instead of 5 separate Prisma queries, use single raw query
@@ -1013,6 +1066,7 @@ const stats = await prisma.$queryRaw`
 ### Application Optimization
 
 **Code splitting:**
+
 ```typescript
 // Dynamic imports for heavy components
 const RevenueChart = dynamic(
@@ -1025,6 +1079,7 @@ const RevenueChart = dynamic(
 ```
 
 **Caching strategy:**
+
 ```typescript
 // Redis-ready architecture
 export async function getCustomerStats() {
@@ -1057,6 +1112,7 @@ export async function getCustomerStats() {
 ### Infrastructure Optimization
 
 **Nginx configuration:**
+
 ```nginx
 # Production nginx config
 upstream locxanh {
@@ -1087,16 +1143,17 @@ server {
 ```
 
 **Docker resource limits:**
+
 ```yaml
 services:
   app:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 ```
 
@@ -1176,6 +1233,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 ### Security Incident Response
 
 **If you suspect a breach:**
+
 1. **Immediate:** Change all secrets in GitHub
 2. **Within 1 hour:** Rotate database passwords
 3. **Within 2 hours:** Review audit logs
@@ -1183,6 +1241,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 5. **Within 24 hours:** Full security audit
 
 **Emergency contacts:**
+
 - Security team: security@locxanh.vn
 - Database admin: dba@locxanh.vn
 - DevOps lead: devops@locxanh.vn
@@ -1192,18 +1251,21 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 ## Maintenance Schedule
 
 ### Daily Tasks (Automated)
+
 - [ ] Health check monitoring
 - [ ] Error log review
 - [ ] Disk space monitoring
 - [ ] Backup verification
 
 ### Weekly Tasks
+
 - [ ] Review performance metrics
 - [ ] Check for security updates
 - [ ] Verify backup restoration process
 - [ ] Review access logs
 
 ### Monthly Tasks
+
 - [ ] Test disaster recovery
 - [ ] Update dependencies
 - [ ] Security audit
@@ -1211,6 +1273,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 - [ ] Clean up old Docker images
 
 ### Quarterly Tasks
+
 - [ ] Rotate all secrets
 - [ ] Update SSL certificates
 - [ ] Review and update documentation
@@ -1224,6 +1287,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 ### Before Any Deployment
 
 **Development to Staging:**
+
 - [ ] All tests pass
 - [ ] Type checking passes
 - [ ] Linting passes
@@ -1232,6 +1296,7 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 - [ ] Documentation updated
 
 **Staging to Production:**
+
 - [ ] All above checks pass
 - [ ] Staging deployment tested
 - [ ] Health checks pass on staging
@@ -1270,11 +1335,11 @@ docker exec locxanh-db psql -U postgres -c "SELECT usename, usesuper FROM pg_use
 
 ## Changelog
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-18 | 1.0.0 | Initial deployment guide |
-| 2025-12-22 | 2.0.0 | Updated for Phase 2.5, added Redis, monitoring, performance optimization, troubleshooting, security checklist |
-| 2025-12-22 | 2.1.0 | Added Coolify deployment section with link to comprehensive guide |
+| Date       | Version | Changes                                                                                                       |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| 2025-12-18 | 1.0.0   | Initial deployment guide                                                                                      |
+| 2025-12-22 | 2.0.0   | Updated for Phase 2.5, added Redis, monitoring, performance optimization, troubleshooting, security checklist |
+| 2025-12-22 | 2.1.0   | Added Coolify deployment section with link to comprehensive guide                                             |
 
 ---
 

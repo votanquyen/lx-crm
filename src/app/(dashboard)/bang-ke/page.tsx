@@ -5,23 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  Download,
-  Printer,
-  CheckCircle2,
-  AlertCircle,
-  Calendar,
-} from "lucide-react";
+import { Search, Download, Printer, CheckCircle2, AlertCircle, Calendar, Pencil } from "lucide-react";
 import {
   getMonthlyStatements,
   getCustomersForStatements,
   getMonthlyStatement,
   confirmMonthlyStatement,
+  getAvailableYears,
 } from "@/actions/monthly-statements";
 import type { StatementListItem, StatementDTO } from "@/types/monthly-statement";
 import { formatCurrency } from "@/lib/format";
-import { getMonthShort } from "@/lib/statement-utils";
 import {
   Table,
   TableBody,
@@ -31,6 +24,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { StatementEditor } from "@/components/statements/statement-editor";
+
+interface CustomerForStatement {
+  id: string;
+  code: string | null;
+  companyName: string;
+  shortName: string | null;
+  address: string | null;
+  district: string | null;
+  contactName: string | null;
+}
 
 export default function BangKePage() {
   const [searchInput, setSearchInput] = useState("");
@@ -45,10 +49,12 @@ export default function BangKePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [customers, setCustomers] = useState<CustomerForStatement[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
   const [currentStatementDetail, setCurrentStatementDetail] = useState<StatementDTO | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   /**
    * PERFORMANCE: Load customers and statements in PARALLEL on mount/year change
@@ -90,21 +96,56 @@ export default function BangKePage() {
     loadInitialData();
   }, [selectedYear]);
 
-  // Load statement detail when customer/month changes
+  // Load statement detail when customer/month/statements change
   useEffect(() => {
-    // Compute current statement ID inside effect to avoid stale closure
-    // Use statements directly (not the memoized map) since this runs once per filter change
     const customerStmts = selectedCustomerId
       ? statements.filter((s) => s.customerId === selectedCustomerId)
       : [];
-    const currentStmt = customerStmts.find((s) => s.month === selectedMonth);
+    const stmt = customerStmts.find((s) => s.month === selectedMonth);
 
-    if (selectedCustomerId && currentStmt) {
-      loadStatementDetail(currentStmt.id);
+    if (selectedCustomerId && stmt) {
+      loadStatementDetail(stmt.id);
     } else {
       setCurrentStatementDetail(null);
     }
   }, [selectedCustomerId, selectedMonth, statements]);
+
+  async function loadCustomers() {
+    try {
+      const [customersResult, yearsResult] = await Promise.all([
+        getCustomersForStatements({}),
+        getAvailableYears({}),
+      ]);
+      if (customersResult.success && customersResult.data) {
+        setCustomers(customersResult.data);
+      }
+      if (yearsResult.success && yearsResult.data) {
+        setAvailableYears(yearsResult.data);
+      }
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+      toast.error("Không thể tải danh sách công ty");
+    }
+  }
+
+  async function loadStatements() {
+    try {
+      setIsLoading(true);
+      const result = await getMonthlyStatements({
+        year: selectedYear,
+        limit: 100,
+        offset: 0,
+      });
+      if (result.success && result.data) {
+        setStatements(result.data.items || []);
+      }
+    } catch (error) {
+      console.error("Failed to load statements:", error);
+      toast.error("Không thể tải bảng kê");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function loadStatementDetail(id: string) {
     try {
@@ -158,7 +199,8 @@ export default function BangKePage() {
 
     try {
       // Dynamic import to reduce initial bundle size
-      const { generateMonthlyStatementCSV, getStatementFilename } = await import("@/lib/csv/export-monthly-statement");
+      const { generateMonthlyStatementCSV, getStatementFilename } =
+        await import("@/lib/csv/export-monthly-statement");
 
       const csv = generateMonthlyStatementCSV(currentStatementDetail);
       const filename = getStatementFilename(
@@ -238,292 +280,343 @@ export default function BangKePage() {
     [selectedCustomerId, statementsByCustomer]
   );
 
-  const currentStatement = useMemo(
-    () => customerStatements.find((s) => s.month === selectedMonth),
-    [customerStatements, selectedMonth]
-  );
-
-  // Years selector (current - 2 to current + 1)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 4 }, (_, i) => currentYear - 2 + i);
+  const currentStatement = customerStatements.find((s) => s.month === selectedMonth);
 
   // Months array
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
-        {/* Sidebar - Company List */}
-        <div className="w-80 border-r bg-card">
-          <div className="p-4 border-b">
-            <h1 className="text-2xl font-bold mb-1">Bảng Kê</h1>
-            <p className="text-sm text-muted-foreground">
-              Cây xanh văn phòng
-            </p>
-            <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Tìm công ty..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-y-auto flex-1">
-            {filteredCustomers.map((customer) => {
-              const customerStmts = statementsByCustomer.get(customer.id) || [];
-              const hasUnconfirmed = customerStmts.some((s) => s.needsConfirmation);
-              const monthlyTotal = customerStmts.find(
-                (s) => s.month === selectedMonth // FIX: Use selectedMonth instead of current month
-              )?.total || 0;
-
-              return (
-                <div
-                  key={customer.id}
-                  onClick={() => setSelectedCustomerId(customer.id)}
-                  className={`p-4 border-b cursor-pointer transition-colors ${
-                    selectedCustomerId === customer.id
-                      ? "bg-primary/10 border-l-4 border-l-primary"
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                          {customer.shortName?.substring(0, 2).toUpperCase() ||
-                            customer.companyName.substring(0, 2).toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">{customer.companyName}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {customer.district} • {customerStmts.length} tháng
-                          </div>
-                        </div>
-                        {hasUnconfirmed && (
-                          <Badge variant="outline" className="border-amber-500 bg-amber-50 text-amber-700">
-                            <AlertCircle className="h-3 w-3" />
-                          </Badge>
-                        )}
-                      </div>
-                      {monthlyTotal > 0 && (
-                        <div className="mt-2 text-sm font-semibold text-primary">
-                          {formatCurrency(monthlyTotal)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* Sidebar - Company List */}
+      <div className="bg-card flex w-80 flex-col overflow-hidden border-r">
+        <div className="shrink-0 border-b p-4">
+          <h1 className="mb-1 text-2xl font-bold">Bảng Kê</h1>
+          <p className="text-muted-foreground text-sm">Cây xanh văn phòng</p>
+          <div className="relative mt-4">
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <Input
+              placeholder="Tìm công ty..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
-          {selectedCustomerId ? (
-            <div className="p-6">
-              {/* Header with customer name */}
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold">
-                  {customers.find((c) => c.id === selectedCustomerId)?.companyName}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {customers.find((c) => c.id === selectedCustomerId)?.address}
-                </p>
-              </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {filteredCustomers.map((customer) => {
+            const customerStmts = statements.filter((s) => s.customerId === customer.id);
+            const hasUnconfirmed = customerStmts.some((s) => s.needsConfirmation);
+            const monthlyTotal =
+              customerStmts.find(
+                (s) => s.month === selectedMonth // FIX: Use selectedMonth instead of current month
+              )?.total || 0;
 
-              {/* Year & Month Selector */}
-              <div className="flex items-center gap-4 mb-6">
+            return (
+              <div
+                key={customer.id}
+                onClick={() => setSelectedCustomerId(customer.id)}
+                className={`cursor-pointer border-b p-4 transition-colors ${
+                  selectedCustomerId === customer.id
+                    ? "bg-primary/10 border-l-primary border-l-4"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/20 text-primary flex h-10 w-10 items-center justify-center rounded-full font-semibold">
+                        {customer.shortName?.substring(0, 2).toUpperCase() ||
+                          customer.companyName.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{customer.companyName}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {customer.district} • {customerStmts.length} tháng
+                        </div>
+                      </div>
+                      {hasUnconfirmed && (
+                        <Badge
+                          variant="outline"
+                          className="border-amber-500 bg-amber-50 text-amber-700"
+                        >
+                          <AlertCircle className="h-3 w-3" />
+                        </Badge>
+                      )}
+                    </div>
+                    {monthlyTotal > 0 && (
+                      <div className="text-primary mt-2 text-sm font-semibold">
+                        {formatCurrency(monthlyTotal)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {selectedCustomerId ? (
+          <div className="h-full overflow-y-auto p-6">
+            {/* Header with customer name */}
+            {(() => {
+              const customer = customers.find((c) => c.id === selectedCustomerId);
+              return (
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold">{customer?.companyName}</h2>
+                  {customer?.address && (
+                    <p className="text-muted-foreground text-sm">{customer.address}</p>
+                  )}
+                  <p className="text-muted-foreground text-sm">
+                    {customer?.district}
+                    {customer?.contactName && ` • Liên hệ: ${customer.contactName}`}
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* Year & Month Selector */}
+            <div className="mb-6 space-y-4">
+              {/* Year and Actions Row */}
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="px-4 py-2 border rounded-md bg-background"
+                  className="bg-background rounded-md border px-4 py-2 font-medium"
                 >
-                  {years.map((year) => (
+                  {availableYears.map((year) => (
                     <option key={year} value={year}>
-                      {year}
+                      Năm {year}
                     </option>
                   ))}
                 </select>
 
-                <div className="flex gap-1 flex-wrap">
-                  {months.map((month) => {
-                    const stmt = customerStatements.find((s) => s.month === month);
-                    const isSelected = selectedMonth === month;
-                    const needsConfirm = stmt?.needsConfirmation;
-
-                    return (
-                      <Button
-                        key={month}
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedMonth(month)}
-                        className={`relative ${
-                          needsConfirm ? "border-amber-500" : ""
-                        }`}
-                      >
-                        {getMonthShort(month)}
-                        {needsConfirm && (
-                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-amber-500 rounded-full" />
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <div className="ml-auto flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!currentStatementDetail}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Xuất Excel
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditMode(true)}
+                    disabled={!currentStatementDetail || isEditMode}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Sửa</span>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={!currentStatementDetail}>
-                    <Printer className="h-4 w-4 mr-2" />
-                    In
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    disabled={!currentStatementDetail}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Excel</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportPDF}
+                    disabled={!currentStatementDetail}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">In</span>
                   </Button>
                 </div>
               </div>
 
-              {/* Statement Card */}
-              {currentStatement ? (
-                <Card
-                  className={
-                    currentStatement.needsConfirmation
-                      ? "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
-                      : ""
+              {/* Month Grid */}
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12">
+                {months.map((month) => {
+                  const stmt = customerStatements.find((s) => s.month === month);
+                  const isSelected = selectedMonth === month;
+                  const needsConfirm = stmt?.needsConfirmation;
+                  const hasData = !!stmt;
+
+                  return (
+                    <Button
+                      key={month}
+                      variant={isSelected ? "default" : hasData ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => setSelectedMonth(month)}
+                      className={`relative h-10 w-full ${needsConfirm ? "ring-2 ring-amber-500 ring-offset-1" : ""} ${!hasData && !isSelected ? "text-muted-foreground" : ""}`}
+                    >
+                      Tháng {month}
+                      {needsConfirm && (
+                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Statement Card or Editor */}
+            {isEditMode && currentStatementDetail ? (
+              <StatementEditor
+                statement={currentStatementDetail}
+                onSave={async () => {
+                  setIsEditMode(false);
+                  await loadStatements();
+                  if (currentStatementDetail) {
+                    await loadStatementDetail(currentStatementDetail.id);
                   }
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          {currentStatement.needsConfirmation && (
-                            <AlertCircle className="h-5 w-5 text-amber-500" />
-                          )}
-                          Tháng {selectedMonth}/{selectedYear}
-                          {currentStatement.needsConfirmation && (
-                            <Badge variant="outline" className="border-amber-500 text-amber-700">
-                              Chưa xác nhận
-                            </Badge>
-                          )}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {currentStatement.plantCount} loại cây
+                }}
+                onCancel={() => setIsEditMode(false)}
+              />
+            ) : currentStatement ? (
+              <Card
+                className={
+                  currentStatement.needsConfirmation
+                    ? "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
+                    : ""
+                }
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        {currentStatement.needsConfirmation && (
+                          <AlertCircle className="h-5 w-5 text-amber-500" />
+                        )}
+                        Tháng {selectedMonth}/{selectedYear}
+                        {currentStatement.needsConfirmation && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-700">
+                            Chưa xác nhận
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      {currentStatementDetail && (
+                        <p className="text-muted-foreground mt-1 text-sm">
+                          Đợt:{" "}
+                          {new Date(currentStatementDetail.periodStart).toLocaleDateString("vi-VN")} →{" "}
+                          {new Date(currentStatementDetail.periodEnd).toLocaleDateString("vi-VN")}
                         </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-primary text-2xl font-bold">
+                        {formatCurrency(currentStatement.total)}
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-primary">
-                          {formatCurrency(currentStatement.total)}
+                      <div className="text-muted-foreground text-xs">đã gồm VAT</div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {currentStatement.needsConfirmation && (
+                    <div className="mb-4 rounded-md bg-amber-100 p-4 dark:bg-amber-900/30">
+                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                        ⚠ Tháng mới - Hệ thống tự động tạo từ tháng trước
+                      </p>
+                      <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                        Vui lòng kiểm tra và xác nhận.
+                      </p>
+                      <Button
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => handleConfirmStatement(currentStatement.id)}
+                        disabled={isConfirming}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        {isConfirming ? "Đang xác nhận..." : "Xác nhận"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Plant Table */}
+                  {currentStatementDetail && isLoading ? (
+                    <div className="text-muted-foreground py-8 text-center">
+                      <div className="border-primary mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2"></div>
+                      <p>Đang tải...</p>
+                    </div>
+                  ) : currentStatementDetail ? (
+                    <div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-16">STT</TableHead>
+                            <TableHead>Tên cây</TableHead>
+                            <TableHead>Quy cách</TableHead>
+                            <TableHead className="text-right">Đơn giá</TableHead>
+                            <TableHead className="text-right">Số lượng</TableHead>
+                            <TableHead className="text-right">Thành tiền</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {currentStatementDetail.plants.map((plant, idx) => (
+                            <TableRow key={plant.id}>
+                              <TableCell className="font-medium">{idx + 1}</TableCell>
+                              <TableCell>{plant.name}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {plant.sizeSpec}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(plant.unitPrice)}
+                              </TableCell>
+                              <TableCell className="text-right">{plant.quantity}</TableCell>
+                              <TableCell className="text-right font-medium">
+                                {formatCurrency(plant.total)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+
+                      {/* Financial Summary */}
+                      <div className="mt-6 space-y-2 border-t pt-4">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tổng cộng:</span>
+                          <span className="font-medium">
+                            {formatCurrency(currentStatementDetail.subtotal)}
+                          </span>
                         </div>
-                        <div className="text-xs text-muted-foreground">đã gồm VAT</div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            VAT ({currentStatementDetail.vatRate}%):
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(currentStatementDetail.vatAmount)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 text-lg font-bold">
+                          <span>Thành tiền:</span>
+                          <span className="text-primary">
+                            {formatCurrency(currentStatementDetail.total)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    {currentStatement.needsConfirmation && (
-                      <div className="mb-4 p-4 bg-amber-100 dark:bg-amber-900/30 rounded-md">
-                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                          ⚠ Tháng mới - Hệ thống tự động tạo từ tháng trước
-                        </p>
-                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                          Vui lòng kiểm tra và xác nhận.
-                        </p>
-                        <Button
-                          size="sm"
-                          className="mt-3"
-                          onClick={() => handleConfirmStatement(currentStatement.id)}
-                          disabled={isConfirming}
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          {isConfirming ? "Đang xác nhận..." : "Xác nhận"}
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Plant Table */}
-                    {currentStatementDetail && isLoading ? (
-                      <div className="text-center text-muted-foreground py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p>Đang tải...</p>
-                      </div>
-                    ) : currentStatementDetail ? (
-                      <div>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-16">STT</TableHead>
-                              <TableHead>Tên cây</TableHead>
-                              <TableHead>Quy cách</TableHead>
-                              <TableHead className="text-right">Đơn giá</TableHead>
-                              <TableHead className="text-right">Số lượng</TableHead>
-                              <TableHead className="text-right">Thành tiền</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {currentStatementDetail.plants.map((plant, idx) => (
-                              <TableRow key={plant.id}>
-                                <TableCell className="font-medium">{idx + 1}</TableCell>
-                                <TableCell>{plant.name}</TableCell>
-                                <TableCell className="text-muted-foreground">{plant.sizeSpec}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(plant.unitPrice)}</TableCell>
-                                <TableCell className="text-right">{plant.quantity}</TableCell>
-                                <TableCell className="text-right font-medium">{formatCurrency(plant.total)}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-
-                        {/* Financial Summary */}
-                        <div className="mt-6 space-y-2 border-t pt-4">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Tổng cộng:</span>
-                            <span className="font-medium">{formatCurrency(currentStatementDetail.subtotal)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">VAT ({currentStatementDetail.vatRate}%):</span>
-                            <span className="font-medium">{formatCurrency(currentStatementDetail.vatAmount)}</span>
-                          </div>
-                          <div className="flex justify-between text-lg font-bold border-t pt-2">
-                            <span>Thành tiền:</span>
-                            <span className="text-primary">{formatCurrency(currentStatementDetail.total)}</span>
-                          </div>
-                        </div>
-
-                        {/* Period Display */}
-                        <div className="mt-4 text-xs text-muted-foreground">
-                          Kỳ: {new Date(currentStatementDetail.periodStart).toLocaleDateString('vi-VN')} → {new Date(currentStatementDetail.periodEnd).toLocaleDateString('vi-VN')}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center text-muted-foreground py-8">
-                        <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Chưa có dữ liệu chi tiết</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Chưa có bảng kê cho tháng {selectedMonth}/{selectedYear}</p>
-                    <Button className="mt-4" variant="outline">
-                      Tạo bảng kê mới
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+                  ) : (
+                    <div className="text-muted-foreground py-8 text-center">
+                      <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                      <p>Chưa có dữ liệu chi tiết</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="text-muted-foreground py-12 text-center">
+                  <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
+                  <p>
+                    Chưa có bảng kê cho tháng {selectedMonth}/{selectedYear}
+                  </p>
+                  <Button className="mt-4" variant="outline">
+                    Tạo bảng kê mới
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <div className="text-muted-foreground flex h-full items-center justify-center">
+            <div className="text-center">
+              <Search className="mx-auto mb-4 h-16 w-16 opacity-50" />
+              <p className="text-lg">Chọn một công ty để xem bảng kê</p>
             </div>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <Search className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Chọn một công ty để xem bảng kê</p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

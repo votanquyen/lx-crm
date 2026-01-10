@@ -12,8 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: '20.x'
-  BUN_VERSION: '1.1.38'
+  NODE_VERSION: "20.x"
+  BUN_VERSION: "1.1.38"
 
 jobs:
   # Job 1: Install dependencies and cache
@@ -246,7 +246,7 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Run dependency audit
-        run: bun audit || true  # Don't fail on audit warnings in CI
+        run: bun audit || true # Don't fail on audit warnings in CI
 
       - name: Check for vulnerable dependencies
         uses: snyk/actions/node@master

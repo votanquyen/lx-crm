@@ -35,7 +35,7 @@ export const PAGINATION = {
  * Validation limits
  */
 export const VALIDATION_LIMITS = {
-  MAX_AMOUNT_VND: 1_000_000_000,            // 1 billion VND
+  MAX_AMOUNT_VND: 1_000_000_000, // 1 billion VND
   MAX_QUANTITY: 10_000,
   TEXT_MAX_LENGTH: 500,
   TEXTAREA_MAX_LENGTH: 2000,
@@ -123,10 +123,28 @@ export const UPLOAD_LIMITS = {
  * Vietnamese districts in HCMC (for geocoding)
  */
 export const HCMC_DISTRICTS = [
-  "Quận 1", "Quận 3", "Quận 4", "Quận 5", "Quận 6", "Quận 7", "Quận 8",
-  "Quận 10", "Quận 11", "Quận 12", "Bình Thạnh", "Gò Vấp", "Phú Nhuận",
-  "Tân Bình", "Tân Phú", "Bình Tân", "Thủ Đức", "Nhà Bè", "Hóc Môn",
-  "Củ Chi", "Bình Chánh", "Cần Giờ",
+  "Quận 1",
+  "Quận 3",
+  "Quận 4",
+  "Quận 5",
+  "Quận 6",
+  "Quận 7",
+  "Quận 8",
+  "Quận 10",
+  "Quận 11",
+  "Quận 12",
+  "Bình Thạnh",
+  "Gò Vấp",
+  "Phú Nhuận",
+  "Tân Bình",
+  "Tân Phú",
+  "Bình Tân",
+  "Thủ Đức",
+  "Nhà Bè",
+  "Hóc Môn",
+  "Củ Chi",
+  "Bình Chánh",
+  "Cần Giờ",
 ] as const;
 
-export type HCMCDistrict = typeof HCMC_DISTRICTS[number];
+export type HCMCDistrict = (typeof HCMC_DISTRICTS)[number];

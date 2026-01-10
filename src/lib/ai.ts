@@ -90,7 +90,6 @@ export interface SearchIntent {
   type: "CUSTOMER" | "CONTRACT" | "INVOICE" | "PLANT" | "GENERAL";
   filters: {
     status?: string[];
-    tier?: string[];
     district?: string[];
     dateRange?: { start?: string; end?: string };
     hasDebt?: boolean;
@@ -111,7 +110,6 @@ Trả về JSON:
   "type": "CUSTOMER" | "CONTRACT" | "INVOICE" | "PLANT" | "GENERAL",
   "filters": {
     "status": ["ACTIVE", "INACTIVE", ...],
-    "tier": ["VIP", "PREMIUM", "STANDARD"],
     "district": ["Quận 1", "Quận 2", ...],
     "hasDebt": true/false,
     "plantType": "tên loại cây"
@@ -122,7 +120,7 @@ Trả về JSON:
 }
 
 Ví dụ:
-- "khách VIP quận 1 còn nợ" → type: CUSTOMER, filters: {tier: ["VIP"], district: ["Quận 1"], hasDebt: true}
+- "khách quận 1 còn nợ" → type: CUSTOMER, filters: {district: ["Quận 1"], hasDebt: true}
 - "hợp đồng sắp hết hạn" → type: CONTRACT, filters: {dateRange: {end: "soon"}}
 - "cây kim tiền" → type: PLANT, filters: {plantType: "kim tiền"}
 
@@ -150,10 +148,16 @@ export async function generateCustomerSummary(
 Khách hàng: ${customerName}
 
 Các ghi chú gần đây:
-${notes.slice(0, 10).map((n, i) => `${i + 1}. ${n}`).join("\n")}
+${notes
+  .slice(0, 10)
+  .map((n, i) => `${i + 1}. ${n}`)
+  .join("\n")}
 
 Hoạt động gần đây:
-${recentActivities.slice(0, 5).map((a, i) => `${i + 1}. ${a}`).join("\n")}
+${recentActivities
+  .slice(0, 5)
+  .map((a, i) => `${i + 1}. ${a}`)
+  .join("\n")}
 
 Viết tóm tắt 2-3 câu về tình trạng khách hàng, các vấn đề cần lưu ý, và đề xuất hành động.`;
 

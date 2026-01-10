@@ -6,15 +6,18 @@
 ## Decisions Made
 
 ### 1. Route Optimization: Google Maps Only ✅
+
 **Decision:** Use Google Maps Directions API only (no OR-Tools)
 
 **Rationale:**
+
 - Simpler integration, faster to market
 - Sufficient for current needs (< 20 stops/day)
 - Lower complexity, easier maintenance
 - OR-Tools deferred to Phase 4 if optimization needs improve
 
 **Implementation:**
+
 - `@googlemaps/google-maps-services-js` package
 - Client-side route visualization with `@react-google-maps/api`
 - Server-side optimization API route
@@ -22,9 +25,11 @@
 ---
 
 ### 2. Photo Storage: MinIO (S3-Compatible) ✅
+
 **Decision:** Use MinIO self-hosted S3-compatible storage
 
 **Rationale:**
+
 - Self-hosted deployment (not Vercel)
 - Full control over data and costs
 - S3-compatible API (standard)
@@ -32,6 +37,7 @@
 - No external service dependencies
 
 **Implementation:**
+
 - `@aws-sdk/client-s3` package for S3 operations
 - MinIO bucket configuration
 - `/api/upload` route for photo uploads
@@ -40,15 +46,18 @@
 ---
 
 ### 3. GPS Tracking: Not Required ✅
+
 **Decision:** Skip GPS tracking features
 
 **Rationale:**
+
 - Not needed for current workflow
 - Simplifies mobile implementation
 - Reduces complexity and development time
 - Can be added later if requirements change
 
 **Implementation:**
+
 - No geolocation API integration
 - No check-in/check-out GPS validation
 - Focus on schedule management only
@@ -57,15 +66,18 @@
 ---
 
 ### 4. Morning Briefing Export: PDF Primary ✅
+
 **Decision:** PDF generation (Google Sheets deferred)
 
 **Rationale:**
+
 - PDF for immediate printing (morning briefing workflow)
 - No Google Sheets API setup overhead
 - Simpler implementation with jsPDF
 - Google Sheets integration deferred to Phase 4
 
 **Implementation:**
+
 - `jspdf` for client-side PDF generation
 - Morning briefing template with route map
 - Print-friendly format
@@ -94,6 +106,7 @@ MINIO_REGION=us-east-1
 ```
 
 **External MinIO Setup Notes:**
+
 - MinIO can be hosted on separate server from your VPS
 - Use full URL in `MINIO_ENDPOINT` (include protocol)
 - Set `MINIO_USE_SSL=true` for HTTPS connections

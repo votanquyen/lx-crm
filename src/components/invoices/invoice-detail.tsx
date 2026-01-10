@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { sendInvoice, cancelInvoice, recordPayment } from "@/actions/invoices";
+import { formatCurrency } from "@/lib/format";
 import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility
@@ -103,7 +104,10 @@ type InvoiceDetail = {
   }[];
 };
 
-const statusConfig: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  InvoiceStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
@@ -138,14 +142,8 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
   });
 
   const status = statusConfig[invoice.status];
-  const isOverdue = new Date(invoice.dueDate) < new Date() && !["PAID", "CANCELLED"].includes(invoice.status);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
+  const isOverdue =
+    new Date(invoice.dueDate) < new Date() && !["PAID", "CANCELLED"].includes(invoice.status);
 
   const handleSend = () => {
     startTransition(async () => {
@@ -195,9 +193,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
             <Badge variant={status.variant}>{status.label}</Badge>
             {isOverdue && <Badge variant="destructive">Quá hạn</Badge>}
           </div>
-          <p className="text-muted-foreground mt-1">
-            Khách hàng: {invoice.customer.companyName}
-          </p>
+          <p className="text-muted-foreground mt-1">Khách hàng: {invoice.customer.companyName}</p>
         </div>
 
         <div className="flex gap-2">
@@ -228,13 +224,10 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
 
       {/* Contract link */}
       {invoice.contract && (
-        <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+        <div className="bg-muted flex items-center gap-2 rounded-lg p-4">
           <FileText className="h-4 w-4" />
           <span className="text-muted-foreground">Hợp đồng:</span>
-          <Link
-            href={`/contracts/${invoice.contract.id}`}
-            className="text-primary hover:underline"
-          >
+          <Link href={`/contracts/${invoice.contract.id}`} className="text-primary hover:underline">
             {invoice.contract.contractNumber}
           </Link>
         </div>
@@ -257,12 +250,10 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
               >
                 {invoice.customer.companyName}
               </Link>
-              <p className="text-sm text-muted-foreground">{invoice.customer.code}</p>
+              <p className="text-muted-foreground text-sm">{invoice.customer.code}</p>
             </div>
             <p className="text-sm">{invoice.customer.address}</p>
-            {invoice.customer.taxCode && (
-              <p className="text-sm">MST: {invoice.customer.taxCode}</p>
-            )}
+            {invoice.customer.taxCode && <p className="text-sm">MST: {invoice.customer.taxCode}</p>}
             <div className="flex flex-wrap gap-4">
               {invoice.customer.contactPhone && (
                 <div className="flex items-center gap-1 text-sm">
@@ -291,15 +282,17 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Ngày phát hành</p>
-                <p className="font-medium flex items-center gap-1">
+                <p className="text-muted-foreground text-sm">Ngày phát hành</p>
+                <p className="flex items-center gap-1 font-medium">
                   <Calendar className="h-4 w-4" />
                   {format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Hạn thanh toán</p>
-                <p className={`font-medium flex items-center gap-1 ${isOverdue ? "text-destructive" : ""}`}>
+                <p className="text-muted-foreground text-sm">Hạn thanh toán</p>
+                <p
+                  className={`flex items-center gap-1 font-medium ${isOverdue ? "text-destructive" : ""}`}
+                >
                   <Calendar className="h-4 w-4" />
                   {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
@@ -307,14 +300,16 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Đã thanh toán</p>
+                <p className="text-muted-foreground text-sm">Đã thanh toán</p>
                 <p className="text-lg font-bold text-green-600">
                   {formatCurrency(invoice.paidAmount)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Còn nợ</p>
-                <p className={`text-lg font-bold ${invoice.outstandingAmount > 0 ? "text-orange-600" : "text-green-600"}`}>
+                <p className="text-muted-foreground text-sm">Còn nợ</p>
+                <p
+                  className={`text-lg font-bold ${invoice.outstandingAmount > 0 ? "text-orange-600" : "text-green-600"}`}
+                >
                   {formatCurrency(invoice.outstandingAmount)}
                 </p>
               </div>
@@ -371,7 +366,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                 <TableCell colSpan={3} className="text-right font-semibold">
                   Tổng cộng:
                 </TableCell>
-                <TableCell className="text-right text-lg font-bold text-primary">
+                <TableCell className="text-primary text-right text-lg font-bold">
                   {formatCurrency(invoice.totalAmount)}
                 </TableCell>
               </TableRow>
@@ -411,7 +406,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(payment.amount)}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
                       {payment.notes || "-"}
                     </TableCell>
                   </TableRow>

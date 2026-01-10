@@ -152,10 +152,7 @@ async function migrateCompaniesToCustomers(companies: OldCompany[]) {
   console.log(`  ✅ Created: ${created}, Skipped: ${skipped}`);
 }
 
-async function migrateInvoices(
-  invoices: OldInvoice[],
-  companyIdMap: Map<string, string>
-) {
+async function migrateInvoices(invoices: OldInvoice[], companyIdMap: Map<string, string>) {
   console.log("\n📄 Migrating invoices...");
 
   let created = 0;

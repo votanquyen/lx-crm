@@ -27,23 +27,34 @@ import {
 } from "@/lib/exchange/inventory-sync";
 
 /**
- * Calculate priority score with enhanced algorithm
- * Uses new priority-scoring module with age and keyword factors
+ * Calculate priority score based on priority and plant count
  */
-function calculatePriorityScore(
-  priority: ExchangePriority,
-  plantCount: number,
-  customerTier: CustomerTier,
-  reason?: string | null,
-  createdAt?: Date
-): number {
-  return calculateEnhancedPriorityScore({
-    priority,
-    customerTier,
-    quantity: plantCount,
-    reason,
-    createdAt: createdAt || new Date(),
-  });
+function calculatePriorityScore(priority: string, plantCount: number): number {
+  let score = 0;
+
+  // Priority weight (0-40)
+  switch (priority) {
+    case "URGENT":
+      score += 40;
+      break;
+    case "HIGH":
+      score += 30;
+      break;
+    case "MEDIUM":
+      score += 15;
+      break;
+    case "LOW":
+      score += 5;
+      break;
+  }
+
+  // Plant count weight (0-30)
+  score += Math.min(plantCount * 3, 30);
+
+  // Base customer score (0-30) - all customers equal
+  score += 15;
+
+  return score;
 }
 
 // Re-export for UI usage
@@ -81,7 +92,6 @@ export async function getExchangeRequests(params: ExchangeSearchParams) {
             companyName: true,
             address: true,
             district: true,
-            tier: true,
           },
         },
       },
@@ -121,7 +131,6 @@ export async function getPendingExchanges() {
           district: true,
           latitude: true,
           longitude: true,
-          tier: true,
         },
       },
     },
@@ -150,7 +159,6 @@ export async function getExchangeRequestById(id: string) {
           district: true,
           contactName: true,
           contactPhone: true,
-          tier: true,
         },
       },
     },
@@ -163,111 +171,97 @@ export async function getExchangeRequestById(id: string) {
 /**
  * Create exchange request
  */
-export const createExchangeRequest = createAction(
-  createExchangeRequestSchema,
-  async (input) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const createExchangeRequest = createAction(createExchangeRequestSchema, async (input) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    // Verify customer
-    const customer = await prisma.customer.findUnique({
-      where: { id: input.customerId },
-    });
-    if (!customer) throw new NotFoundError("Khách hàng");
+  // Verify customer
+  const customer = await prisma.customer.findUnique({
+    where: { id: input.customerId },
+  });
+  if (!customer) throw new NotFoundError("Khách hàng");
 
-    // Calculate priority score with enhanced algorithm
-    const priorityScore = calculatePriorityScore(
-      input.priority,
-      input.quantity,
-      customer.tier,
-      input.reason
-    );
+  // Calculate priority score
+  const priorityScore = calculatePriorityScore(input.priority, input.quantity);
 
-    const request = await prisma.exchangeRequest.create({
-      data: {
-        customerId: input.customerId,
-        priority: input.priority,
-        priorityScore,
-        quantity: input.quantity,
-        reason: input.reason,
-        preferredDate: input.preferredDate,
-        currentPlant: input.currentPlant,
-        requestedPlant: input.requestedPlant,
-        plantLocation: input.plantLocation,
-        status: "PENDING",
-      },
-      include: {
-        customer: { select: { id: true, companyName: true } },
-      },
-    });
+  const request = await prisma.exchangeRequest.create({
+    data: {
+      customerId: input.customerId,
+      priority: input.priority,
+      priorityScore,
+      quantity: input.quantity,
+      reason: input.reason,
+      preferredDate: input.preferredDate,
+      currentPlant: input.currentPlant,
+      requestedPlant: input.requestedPlant,
+      plantLocation: input.plantLocation,
+      status: "PENDING",
+    },
+    include: {
+      customer: { select: { id: true, companyName: true } },
+    },
+  });
 
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CREATE",
-        entityType: "ExchangeRequest",
-        entityId: request.id,
-        newValues: request as unknown as Prisma.JsonObject,
-      },
-    });
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "ExchangeRequest",
+      entityId: request.id,
+      newValues: request as unknown as Prisma.JsonObject,
+    },
+  });
 
-    revalidatePath("/exchanges");
-    revalidatePath(`/customers/${input.customerId}`);
-    return request;
-  }
-);
+  revalidatePath("/exchanges");
+  revalidatePath(`/customers/${input.customerId}`);
+  return request;
+});
 
 /**
  * Update exchange request
  */
-export const updateExchangeRequest = createAction(
-  updateExchangeRequestSchema,
-  async (input) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const updateExchangeRequest = createAction(updateExchangeRequestSchema, async (input) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    const { id, ...updateData } = input;
+  const { id, ...updateData } = input;
 
-    const existing = await prisma.exchangeRequest.findUnique({
-      where: { id },
-      include: { customer: true },
-    });
-    if (!existing) throw new NotFoundError("Yêu cầu đổi cây");
+  const existing = await prisma.exchangeRequest.findUnique({
+    where: { id },
+    include: { customer: true },
+  });
+  if (!existing) throw new NotFoundError("Yêu cầu đổi cây");
 
-    // Cannot update completed/cancelled
-    if (["COMPLETED", "CANCELLED"].includes(existing.status)) {
-      throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
-    }
-
-    // Recalculate priority if priority, quantity, or reason changed
-    let priorityScore = existing.priorityScore;
-    if (updateData.priority || updateData.quantity || updateData.reason) {
-      const quantity = updateData.quantity || existing.quantity;
-      priorityScore = calculatePriorityScore(
-        updateData.priority || existing.priority,
-        quantity,
-        existing.customer.tier,
-        updateData.reason || existing.reason,
-        existing.createdAt
-      );
-    }
-
-    const request = await prisma.exchangeRequest.update({
-      where: { id },
-      data: {
-        ...updateData,
-        priorityScore,
-      },
-      include: {
-        customer: { select: { id: true, companyName: true } },
-      },
-    });
-
-    revalidatePath("/exchanges");
-    return request;
+  // Cannot update completed/cancelled
+  if (["COMPLETED", "CANCELLED"].includes(existing.status)) {
+    throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
   }
-);
+
+  // Recalculate priority if priority or quantity changed
+  let priorityScore = existing.priorityScore;
+  if (updateData.priority || updateData.quantity) {
+    const quantity = updateData.quantity || existing.quantity;
+    priorityScore = calculatePriorityScore(
+      updateData.priority || existing.priority,
+      quantity
+    );
+  }
+
+  const request = await prisma.exchangeRequest.update({
+    where: { id },
+    data: {
+      ...updateData,
+      priorityScore,
+    },
+    include: {
+      customer: { select: { id: true, companyName: true } },
+    },
+  });
+
+  revalidatePath("/exchanges");
+  return request;
+});
 
 /**
  * Approve exchange request
@@ -321,7 +315,9 @@ export const cancelExchangeRequest = createSimpleAction(
       where: { id: data.id },
       data: {
         status: "CANCELLED",
-        reason: data.reason ? `${request.reason || ""}\n[Lý do hủy: ${data.reason}]` : request.reason,
+        reason: data.reason
+          ? `${request.reason || ""}\n[Lý do hủy: ${data.reason}]`
+          : request.reason,
       },
     });
 

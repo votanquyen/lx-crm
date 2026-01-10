@@ -14,15 +14,18 @@ SCALE: $2 (defaults to 3)
 RELEVANT_FILE_OUTPUT_DIR: `plans/<plan-name>/reports/`
 
 ## Workflow:
+
 - Write a prompt for 'SCALE' number of agents to the `Task` tool that will immediately call the `Bash` tool to run these commands to kick off your agents to conduct the search:
   - `gemini -p "[prompt]" --model gemini-2.5-flash-preview-09-2025` (if count <= 3)
   - `opencode run "[prompt]" --model opencode/grok-code` (if count > 3 and count < 6)
   - if count >= 6, spawn `Explore` subagents to search the codebase in parallel
 
 **Why use external agentic tools?**
+
 - External agentic tools are faster and more efficient when using LLMs with large context windows (1M+ tokens).
 
 **How to prompt the agents:**
+
 - If `gemini` or `opencode` is not available, ask the user if they want to install it:
   - If **yes**, install it (if there are permission issues, instruct the user to install it manually, including authentication steps)
   - If **no**, use the default `Explore` subagents.

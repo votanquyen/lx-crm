@@ -17,7 +17,7 @@ import type { ExchangeRequest, Customer } from "@prisma/client";
 
 interface ExchangeRequestCardProps {
   request: ExchangeRequest & {
-    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "tier">;
+    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district">;
   };
   onApprove?: (id: string) => void;
   onCancel?: (id: string) => void;
@@ -34,17 +34,13 @@ export function ExchangeRequestCardComponent({
   const canCancel = !["COMPLETED", "CANCELLED"].includes(request.status);
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-lg truncate">
-                {request.customer.companyName}
-              </h3>
-              <span className="text-sm text-gray-500 shrink-0">
-                #{request.customer.code}
-              </span>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-2">
+              <h3 className="truncate text-lg font-semibold">{request.customer.companyName}</h3>
+              <span className="shrink-0 text-sm text-gray-500">#{request.customer.code}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={request.status} />
@@ -57,7 +53,7 @@ export function ExchangeRequestCardComponent({
       <CardContent className="space-y-3">
         {/* Customer Info */}
         <div className="flex items-start gap-2 text-sm text-gray-600">
-          <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
           <span className="line-clamp-2">
             {request.customer.address}, {request.customer.district}
           </span>
@@ -79,28 +75,27 @@ export function ExchangeRequestCardComponent({
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar className="h-4 w-4 shrink-0" />
             <span>
-              Ngày mong muốn:{" "}
-              {format(request.preferredDate, "dd/MM/yyyy", { locale: vi })}
+              Ngày mong muốn: {format(request.preferredDate, "dd/MM/yyyy", { locale: vi })}
             </span>
           </div>
         )}
 
         {/* Reason */}
         {request.reason && (
-          <p className="text-sm text-gray-700 line-clamp-2 italic bg-gray-50 p-2 rounded">
+          <p className="line-clamp-2 rounded bg-gray-50 p-2 text-sm text-gray-700 italic">
             &quot;{request.reason}&quot;
           </p>
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t">
+        <div className="flex flex-wrap gap-2 border-t pt-2">
           <Button
             size="sm"
             variant="outline"
             onClick={() => onView?.(request.id)}
-            className="flex-1 min-w-[100px]"
+            className="min-w-[100px] flex-1"
           >
-            <User className="h-4 w-4 mr-1" />
+            <User className="mr-1 h-4 w-4" />
             Chi tiết
           </Button>
 
@@ -108,7 +103,7 @@ export function ExchangeRequestCardComponent({
             <Button
               size="sm"
               onClick={() => onApprove(request.id)}
-              className="flex-1 min-w-[100px]"
+              className="min-w-[100px] flex-1"
             >
               Duyệt
             </Button>
@@ -119,7 +114,7 @@ export function ExchangeRequestCardComponent({
               size="sm"
               variant="destructive"
               onClick={() => onCancel(request.id)}
-              className="flex-1 min-w-[100px]"
+              className="min-w-[100px] flex-1"
             >
               Hủy
             </Button>

@@ -59,9 +59,9 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
 
 **Your Review Process:**
 
-1. **Initial Analysis**: 
+1. **Initial Analysis**:
    - Read and understand the given plan file.
-   - Focus on recently changed files unless explicitly asked to review the entire codebase. 
+   - Focus on recently changed files unless explicitly asked to review the entire codebase.
    - If you are asked to review the entire codebase, use `repomix` bash command to compact the codebase into `repomix-output.xml` file and summarize the codebase, then analyze the summary and the changed files at once.
    - Use git diff or similar tools to identify modifications.
    - You can use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
@@ -86,7 +86,7 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - Suggest alternative approaches when applicable
    - Reference relevant best practices or documentation
 
-5. **[IMPORTANT] Update Plan File**: 
+5. **[IMPORTANT] Update Plan File**:
    - Update the given plan file with task status and next steps
 
 **Output Format:**
@@ -97,34 +97,43 @@ Structure your review as a comprehensive report with:
 ## Code Review Summary
 
 ### Scope
+
 - Files reviewed: [list of files]
 - Lines of code analyzed: [approximate count]
 - Review focus: [recent changes/specific features/full codebase]
 - Updated plans: [list of updated plans]
 
 ### Overall Assessment
+
 [Brief overview of code quality and main findings]
 
 ### Critical Issues
+
 [List any security vulnerabilities or breaking issues]
 
 ### High Priority Findings
+
 [Performance problems, type safety issues, etc.]
 
 ### Medium Priority Improvements
+
 [Code quality, maintainability suggestions]
 
 ### Low Priority Suggestions
+
 [Minor optimizations, style improvements]
 
 ### Positive Observations
+
 [Highlight well-written code and good practices]
 
 ### Recommended Actions
+
 1. [Prioritized list of actions to take]
 2. [Include specific code fixes where helpful]
 
 ### Metrics
+
 - Type Coverage: [percentage if applicable]
 - Test Coverage: [percentage if available]
 - Linting Issues: [count by severity]
@@ -155,6 +164,7 @@ Check "Plan Context" section above for `Reports Path`. Use that path, or `plans/
 **Additional rule**: If "given plan file" provided, extract plan folder from path first.
 
 ### File Naming
+
 `code-reviewer-{date}-{review-slug}.md`
 
 Example: `code-reviewer-251128-auth-module-review.md`

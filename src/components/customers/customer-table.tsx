@@ -2,9 +2,10 @@
  * Customer Table Component
  * Main list with search, filters, and pagination
  */
+import { memo } from "react";
 import { CustomerCard } from "./customer-card";
 import { Pagination } from "@/components/ui/pagination";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
 
 interface Customer {
   id: string;
@@ -16,7 +17,6 @@ interface Customer {
   contactPhone: string | null;
   contactEmail: string | null;
   status: CustomerStatus;
-  tier: CustomerTier;
   _count?: {
     customerPlants: number;
     stickyNotes: number;
@@ -34,13 +34,16 @@ interface CustomerTableProps {
   };
 }
 
-export function CustomerTable({ customers, pagination }: CustomerTableProps) {
+export const CustomerTable = memo(function CustomerTable({
+  customers,
+  pagination,
+}: CustomerTableProps) {
   if (customers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="rounded-full bg-muted p-4">
+        <div className="bg-muted rounded-full p-4">
           <svg
-            className="h-8 w-8 text-muted-foreground"
+            className="text-muted-foreground h-8 w-8"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -54,7 +57,7 @@ export function CustomerTable({ customers, pagination }: CustomerTableProps) {
           </svg>
         </div>
         <h3 className="mt-4 text-lg font-semibold">Không tìm thấy khách hàng</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-sm">
           Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
         </p>
       </div>
@@ -72,4 +75,4 @@ export function CustomerTable({ customers, pagination }: CustomerTableProps) {
       <Pagination {...pagination} />
     </div>
   );
-}
+});

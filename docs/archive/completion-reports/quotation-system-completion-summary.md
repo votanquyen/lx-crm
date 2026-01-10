@@ -16,9 +16,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ## What Was Implemented
 
 ### 1. Validation Schemas ✅
+
 **File:** `src/lib/validations/quotation.ts`
 
 **Schemas:**
+
 - `quotationItemSchema` - Item validation with quantity, pricing, discounts
 - `createQuotationSchema` - Create new quotations with items array
 - `updateQuotationSchema` - Edit quotations (draft only)
@@ -31,6 +33,7 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 - `sendQuotationSchema` - Send quotation with email
 
 **Features:**
+
 - Vietnamese error messages
 - Multi-level validation (items, totals, dates)
 - Business rule enforcement (expiry > valid from, min 1 item, etc.)
@@ -39,24 +42,29 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ---
 
 ### 2. Server Actions ✅
+
 **File:** `src/actions/quotations.ts`
 
 **Read Operations:**
+
 - `getQuotations(params)` - Paginated list with filters (status, customer, dates, amounts)
 - `getQuotationById(id)` - Single quotation with full details
 - `getQuotationStats()` - Dashboard statistics
 
 **Write Operations:**
+
 - `createQuotation(data)` - Create with auto-numbering (QT-YYYYMM-XXXX)
 - `updateQuotation(id, data)` - Edit (draft only)
 - `deleteQuotation(id)` - Delete (draft only, managers only)
 
 **Item Management:**
+
 - `addQuotationItem(data)` - Add item with automatic recalculation
 - `updateQuotationItem(id, data)` - Edit item with recalculation
 - `removeQuotationItem(id)` - Remove item with recalculation
 
 **Status Management:**
+
 - `sendQuotation(data)` - DRAFT → SENT
 - `markQuotationAsViewed(id)` - SENT → VIEWED
 - `acceptQuotation(id, response)` - SENT/VIEWED → ACCEPTED
@@ -64,9 +72,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 - `markExpiredQuotations()` - Auto-expire past due (for cron)
 
 **Conversion:**
+
 - `convertQuotationToContract(data)` - ACCEPTED → CONVERTED
 
 **Key Features:**
+
 - Auto-generate quotation numbers (QT-202512-0001)
 - Automatic total calculations (subtotal, discount, VAT, total)
 - Transaction-safe operations
@@ -79,9 +89,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ### 3. UI Components ✅
 
 #### A. Quotation List Page
+
 **File:** `src/app/(dashboard)/quotations/page.tsx`
 
 **Features:**
+
 - Statistics dashboard (4 cards):
   - Total quotations + draft count
   - Pending (sent, awaiting response)
@@ -100,9 +112,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 - Empty state with CTA
 
 #### B. Quotation Form Component
+
 **File:** `src/components/quotations/quotation-form.tsx`
 
 **Sections:**
+
 1. **Customer Selection** - Dropdown with search
 2. **Basic Info** - Title, expiry date, description
 3. **Items Management**:
@@ -121,6 +135,7 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 7. **Actions** - Save draft or cancel
 
 **Features:**
+
 - Real-time calculation of all totals
 - Auto-fill prices from plant types
 - Item-level discounts + quotation-level discount
@@ -128,9 +143,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 - Responsive design
 
 #### C. Quotation Detail Page
+
 **File:** `src/app/(dashboard)/quotations/[id]/page.tsx`
 
 **Sections:**
+
 1. **Header** - Quote number, status badge, expiry warnings
 2. **Customer Info** - Company, email, phone, address
 3. **Quotation Details** - Created date, expiry date, description
@@ -140,21 +157,25 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 7. **Timeline** - Created → Sent → Accepted/Rejected history
 
 **Features:**
+
 - Status-dependent action buttons
 - Responsive layout
 - Clear pricing breakdown
 - Timeline visualization
 
 #### D. Quotation Actions Component
+
 **File:** `src/components/quotations/quotation-actions.tsx`
 
 **Actions by Status:**
+
 - **DRAFT**: Edit, Send, Delete
 - **SENT/VIEWED**: Accept, Reject
 - **ACCEPTED**: Convert to Contract
 - **All**: Download PDF (placeholder)
 
 **Features:**
+
 - Status-dependent visibility
 - Confirmation dialogs (delete, reject)
 - Loading states
@@ -164,9 +185,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ---
 
 ### 4. Create Quotation Page ✅
+
 **File:** `src/app/(dashboard)/quotations/new/page.tsx`
 
 **Features:**
+
 - Server-side data fetching (customers, plant types)
 - Passes data to form component
 - Clean layout with card wrapper
@@ -174,9 +197,11 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ---
 
 ### 5. Seed Data ✅
+
 **File:** `prisma/seeds/quotations.ts`
 
 **Created:**
+
 - 5 sample quotations with diverse statuses:
   - DRAFT - Basic office package
   - SENT - Lobby decoration
@@ -189,6 +214,7 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 - Terms & conditions template
 
 **Integration:**
+
 - Added to main seed file (`prisma/seed.ts`)
 - Runs after customers/plants/users seeding
 - Safe error handling
@@ -198,6 +224,7 @@ Successfully implemented complete quotation management system for Lộc Xanh CRM
 ## Technical Implementation Details
 
 ### Auto-numbering System
+
 ```typescript
 Format: QT-YYYYMM-XXXX
 Example: QT-202512-0001
@@ -210,6 +237,7 @@ Algorithm:
 ```
 
 ### Calculation Logic
+
 ```typescript
 // Item total
 itemTotal = quantity × unitPrice × (1 - itemDiscount/100)
@@ -223,6 +251,7 @@ totalAmount = subtotalAfterDiscount + vatAmount
 ```
 
 ### Status Workflow
+
 ```
 DRAFT → SENT → VIEWED → ACCEPTED → CONVERTED
                     ↓
@@ -232,6 +261,7 @@ DRAFT → SENT → VIEWED → ACCEPTED → CONVERTED
 ```
 
 **Rules:**
+
 - Can only edit DRAFT
 - Can only delete DRAFT (managers)
 - Can only send DRAFT
@@ -244,6 +274,7 @@ DRAFT → SENT → VIEWED → ACCEPTED → CONVERTED
 ## Database Schema
 
 **Already existed in Prisma schema:**
+
 - `Quotation` model with all fields
 - `QuotationItem` model with relations
 - `QuotationStatus` enum
@@ -255,16 +286,19 @@ DRAFT → SENT → VIEWED → ACCEPTED → CONVERTED
 ## Validation & Quality
 
 **TypeScript:**
+
 - ✅ All files type-safe
 - ✅ No compilation errors
 - ✅ Strict mode compliance
 
 **Linting:**
+
 - ✅ No errors in quotation files
 - ✅ Clean unused imports
 - ✅ ESLint compliant
 
 **Code Quality:**
+
 - ✅ Follows project patterns
 - ✅ Vietnamese localization
 - ✅ Error handling
@@ -305,25 +339,26 @@ prisma/
 
 ## Features Comparison vs Plan
 
-| Feature | Planned | Implemented | Notes |
-|---------|---------|-------------|-------|
-| Validation schemas | ✅ | ✅ | All 9 schemas |
-| Server actions (CRUD) | ✅ | ✅ | Full CRUD + items |
-| Status management | ✅ | ✅ | All transitions |
-| Auto-numbering | ✅ | ✅ | QT-YYYYMM-XXXX |
-| Auto-calculations | ✅ | ✅ | Real-time |
-| Quotation list | ✅ | ✅ | With stats |
-| Create quotation | ✅ | ✅ | Multi-item form |
-| Quotation detail | ✅ | ✅ | Full details + actions |
-| Send quotation | ✅ | ✅ | Status change (email TODO) |
-| Accept/Reject | ✅ | ✅ | With reasons |
-| Convert to contract | ✅ | 🚧 | Placeholder (contract module pending) |
-| PDF generation | ✅ | ⏳ | TODO (Phase 3) |
-| Email integration | ✅ | ⏳ | TODO (Phase 3) |
-| Seed data | ✅ | ✅ | 5 quotations |
-| Tests | ✅ | ⏳ | TODO |
+| Feature               | Planned | Implemented | Notes                                 |
+| --------------------- | ------- | ----------- | ------------------------------------- |
+| Validation schemas    | ✅      | ✅          | All 9 schemas                         |
+| Server actions (CRUD) | ✅      | ✅          | Full CRUD + items                     |
+| Status management     | ✅      | ✅          | All transitions                       |
+| Auto-numbering        | ✅      | ✅          | QT-YYYYMM-XXXX                        |
+| Auto-calculations     | ✅      | ✅          | Real-time                             |
+| Quotation list        | ✅      | ✅          | With stats                            |
+| Create quotation      | ✅      | ✅          | Multi-item form                       |
+| Quotation detail      | ✅      | ✅          | Full details + actions                |
+| Send quotation        | ✅      | ✅          | Status change (email TODO)            |
+| Accept/Reject         | ✅      | ✅          | With reasons                          |
+| Convert to contract   | ✅      | 🚧          | Placeholder (contract module pending) |
+| PDF generation        | ✅      | ⏳          | TODO (Phase 3)                        |
+| Email integration     | ✅      | ⏳          | TODO (Phase 3)                        |
+| Seed data             | ✅      | ✅          | 5 quotations                          |
+| Tests                 | ✅      | ⏳          | TODO                                  |
 
 **Legend:**
+
 - ✅ Complete
 - 🚧 Partial (placeholder implemented)
 - ⏳ Deferred to Phase 3
@@ -333,11 +368,13 @@ prisma/
 ## Next Steps (Phase 3)
 
 ### Immediate (This Week)
+
 1. ✅ **COMPLETE** - All core functionality working
 2. **Manual Testing** - Test create → send → accept → convert workflow
 3. **Bug Fixes** - Address any issues found in testing
 
 ### Phase 3 Features (Week 4-5)
+
 1. **PDF Generation** (`@react-pdf/renderer`)
    - Quotation template
    - Download action
@@ -357,6 +394,7 @@ prisma/
    - Quotation templates
 
 ### Phase 3+ (Later)
+
 - Quotation analytics (conversion funnel)
 - Bulk operations (send multiple, export CSV)
 - Quotation revisions/versions
@@ -417,6 +455,7 @@ prisma/
 ## Testing Checklist
 
 ### Manual Testing
+
 - [ ] Create quotation with 1 item
 - [ ] Create quotation with multiple items
 - [ ] Test calculations (item discount + quotation discount + VAT)
@@ -431,6 +470,7 @@ prisma/
 - [ ] Verify stats cards show correct counts
 
 ### Automated Testing (TODO)
+
 - Unit tests for calculations
 - Integration tests for server actions
 - E2E tests for workflows
@@ -440,12 +480,14 @@ prisma/
 ## Performance Notes
 
 **Optimizations Implemented:**
+
 - Parallel queries (quotations + stats)
 - Efficient includes (only needed relations)
 - Indexed queries (status, customerId, dates)
 - Transaction batching for multi-item creates
 
 **Database Indexes Used:**
+
 - `quoteNumber` (unique)
 - `customerId`
 - `status`
@@ -456,6 +498,7 @@ prisma/
 ## Security
 
 **Implemented:**
+
 - Authentication required (all actions)
 - Authorization for delete (managers only)
 - CSRF protection (Next.js default)
@@ -463,6 +506,7 @@ prisma/
 - Input validation (Zod schemas)
 
 **Status Guards:**
+
 - Cannot edit non-DRAFT quotations
 - Cannot delete non-DRAFT quotations
 - Cannot convert non-ACCEPTED quotations
@@ -493,6 +537,7 @@ prisma/
 ## Dependencies Added
 
 **None** - All dependencies already in project:
+
 - `@hookform/resolvers` ✅
 - `react-hook-form` ✅
 - `zod` ✅
@@ -501,6 +546,7 @@ prisma/
 - `lucide-react` ✅
 
 **Future Dependencies (Phase 3):**
+
 - `@react-pdf/renderer` - PDF generation
 - `resend` - Already installed for emails
 
@@ -511,6 +557,7 @@ prisma/
 **Status:** Phase 2.3 implementation COMPLETE ✅
 
 **Delivered:**
+
 - Complete quotation management system
 - Full CRUD operations
 - Status workflow management
@@ -520,17 +567,20 @@ prisma/
 - Clean code passing validation
 
 **Ready for:**
+
 - Manual testing
 - User acceptance testing
 - Production deployment (after testing)
 
 **Blocked items:**
+
 - PDF generation (Phase 3)
 - Email integration (Phase 3)
 - Contract conversion (waiting for contract module)
 - Edit page (low priority, can add later)
 
 **Overall Progress:**
+
 - Phase 2.1: Plant Types ✅ COMPLETE
 - Phase 2.2: Payments ✅ COMPLETE
 - Phase 2.3: Quotations ✅ COMPLETE

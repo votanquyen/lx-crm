@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { activateContract, cancelContract } from "@/actions/contracts";
+import { formatCurrency } from "@/lib/format";
 import type { ContractStatus, InvoiceStatus } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility
@@ -105,7 +106,10 @@ type ContractDetail = {
   previousContractId?: string | null;
 };
 
-const statusConfig: Record<ContractStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  ContractStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   NEGOTIATING: { label: "Đang đàm phán", variant: "outline" },
@@ -116,7 +120,10 @@ const statusConfig: Record<ContractStatus, { label: string; variant: "default" |
   CANCELLED: { label: "Đã hủy", variant: "destructive" },
 };
 
-const invoiceStatusConfig: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const invoiceStatusConfig: Record<
+  InvoiceStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
@@ -137,13 +144,6 @@ export function ContractDetail({ contract }: ContractDetailProps) {
   const [cancelReason, setCancelReason] = useState("");
 
   const status = statusConfig[contract.status];
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
 
   const getDaysRemaining = () => {
     const now = new Date();
@@ -188,9 +188,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground mt-1">
-            Khách hàng: {contract.customer.companyName}
-          </p>
+          <p className="text-muted-foreground mt-1">Khách hàng: {contract.customer.companyName}</p>
         </div>
 
         <div className="flex gap-2">
@@ -236,7 +234,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
 
       {/* Renewal links */}
       {(contract.renewedFrom || contract.renewedTo) && (
-        <div className="flex gap-4 p-4 bg-muted rounded-lg">
+        <div className="bg-muted flex gap-4 rounded-lg p-4">
           {contract.renewedFrom && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Gia hạn từ:</span>
@@ -279,7 +277,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
               >
                 {contract.customer.companyName}
               </Link>
-              <p className="text-sm text-muted-foreground">{contract.customer.code}</p>
+              <p className="text-muted-foreground text-sm">{contract.customer.code}</p>
             </div>
             <p className="text-sm">{contract.customer.address}</p>
             {contract.customer.contactName && (
@@ -313,15 +311,15 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Ngày bắt đầu</p>
-                <p className="font-medium flex items-center gap-1">
+                <p className="text-muted-foreground text-sm">Ngày bắt đầu</p>
+                <p className="flex items-center gap-1 font-medium">
                   <Calendar className="h-4 w-4" />
                   {format(new Date(contract.startDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Ngày kết thúc</p>
-                <p className="font-medium flex items-center gap-1">
+                <p className="text-muted-foreground text-sm">Ngày kết thúc</p>
+                <p className="flex items-center gap-1 font-medium">
                   <Calendar className="h-4 w-4" />
                   {format(new Date(contract.endDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
@@ -329,22 +327,20 @@ export function ContractDetail({ contract }: ContractDetailProps) {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Giá trị/tháng</p>
-                <p className="text-lg font-bold text-primary flex items-center gap-1">
+                <p className="text-muted-foreground text-sm">Giá trị/tháng</p>
+                <p className="text-primary flex items-center gap-1 text-lg font-bold">
                   <DollarSign className="h-5 w-5" />
                   {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Tiền đặt cọc</p>
-                <p className="font-medium">
-                  {formatCurrency(contract.depositAmount ?? 0)}
-                </p>
+                <p className="text-muted-foreground text-sm">Tiền đặt cọc</p>
+                <p className="font-medium">{formatCurrency(contract.depositAmount ?? 0)}</p>
               </div>
             </div>
             {contract.paymentTerms && (
               <div>
-                <p className="text-sm text-muted-foreground">Điều khoản thanh toán</p>
+                <p className="text-muted-foreground text-sm">Điều khoản thanh toán</p>
                 <p className="text-sm">{contract.paymentTerms}</p>
               </div>
             )}
@@ -373,8 +369,8 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{item.plantType?.name ?? "N/A"}</p>
-                      <p className="text-sm text-muted-foreground">{item.plantType?.code ?? "-"}</p>
+                      <p className="font-medium">{item.plantType.name}</p>
+                      <p className="text-muted-foreground text-sm">{item.plantType.code}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
@@ -382,7 +378,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                   <TableCell className="text-right font-medium">
                     {formatCurrency(item.totalPrice)}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {item.notes || "-"}
                   </TableCell>
                 </TableRow>
@@ -391,8 +387,8 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <TableCell colSpan={3} className="text-right font-semibold">
                   Tổng cộng:
                 </TableCell>
-                <TableCell className="text-right text-lg font-bold text-primary">
-                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
+                <TableCell className="text-primary text-right text-lg font-bold">
+                  {formatCurrency(contract.monthlyAmount)}
                 </TableCell>
                 <TableCell />
               </TableRow>
@@ -476,7 +472,8 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           <DialogHeader>
             <DialogTitle>Hủy hợp đồng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn hủy hợp đồng {contract.contractNumber}? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn hủy hợp đồng {contract.contractNumber}? Hành động này không thể
+              hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

@@ -28,7 +28,9 @@ async function verifyPlantTypes() {
     console.log(`   Status: ${pt.isActive ? "✅ Active" : "❌ Inactive"}`);
 
     if (pt.inventory) {
-      console.log(`   Inventory: ${pt.inventory.availableStock}/${pt.inventory.totalStock} available`);
+      console.log(
+        `   Inventory: ${pt.inventory.availableStock}/${pt.inventory.totalStock} available`
+      );
     }
     console.log("");
   });

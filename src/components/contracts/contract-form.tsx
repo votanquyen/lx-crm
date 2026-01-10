@@ -22,7 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createContractSchema, updateContractSchema, type CreateContractInput, type UpdateContractInput } from "@/lib/validations/contract";
+import {
+  createContractSchema,
+  updateContractSchema,
+  type CreateContractInput,
+  type UpdateContractInput,
+} from "@/lib/validations/contract";
 import { createContract, updateContract } from "@/actions/contracts";
 import { formatCurrency } from "@/lib/format";
 
@@ -62,7 +67,12 @@ interface ContractFormProps {
   contract?: ContractForEdit;
 }
 
-export function ContractForm({ customers, plantTypes, defaultCustomerId, contract }: ContractFormProps) {
+export function ContractForm({
+  customers,
+  plantTypes,
+  defaultCustomerId,
+  contract,
+}: ContractFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +80,9 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
   const isEditing = !!contract;
 
   const form = useForm<CreateContractInput>({
-    resolver: zodResolver(isEditing ? updateContractSchema : createContractSchema) as Resolver<CreateContractInput>,
+    resolver: zodResolver(
+      isEditing ? updateContractSchema : createContractSchema
+    ) as Resolver<CreateContractInput>,
     defaultValues: isEditing
       ? {
           customerId: contract.customerId,
@@ -108,13 +120,16 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
     [watchItems]
   );
 
-  const handlePlantTypeChange = useCallback((index: number, plantTypeId: string) => {
-    const plantType = plantTypes.find((pt) => pt.id === plantTypeId);
-    if (plantType) {
-      form.setValue(`items.${index}.plantTypeId`, plantTypeId);
-      form.setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
-    }
-  }, [plantTypes, form]);
+  const handlePlantTypeChange = useCallback(
+    (index: number, plantTypeId: string) => {
+      const plantType = plantTypes.find((pt) => pt.id === plantTypeId);
+      if (plantType) {
+        form.setValue(`items.${index}.plantTypeId`, plantTypeId);
+        form.setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
+      }
+    },
+    [plantTypes, form]
+  );
 
   const onSubmit = (data: CreateContractInput) => {
     setError(null);
@@ -150,11 +165,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-          {error}
-        </div>
-      )}
+      {error && <div className="bg-destructive/10 text-destructive rounded-lg p-4">{error}</div>}
 
       <Card>
         <CardHeader>
@@ -181,12 +192,12 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
                 </SelectContent>
               </Select>
               {isEditing && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Không thể thay đổi khách hàng khi chỉnh sửa hợp đồng
                 </p>
               )}
               {form.formState.errors.customerId && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {form.formState.errors.customerId.message}
                 </p>
               )}
@@ -212,7 +223,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
                 defaultValue={format(new Date(), "yyyy-MM-dd")}
               />
               {form.formState.errors.startDate && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {form.formState.errors.startDate.message}
                 </p>
               )}
@@ -230,20 +241,14 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
                 )}
               />
               {form.formState.errors.endDate && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.endDate.message}
-                </p>
+                <p className="text-destructive text-sm">{form.formState.errors.endDate.message}</p>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="paymentTerms">Điều khoản thanh toán</Label>
-            <Textarea
-              id="paymentTerms"
-              {...form.register("paymentTerms")}
-              rows={2}
-            />
+            <Textarea id="paymentTerms" {...form.register("paymentTerms")} rows={2} />
           </div>
 
           <div className="space-y-2">
@@ -269,11 +274,8 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
         <CardContent>
           <div className="space-y-4">
             {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="flex gap-4 items-start p-4 border rounded-lg"
-              >
-                <div className="flex-1 grid gap-4 md:grid-cols-4">
+              <div key={field.id} className="flex items-start gap-4 rounded-lg border p-4">
+                <div className="grid flex-1 gap-4 md:grid-cols-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label>Loại cây *</Label>
                     <Select
@@ -324,21 +326,19 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
                     onClick={() => remove(index)}
                     className="mt-6"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="text-destructive h-4 w-4" />
                   </Button>
                 )}
               </div>
             ))}
 
             {form.formState.errors.items && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.items.message}
-              </p>
+              <p className="text-destructive text-sm">{form.formState.errors.items.message}</p>
             )}
           </div>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <div className="flex justify-between items-center text-lg font-semibold">
+          <div className="bg-muted mt-6 rounded-lg p-4">
+            <div className="flex items-center justify-between text-lg font-semibold">
               <span>Tổng giá trị hàng tháng:</span>
               <span className="text-primary">{formatCurrency(monthlyTotal)}</span>
             </div>
@@ -351,12 +351,7 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEditing ? "Cập nhật hợp đồng" : "Tạo hợp đồng"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isPending}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>
           Hủy
         </Button>
       </div>

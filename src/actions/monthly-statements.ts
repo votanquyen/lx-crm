@@ -16,83 +16,26 @@ import {
   getMonthlyStatementsSchema,
   autoRolloverSchema,
 } from "@/lib/validations/monthly-statement";
-import type {
-  PlantItem,
-  StatementDTO,
-  StatementListItem,
-} from "@/types/monthly-statement";
+import type { PlantItem, StatementDTO, StatementListItem } from "@/types/monthly-statement";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 /**
  * Get list of monthly statements with filters
  */
-export const getMonthlyStatements = createAction(
-  getMonthlyStatementsSchema,
-  async (input) => {
-    const { customerId, year, month, needsConfirmation, limit, offset } =
-      input;
+export const getMonthlyStatements = createAction(getMonthlyStatementsSchema, async (input) => {
+  const { customerId, year, month, needsConfirmation, limit, offset } = input;
 
-    const where: Prisma.MonthlyStatementWhereInput = {};
+  const where: Prisma.MonthlyStatementWhereInput = {};
 
-    if (customerId) where.customerId = customerId;
-    if (year) where.year = year;
-    if (month) where.month = month;
-    if (needsConfirmation !== undefined)
-      where.needsConfirmation = needsConfirmation;
+  if (customerId) where.customerId = customerId;
+  if (year) where.year = year;
+  if (month) where.month = month;
+  if (needsConfirmation !== undefined) where.needsConfirmation = needsConfirmation;
 
-    const [statements, total] = await Promise.all([
-      prisma.monthlyStatement.findMany({
-        where,
-        include: {
-          customer: {
-            select: {
-              id: true,
-              code: true,
-              companyName: true,
-              shortName: true,
-              district: true,
-            },
-          },
-        },
-        orderBy: [{ year: "desc" }, { month: "desc" }],
-        take: limit,
-        skip: offset,
-      }),
-      prisma.monthlyStatement.count({ where }),
-    ]);
-
-    // Convert Decimal to number for frontend
-    const items: StatementListItem[] = statements.map((stmt) => ({
-      id: stmt.id,
-      customerId: stmt.customerId,
-      year: stmt.year,
-      month: stmt.month,
-      total: Number(stmt.total),
-      needsConfirmation: stmt.needsConfirmation,
-      companyName: stmt.customer.companyName,
-      shortName: stmt.customer.shortName,
-      district: stmt.customer.district,
-      plantCount: Array.isArray(stmt.plants) ? stmt.plants.length : 0,
-    }));
-
-    return {
-      items,
-      total,
-      limit,
-      offset,
-    };
-  }
-);
-
-/**
- * Get single monthly statement by ID
- */
-export const getMonthlyStatement = createAction(
-  getMonthlyStatementSchema,
-  async ({ id }) => {
-    const statement = await prisma.monthlyStatement.findUnique({
-      where: { id },
+  const [statements, total] = await Promise.all([
+    prisma.monthlyStatement.findMany({
+      where,
       include: {
         customer: {
           select: {
@@ -100,53 +43,98 @@ export const getMonthlyStatement = createAction(
             code: true,
             companyName: true,
             shortName: true,
-            address: true,
             district: true,
-            contactName: true,
-            contactPhone: true,
-          },
-        },
-        confirmedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
           },
         },
       },
-    });
+      orderBy: [{ year: "desc" }, { month: "desc" }],
+      take: limit,
+      skip: offset,
+    }),
+    prisma.monthlyStatement.count({ where }),
+  ]);
 
-    if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
-    }
+  // Convert Decimal to number for frontend
+  const items: StatementListItem[] = statements.map((stmt) => ({
+    id: stmt.id,
+    customerId: stmt.customerId,
+    year: stmt.year,
+    month: stmt.month,
+    total: Number(stmt.total),
+    needsConfirmation: stmt.needsConfirmation,
+    companyName: stmt.customer.companyName,
+    shortName: stmt.customer.shortName,
+    district: stmt.customer.district,
+    plantCount: Array.isArray(stmt.plants) ? stmt.plants.length : 0,
+  }));
 
-    // Convert to DTO
-    const dto: StatementDTO = {
-      id: statement.id,
-      customerId: statement.customerId,
-      year: statement.year,
-      month: statement.month,
-      periodStart: statement.periodStart.toISOString(),
-      periodEnd: statement.periodEnd.toISOString(),
-      contactName: statement.contactName,
-      plants: statement.plants as unknown as PlantItem[],
-      subtotal: Number(statement.subtotal),
-      vatRate: Number(statement.vatRate),
-      vatAmount: Number(statement.vatAmount),
-      total: Number(statement.total),
-      needsConfirmation: statement.needsConfirmation,
-      confirmedAt: statement.confirmedAt?.toISOString() ?? null,
-      notes: statement.notes,
-      internalNotes: statement.internalNotes,
-      createdAt: statement.createdAt.toISOString(),
-      updatedAt: statement.updatedAt.toISOString(),
-      customer: statement.customer,
-      confirmedBy: statement.confirmedBy ?? undefined,
-    };
+  return {
+    items,
+    total,
+    limit,
+    offset,
+  };
+});
 
-    return dto;
+/**
+ * Get single monthly statement by ID
+ */
+export const getMonthlyStatement = createAction(getMonthlyStatementSchema, async ({ id }) => {
+  const statement = await prisma.monthlyStatement.findUnique({
+    where: { id },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          code: true,
+          companyName: true,
+          shortName: true,
+          address: true,
+          district: true,
+          contactName: true,
+          contactPhone: true,
+        },
+      },
+      confirmedBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  if (!statement) {
+    throw new Error("Không tìm thấy bảng kê");
   }
-);
+
+  // Convert to DTO
+  const dto: StatementDTO = {
+    id: statement.id,
+    customerId: statement.customerId,
+    year: statement.year,
+    month: statement.month,
+    periodStart: statement.periodStart.toISOString(),
+    periodEnd: statement.periodEnd.toISOString(),
+    contactName: statement.contactName,
+    plants: statement.plants as unknown as PlantItem[],
+    subtotal: Number(statement.subtotal),
+    vatRate: Number(statement.vatRate),
+    vatAmount: Number(statement.vatAmount),
+    total: Number(statement.total),
+    needsConfirmation: statement.needsConfirmation,
+    confirmedAt: statement.confirmedAt?.toISOString() ?? null,
+    notes: statement.notes,
+    internalNotes: statement.internalNotes,
+    createdAt: statement.createdAt.toISOString(),
+    updatedAt: statement.updatedAt.toISOString(),
+    customer: statement.customer,
+    confirmedBy: statement.confirmedBy ?? undefined,
+  };
+
+  return dto;
+});
 
 /**
  * Create new monthly statement (manual or auto-rollover)
@@ -164,8 +152,7 @@ export const createMonthlyStatement = createAction(
       throw new Error("Bạn không có quyền tạo bảng kê");
     }
 
-    const { customerId, year, month, contactName, plants, notes, internalNotes } =
-      input;
+    const { customerId, year, month, contactName, plants, notes, internalNotes } = input;
 
     // Check if statement already exists
     const existing = await prisma.monthlyStatement.findUnique({
@@ -175,9 +162,7 @@ export const createMonthlyStatement = createAction(
     });
 
     if (existing) {
-      throw new Error(
-        `Bảng kê cho tháng ${month}/${year} đã tồn tại`
-      );
+      throw new Error(`Bảng kê cho tháng ${month}/${year} đã tồn tại`);
     }
 
     // Calculate period dates
@@ -237,7 +222,16 @@ export const updateMonthlyStatement = createAction(
       throw new Error("Bạn không có quyền sửa bảng kê");
     }
 
-    const { id, contactName, plants, notes, internalNotes } = input;
+    const {
+      id,
+      contactName,
+      periodStart,
+      periodEnd,
+      plants,
+      vatRate = 8,
+      notes,
+      internalNotes,
+    } = input;
 
     // Check if exists and not confirmed
     const existing = await prisma.monthlyStatement.findUnique({
@@ -249,21 +243,22 @@ export const updateMonthlyStatement = createAction(
     }
 
     if (!existing.needsConfirmation && existing.confirmedAt) {
-      throw new Error(
-        "Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý."
-      );
+      throw new Error("Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý.");
     }
 
-    // Recalculate amounts
-    const { subtotal, vatAmount, total } = recalculateStatementAmounts(plants);
+    // Recalculate amounts with custom VAT rate
+    const { subtotal, vatAmount, total } = recalculateStatementAmounts(plants, vatRate);
 
     // Update
     const updated = await prisma.monthlyStatement.update({
       where: { id },
       data: {
         contactName,
+        ...(periodStart && { periodStart: new Date(periodStart) }),
+        ...(periodEnd && { periodEnd: new Date(periodEnd) }),
         plants: plants as unknown as Prisma.InputJsonValue,
         subtotal,
+        vatRate,
         vatAmount,
         total,
         notes,
@@ -357,9 +352,7 @@ export const deleteMonthlyStatement = createAction(
     }
 
     if (!statement.needsConfirmation) {
-      throw new Error(
-        "Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support."
-      );
+      throw new Error("Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support.");
     }
 
     await prisma.monthlyStatement.delete({
@@ -391,10 +384,7 @@ export const autoRolloverStatements = createAction(
     }
 
     // Get previous month
-    const { year: prevYear, month: prevMonth} = getPreviousMonth(
-      targetYear,
-      targetMonth
-    );
+    const { year: prevYear, month: prevMonth } = getPreviousMonth(targetYear, targetMonth);
 
     // Get customers to rollover
     const customerFilter: Prisma.MonthlyStatementWhereInput = {
@@ -494,6 +484,7 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       code: true,
       companyName: true,
       shortName: true,
+      address: true,
       district: true,
       contactName: true,
     },
@@ -516,4 +507,25 @@ export const getUnconfirmedCount = createSimpleAction(async () => {
   });
 
   return count;
+});
+
+/**
+ * Get available years with statement data
+ */
+export const getAvailableYears = createSimpleAction(async () => {
+  const result = await prisma.monthlyStatement.findMany({
+    select: { year: true },
+    distinct: ["year"],
+    orderBy: { year: "desc" },
+  });
+
+  const years = result.map((r) => r.year);
+
+  // Always include current year even if no data
+  const currentYear = new Date().getFullYear();
+  if (!years.includes(currentYear)) {
+    years.unshift(currentYear);
+  }
+
+  return years.sort((a, b) => b - a);
 });

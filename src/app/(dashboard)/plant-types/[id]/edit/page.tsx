@@ -32,7 +32,9 @@ export default async function EditPlantTypePage({ params }: PageProps) {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa loại cây</h1>
-          <p className="text-muted-foreground">{plantType.name} ({plantType.code})</p>
+          <p className="text-muted-foreground">
+            {plantType.name} ({plantType.code})
+          </p>
         </div>
       </div>
 

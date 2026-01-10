@@ -29,11 +29,11 @@ async function CareStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Hôm nay</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Calendar className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.todayCount}</div>
-          <p className="text-xs text-muted-foreground">lịch chăm sóc</p>
+          <p className="text-muted-foreground text-xs">lịch chăm sóc</p>
         </CardContent>
       </Card>
 
@@ -60,7 +60,7 @@ async function CareStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tỷ lệ hoàn thành</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <Users className="text-muted-foreground h-4 w-4" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.completionRate}%</div>
@@ -117,9 +117,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Lịch chăm sóc</h1>
-          <p className="text-muted-foreground">
-            Quản lý lịch chăm sóc cây tại khách hàng
-          </p>
+          <p className="text-muted-foreground">Quản lý lịch chăm sóc cây tại khách hàng</p>
         </div>
         <Button asChild>
           <Link href="/care/new">
@@ -149,10 +147,10 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       </Suspense>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex flex-wrap gap-4">
         <Link
           href="/care"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             !status ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -160,7 +158,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         </Link>
         <Link
           href="/care?status=SCHEDULED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "SCHEDULED" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -168,7 +166,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         </Link>
         <Link
           href="/care?status=IN_PROGRESS"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "IN_PROGRESS" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >
@@ -176,7 +174,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         </Link>
         <Link
           href="/care?status=COMPLETED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
+          className={`rounded-full px-3 py-1.5 text-sm ${
             status === "COMPLETED" ? "bg-primary text-primary-foreground" : "bg-muted"
           }`}
         >

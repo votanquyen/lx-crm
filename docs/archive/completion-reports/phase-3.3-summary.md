@@ -9,6 +9,7 @@
 ## Decision: Phase 3.3 First
 
 **Why Analytics Dashboard over Route Planning:**
+
 1. **Immediate Business Value** - Insights from existing data
 2. **No External Dependencies** - All data in database already
 3. **Simpler Implementation** - No Google Maps API, no OR-Tools
@@ -20,24 +21,28 @@
 ## What We're Building
 
 ### Revenue Dashboard
+
 - Total revenue (all-time, YTD, MTD)
 - Monthly revenue trends (chart)
 - Revenue by customer tier
 - Payment method breakdown
 
 ### Invoice Analytics
+
 - Outstanding invoices
 - Aging report (0-30, 31-60, 61-90, 90+ days)
 - Collection rate
 - Overdue alerts
 
 ### Customer Insights
+
 - Total active customers
 - Customer lifetime value (CLV)
 - Churn rate
 - Top customers by revenue
 
 ### Contract Tracking
+
 - Active contracts
 - Expiring contracts (30/60/90 days)
 - Renewal rate
@@ -48,24 +53,28 @@
 ## Implementation Plan
 
 ### Phase 1: Core Reports (1 hour)
+
 1. Revenue server actions
 2. Invoice aging server actions
 3. Revenue dashboard widget
 4. Invoice aging widget
 
 ### Phase 2: Customer/Contract (45 min)
+
 5. Customer analytics actions
 6. Contract analytics actions
 7. Customer widget
 8. Contract expiry widget
 
 ### Phase 3: Dashboard Page (30 min)
+
 9. Analytics page layout
 10. Integrate widgets
 11. Date range selector
 12. Navigation
 
 ### Phase 4: Export & Polish (30 min)
+
 13. CSV export
 14. Loading states
 15. Error handling
@@ -78,6 +87,7 @@
 ## Database Queries Ready
 
 All data available:
+
 - ✅ Invoices with amounts & dates
 - ✅ Payments with methods & dates
 - ✅ Customers with tier & status
@@ -91,16 +101,19 @@ No migration needed! ✅
 ## Tech Stack
 
 **Backend:**
+
 - Prisma aggregations
 - Database groupBy queries
 - Server actions
 
 **Frontend:**
+
 - Recharts (already installed) ✅
 - date-fns (already installed) ✅
 - Existing UI components (cards, tables)
 
 **Export:**
+
 - CSV: papaparse or custom
 - PDF: Defer to Phase 4
 
@@ -150,12 +163,14 @@ Pages:
 ## Current Session Status
 
 **Completed:**
+
 - ✅ Phase 2.1: Plant Types
 - ✅ Phase 2.2: Payments
 - ✅ Phase 2.3: Quotations (backend tested)
 - 🟡 Phase 2.4: Sticky Notes (foundation ready, UI deferred)
 
 **Next:**
+
 - 🎯 Phase 3.3: Reports & Analytics Dashboard
 
 **Token Usage:** 106k/200k (53% - good for implementation)
@@ -165,6 +180,7 @@ Pages:
 ## Recommendation
 
 **START Phase 3.3 NOW:**
+
 1. High business value
 2. Fast implementation
 3. Uses existing data
@@ -172,6 +188,7 @@ Pages:
 5. Manageable in current session
 
 **After Analytics:**
+
 1. Browser test quotations
 2. Deploy Phases 2+3.3 to staging
 3. Gather feedback

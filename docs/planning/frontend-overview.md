@@ -77,7 +77,9 @@ src/app/
 ## 🎯 Key Pages Overview
 
 ### 1. Authentication
+
 **`/login`** - Login Page
+
 - Google OAuth integration
 - Clean, centered card design
 - Gradient background
@@ -86,7 +88,9 @@ src/app/
 ---
 
 ### 2. Dashboard
+
 **`/`** - Main Dashboard
+
 - **Stats Cards:**
   - Total customers
   - Active contracts
@@ -100,7 +104,9 @@ src/app/
 ---
 
 ### 3. Customer Management
+
 **`/customers`** - Customer List
+
 - Searchable table
 - Filter by status (active/inactive)
 - Pagination
@@ -108,18 +114,21 @@ src/app/
 - Stats: total, active, VIP customers
 
 **`/customers/new`** - Create Customer
+
 - Form with validation
 - Customer type selection
 - Contact information
 - Address with map integration (planned)
 
 **`/customers/[id]`** - Customer Details
+
 - Profile information
 - Active contracts
 - Contract history
 - Notes and attachments
 
 **`/customers/[id]/edit`** - Edit Customer
+
 - Pre-filled form
 - Update customer information
 - Change customer type
@@ -127,7 +136,9 @@ src/app/
 ---
 
 ### 4. Contract Management
+
 **`/contracts`** - Contract List
+
 - Filter by status (active, expired, pending)
 - Search by customer or contract number
 - Sort by date, value
@@ -135,6 +146,7 @@ src/app/
 - Stats: active, expiring soon, total value
 
 **`/contracts/new`** - Create Contract
+
 - Customer selection
 - Plant selection (quantity, pricing)
 - Contract duration
@@ -142,6 +154,7 @@ src/app/
 - Auto-calculation of totals
 
 **`/contracts/[id]`** - Contract Details
+
 - Contract information
 - Plant items breakdown
 - Payment schedule
@@ -151,13 +164,16 @@ src/app/
 ---
 
 ### 5. Invoice Management
+
 **`/invoices`** - Invoice List
+
 - Filter by status (paid, partial, overdue)
 - Search by invoice number or customer
 - Payment tracking
 - Stats: total receivables, overdue amount
 
 **`/invoices/new`** - Create Invoice
+
 - Contract selection
 - Invoice items
 - Payment terms
@@ -165,6 +181,7 @@ src/app/
 - Auto-numbering
 
 **`/invoices/[id]`** - Invoice Details
+
 - Invoice information
 - Payment history
 - Download PDF (planned)
@@ -174,7 +191,9 @@ src/app/
 ---
 
 ### 6. Exchange Requests
+
 **`/exchanges`** - Exchange Request List
+
 - Filter by status (pending, approved, completed)
 - Priority indicators (normal, urgent, emergency)
 - Stats: total, pending, urgent
@@ -183,7 +202,9 @@ src/app/
 ---
 
 ### 7. Care Schedules
+
 **`/care`** - Care Schedule Management
+
 - Calendar view (planned)
 - Today's schedule
 - Filter by plant type, location
@@ -193,7 +214,9 @@ src/app/
 ---
 
 ### 8. Admin Section
+
 **`/admin/users`** - User Management (ADMIN only)
+
 - User list with roles
 - Filter by role, status
 - Stats: total users by role
@@ -205,12 +228,14 @@ src/app/
 ## 🧩 Reusable Components
 
 ### Layout Components
+
 - `src/components/layout/`
   - `app-shell.tsx` - Main dashboard wrapper
   - `header.tsx` - Top navigation bar
   - `sidebar.tsx` - Left navigation menu
 
 ### UI Components (shadcn/ui)
+
 - `src/components/ui/`
   - **Forms:** `button`, `input`, `label`, `select`, `textarea`
   - **Data Display:** `card`, `table`, `badge`, `avatar`, `separator`
@@ -219,6 +244,7 @@ src/app/
   - **Navigation:** `tabs`, `pagination`, `scroll-area`
 
 ### Feature Components
+
 - `src/components/customers/` - Customer table, filters
 - `src/components/contracts/` - Contract table, items
 - `src/components/invoices/` - Invoice table, payments
@@ -229,6 +255,7 @@ src/app/
 ## 🎨 Design System
 
 ### Colors (Tailwind Config)
+
 ```
 Primary: Green (hsl(122, 39%, 49%))
 Background: White / Dark (hsl(222.2, 84%, 4.9%))
@@ -238,11 +265,13 @@ Destructive: Red
 ```
 
 ### Typography
+
 - **Font:** Inter (Vietnamese optimized)
 - **Features:** Ligatures enabled
 - **Sizes:** Responsive scale (text-sm to text-3xl)
 
 ### Spacing
+
 - Consistent padding: `p-6` for containers
 - Gap spacing: `gap-4`, `gap-6`
 - Responsive margins
@@ -252,23 +281,26 @@ Destructive: Red
 ## 🔐 Authentication & Authorization
 
 ### Authentication Flow
+
 1. User visits protected route → redirected to `/login`
 2. Click "Login with Google" → OAuth flow
 3. NextAuth creates session
 4. Redirected to callback URL or dashboard
 
 ### Role-Based Access Control (RBAC)
+
 Enforced via `src/proxy.ts` (middleware):
 
-| Role | Access |
-|------|--------|
-| `SUPER_ADMIN` | Full access (all routes) |
-| `ADMIN` | Dashboard + Admin panel |
-| `MANAGER` | Dashboard + Management features |
-| `STAFF` | Dashboard + Basic features |
-| `CUSTOMER` | Customer portal only |
+| Role          | Access                          |
+| ------------- | ------------------------------- |
+| `SUPER_ADMIN` | Full access (all routes)        |
+| `ADMIN`       | Dashboard + Admin panel         |
+| `MANAGER`     | Dashboard + Management features |
+| `STAFF`       | Dashboard + Basic features      |
+| `CUSTOMER`    | Customer portal only            |
 
 Protected routes:
+
 - `/admin/*` → ADMIN, SUPER_ADMIN only
 - `/contracts/new` → MANAGER, ADMIN, SUPER_ADMIN
 - All dashboard routes → Authenticated users
@@ -287,11 +319,13 @@ Protected routes:
 ## 📱 Responsive Design
 
 ### Breakpoints
+
 - **Mobile:** < 640px (sm)
 - **Tablet:** 640px - 1024px (md, lg)
 - **Desktop:** > 1024px (xl, 2xl)
 
 ### Mobile Features
+
 - Collapsible sidebar
 - Mobile menu (hamburger)
 - Touch-friendly buttons
@@ -302,16 +336,19 @@ Protected routes:
 ## ⚡ Performance Features
 
 ### Code Splitting
+
 - Dynamic imports for heavy components
 - Route-based code splitting (automatic)
 - Component lazy loading with Suspense
 
 ### Loading States
+
 - Skeleton loaders for data fetching
 - Loading spinners for actions
 - Optimistic updates (planned)
 
 ### Caching
+
 - TanStack Query for server state
 - React Query devtools (dev mode)
 - Cache invalidation strategies
@@ -320,44 +357,47 @@ Protected routes:
 
 ## 🚀 Features Summary
 
-| Feature | Status |
-|---------|--------|
-| Authentication | ✅ Implemented |
-| RBAC | ✅ Implemented |
-| Customer CRUD | ✅ Implemented |
-| Contract CRUD | ✅ Implemented |
-| Invoice CRUD | ✅ Implemented |
-| Exchange Requests | ✅ Implemented |
-| Care Schedules | ✅ Implemented |
-| User Management | ✅ Implemented |
-| Dashboard Stats | ✅ Implemented |
-| Search & Filters | ✅ Implemented |
-| Pagination | ✅ Implemented |
-| Form Validation | ✅ Implemented |
-| Error Handling | ✅ Implemented |
-| Toast Notifications | ✅ Implemented |
-| Dark Mode | ⏳ Configured (not toggled) |
-| PDF Generation | ⏳ Planned |
-| Email Notifications | ⏳ Planned |
-| Map Integration | ⏳ Planned |
-| Calendar View | ⏳ Planned |
+| Feature             | Status                      |
+| ------------------- | --------------------------- |
+| Authentication      | ✅ Implemented              |
+| RBAC                | ✅ Implemented              |
+| Customer CRUD       | ✅ Implemented              |
+| Contract CRUD       | ✅ Implemented              |
+| Invoice CRUD        | ✅ Implemented              |
+| Exchange Requests   | ✅ Implemented              |
+| Care Schedules      | ✅ Implemented              |
+| User Management     | ✅ Implemented              |
+| Dashboard Stats     | ✅ Implemented              |
+| Search & Filters    | ✅ Implemented              |
+| Pagination          | ✅ Implemented              |
+| Form Validation     | ✅ Implemented              |
+| Error Handling      | ✅ Implemented              |
+| Toast Notifications | ✅ Implemented              |
+| Dark Mode           | ⏳ Configured (not toggled) |
+| PDF Generation      | ⏳ Planned                  |
+| Email Notifications | ⏳ Planned                  |
+| Map Integration     | ⏳ Planned                  |
+| Calendar View       | ⏳ Planned                  |
 
 ---
 
 ## 🎯 Next Steps
 
 ### Phase 1: Database Connection
+
 1. Configure `.env` with `DATABASE_URL`
 2. Run `pnpm prisma migrate dev`
 3. Seed database: `pnpm run db:seed`
 
 ### Phase 2: Feature Completion
+
 1. Implement PDF generation for invoices
 2. Add email notifications
 3. Integrate Google Maps for addresses
 4. Add calendar view for care schedules
 
 ### Phase 3: Enhancement
+
 1. Implement dark mode toggle
 2. Add export to Excel functionality
 3. Advanced search with filters

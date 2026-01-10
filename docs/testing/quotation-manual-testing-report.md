@@ -10,6 +10,7 @@
 ## Executive Summary
 
 Completed manual testing of quotation system covering:
+
 - Database schema validation
 - Quotation CRUD operations
 - Calculation logic (subtotal, discount, VAT, total)
@@ -23,11 +24,13 @@ Completed manual testing of quotation system covering:
 ## Test Environment
 
 ### Database
+
 - **Status:** ✅ Synced with Prisma schema
 - **Connection:** Neon PostgreSQL (production database)
 - **Extensions:** PostGIS 3.5.0, pg_trgm, unaccent
 
 ### Seed Data
+
 - **Quotations:** 5 quotations with diverse statuses
 - **Statuses Coverage:**
   - DRAFT: 1 quotation
@@ -37,6 +40,7 @@ Completed manual testing of quotation system covering:
   - EXPIRED: 1 quotation
 
 ### Test Data Details
+
 ```
 1. QT-202512-0001 - DRAFT
    Customer: Văn phòng XYZ
@@ -76,14 +80,17 @@ Completed manual testing of quotation system covering:
 ## Test Results
 
 ### ✅ TEST 1: Create Single Item Quotation
+
 **Status:** PASSED
 
 **Test Steps:**
+
 1. Created quotation with 1 plant item (5 units)
 2. Applied 5% quotation-level discount
 3. Applied 10% VAT
 
 **Results:**
+
 ```
 Quote Number: QT-TEST-1766113957315-001
 Subtotal: 1,250,000đ ✅
@@ -94,6 +101,7 @@ Items: 1 item ✅
 ```
 
 **Validation:**
+
 - ✅ Quotation created successfully
 - ✅ Subtotal calculation correct
 - ✅ Discount calculation correct
@@ -104,9 +112,11 @@ Items: 1 item ✅
 ---
 
 ### ✅ TEST 2: Create Multi-Item Quotation
+
 **Status:** PASSED
 
 **Test Steps:**
+
 1. Created quotation with 2 different plant types
 2. Item 1: 3 units of Plant A
 3. Item 2: 2 units of Plant B
@@ -114,6 +124,7 @@ Items: 1 item ✅
 5. Applied 10% VAT
 
 **Results:**
+
 ```
 Quote Number: QT-TEST-1766113957801-002
 Items: 2 items ✅
@@ -124,6 +135,7 @@ Total: 980,100đ ✅
 ```
 
 **Validation:**
+
 - ✅ Multiple items created correctly
 - ✅ Subtotal = sum of all item totals
 - ✅ Percentage discount applied correctly
@@ -134,9 +146,11 @@ Total: 980,100đ ✅
 ---
 
 ### ✅ TEST 3: Calculation Logic Verification
+
 **Status:** PASSED
 
 **Formula Tested:**
+
 ```typescript
 itemTotal = quantity × unitPrice × (1 - itemDiscount/100)
 subtotal = sum(all item totals)
@@ -147,12 +161,14 @@ totalAmount = subtotalAfterDiscount + vatAmount
 ```
 
 **Test Cases:**
+
 1. ✅ 5% discount on 1,250,000đ = 62,500đ
 2. ✅ 10% discount on 990,000đ = 99,000đ
 3. ✅ 10% VAT on 891,000đ (990k - 99k) = 89,100đ
 4. ✅ Final total matches expected: 980,100đ
 
 **Edge Cases Verified:**
+
 - ✅ Zero discount (0%) - no discount applied
 - ✅ Zero items discount - quotation-level discount only
 - ✅ Multiple items with different prices
@@ -161,9 +177,11 @@ totalAmount = subtotalAfterDiscount + vatAmount
 ---
 
 ### ✅ TEST 4: Database Schema Validation
+
 **Status:** PASSED
 
 **Schema Check:**
+
 ```prisma
 model Quotation {
   id          String @id @default(cuid())
@@ -215,6 +233,7 @@ enum QuotationStatus {
 ```
 
 **Validation:**
+
 - ✅ All required fields present
 - ✅ Unique constraint on `quoteNumber`
 - ✅ Foreign keys properly set up
@@ -225,9 +244,11 @@ enum QuotationStatus {
 ---
 
 ### ✅ TEST 5: Seed Data Verification
+
 **Status:** PASSED
 
 **Statistics:**
+
 ```
 Total quotations: 5
 Status breakdown:
@@ -239,6 +260,7 @@ Status breakdown:
 ```
 
 **Data Quality:**
+
 - ✅ All quotations have valid quote numbers (QT-YYYYMM-XXXX format)
 - ✅ All quotations linked to customers
 - ✅ All quotations have items (1-3 items each)
@@ -250,17 +272,20 @@ Status breakdown:
 ---
 
 ### ⚠️ TEST 6: Server Actions (Partial)
+
 **Status:** EXPECTED BEHAVIOR
 
 **Finding:**
 Server actions (`createQuotation`, `getQuotations`, etc.) require Next.js request context and cannot be tested in standalone scripts.
 
 **Error:**
+
 ```
 `headers` was called outside a request scope.
 ```
 
 **Explanation:**
+
 - Server actions use `await requireUser()` which calls Next.js `headers()`
 - This is correct authentication implementation
 - Actions must be called from Next.js pages/components
@@ -268,6 +293,7 @@ Server actions (`createQuotation`, `getQuotations`, etc.) require Next.js reques
 
 **Recommendation:**
 Server actions should be tested via:
+
 1. Browser manual testing (create quotation page)
 2. E2E tests with Playwright/Cypress
 3. Integration tests with Next.js test environment
@@ -279,6 +305,7 @@ Server actions should be tested via:
 ## Test Coverage
 
 ### ✅ Covered (100%)
+
 1. Database schema structure
 2. Seed data integrity
 3. Single item quotation creation
@@ -293,6 +320,7 @@ Server actions should be tested via:
 12. Data validation at database level
 
 ### ⏳ Requires Browser Testing
+
 1. UI form submission
 2. Server action execution in request context
 3. Status workflow buttons (send, accept, reject)
@@ -307,6 +335,7 @@ Server actions should be tested via:
 ## Issues Found
 
 ### 🔧 Minor: Schema Documentation vs Implementation
+
 **Issue:** Implementation plan mentioned `sentAt`, `acceptedAt`, `rejectedAt` fields, but schema uses `responseDate`.
 
 **Impact:** Low - doesn't affect functionality.
@@ -314,6 +343,7 @@ Server actions should be tested via:
 **Status:** Documentation issue only.
 
 **Recommendation:** Update documentation to match schema:
+
 - Use `responseDate` instead of `sentAt`/`acceptedAt`
 - Schema is correct, docs need update
 
@@ -322,12 +352,14 @@ Server actions should be tested via:
 ## Performance Notes
 
 ### Database Queries
+
 - ✅ Efficient includes (only needed relations fetched)
 - ✅ Indexes used for filtering (status, customerId, validUntil)
 - ✅ Transaction support for multi-item creates
 - ✅ Pagination implemented
 
 ### Calculation Performance
+
 - ✅ All calculations done server-side (secure)
 - ✅ Decimal precision maintained
 - ✅ No rounding errors detected
@@ -337,6 +369,7 @@ Server actions should be tested via:
 ## Security Verification
 
 ### ✅ Validated
+
 1. **Authentication:** Server actions require authenticated user
 2. **Input Validation:** Zod schemas validate all inputs
 3. **SQL Injection:** Protected by Prisma (parameterized queries)
@@ -344,6 +377,7 @@ Server actions should be tested via:
 5. **Cascading Deletes:** Items deleted when quotation deleted
 
 ### ⚠️ Not Tested (Requires Integration Tests)
+
 1. Authorization levels (manager-only delete)
 2. CSRF protection (Next.js default)
 3. Rate limiting
@@ -354,6 +388,7 @@ Server actions should be tested via:
 ## Browser Testing Checklist
 
 ### For Next Manual Testing Session
+
 - [ ] Navigate to `/quotations/new`
 - [ ] Create quotation with single item
 - [ ] Create quotation with multiple items
@@ -376,18 +411,21 @@ Server actions should be tested via:
 ## Recommendations
 
 ### Immediate (Before Production)
+
 1. **Browser Testing:** Complete manual testing in browser
 2. **E2E Tests:** Add Playwright tests for critical workflows
 3. **Error Handling:** Test all error states in UI
 4. **Edge Cases:** Test with large numbers, zero quantities
 
 ### Short-term (Phase 3)
+
 1. **PDF Generation:** Implement and test PDF download
 2. **Email Integration:** Test quotation email sending
 3. **Edit Page:** Implement edit quotation page
 4. **Auto-expire Cron:** Set up and test scheduled job
 
 ### Long-term (Phase 4+)
+
 1. **Unit Tests:** Add unit tests for calculation functions
 2. **Integration Tests:** Test server actions with mock auth
 3. **Performance Tests:** Load test with 1000+ quotations
@@ -400,6 +438,7 @@ Server actions should be tested via:
 ### Overall Assessment: ✅ PASSED
 
 **Core Functionality:** Working correctly
+
 - Database schema ✅
 - CRUD operations ✅
 - Calculations ✅
@@ -407,6 +446,7 @@ Server actions should be tested via:
 - Seed data ✅
 
 **Deferred Testing:** Requires browser/E2E
+
 - UI interactions ⏳
 - Server actions in context ⏳
 - Authorization rules ⏳
@@ -434,11 +474,13 @@ Server actions should be tested via:
 ## Test Artifacts
 
 ### Scripts Created
+
 1. `scripts/verify-quotations.ts` - Database verification
 2. `scripts/test-quotations.ts` - Comprehensive testing
 3. `scripts/test-quotation-actions.ts` - Server actions testing
 
 ### Commands Used
+
 ```bash
 # Schema sync
 bun run db:push

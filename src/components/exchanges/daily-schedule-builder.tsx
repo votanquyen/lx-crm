@@ -27,13 +27,21 @@ import type { DailySchedule, ScheduledExchange, ExchangeRequest, Customer } from
 
 interface DailyScheduleBuilderProps {
   scheduleDate: Date;
-  existingSchedule: (DailySchedule & {
-    exchanges: (ScheduledExchange & {
-      customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude">;
-    })[];
-  }) | null;
+  existingSchedule:
+    | (DailySchedule & {
+        exchanges: (ScheduledExchange & {
+          customer: Pick<
+            Customer,
+            "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude"
+          >;
+        })[];
+      })
+    | null;
   pendingRequests: (ExchangeRequest & {
-    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude" | "tier">;
+    customer: Pick<
+      Customer,
+      "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude"
+    >;
   })[];
 }
 
@@ -48,16 +56,17 @@ export function DailyScheduleBuilder({
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
 
   // Convert existing schedule to stops
-  const existingStops: Stop[] = existingSchedule?.exchanges.map((ex) => ({
-    id: ex.id,
-    customerId: ex.customerId,
-    customerName: ex.customer.companyName,
-    address: `${ex.customer.address}, ${ex.customer.district}`,
-    latitude: ex.customer.latitude || 0,
-    longitude: ex.customer.longitude || 0,
-    plantCount: ex.totalPlantCount,
-    estimatedDurationMins: ex.estimatedDurationMins,
-  })) || [];
+  const existingStops: Stop[] =
+    existingSchedule?.exchanges.map((ex) => ({
+      id: ex.id,
+      customerId: ex.customerId,
+      customerName: ex.customer.companyName,
+      address: `${ex.customer.address}, ${ex.customer.district}`,
+      latitude: ex.customer.latitude || 0,
+      longitude: ex.customer.longitude || 0,
+      plantCount: ex.totalPlantCount,
+      estimatedDurationMins: ex.estimatedDurationMins,
+    })) || [];
 
   const handleCreateSchedule = async () => {
     if (selectedRequests.length === 0) {
@@ -137,9 +146,7 @@ export function DailyScheduleBuilder({
 
   const toggleRequestSelection = (requestId: string) => {
     setSelectedRequests((prev) =>
-      prev.includes(requestId)
-        ? prev.filter((id) => id !== requestId)
-        : [...prev, requestId]
+      prev.includes(requestId) ? prev.filter((id) => id !== requestId) : [...prev, requestId]
     );
   };
 
@@ -185,10 +192,8 @@ export function DailyScheduleBuilder({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>
-                    Lịch trình {format(scheduleDate, "dd/MM/yyyy")}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <CardTitle>Lịch trình {format(scheduleDate, "dd/MM/yyyy")}</CardTitle>
+                  <p className="mt-1 text-sm text-gray-600">
                     Trạng thái: <span className="font-semibold">{existingSchedule.status}</span>
                   </p>
                 </div>
@@ -197,15 +202,12 @@ export function DailyScheduleBuilder({
                     <>
                       <Button variant="outline" asChild>
                         <a href={`/exchanges/execute/${existingSchedule.id}`}>
-                          <PlayCircle className="h-4 w-4 mr-2" />
+                          <PlayCircle className="mr-2 h-4 w-4" />
                           Thực hiện
                         </a>
                       </Button>
-                      <Button
-                        variant="outline"
-                        onClick={handlePrintBriefing}
-                      >
-                        <Printer className="h-4 w-4 mr-2" />
+                      <Button variant="outline" onClick={handlePrintBriefing}>
+                        <Printer className="mr-2 h-4 w-4" />
                         In lịch trình
                       </Button>
                     </>
@@ -213,26 +215,19 @@ export function DailyScheduleBuilder({
                   {existingSchedule.status === "IN_PROGRESS" && (
                     <Button variant="outline" asChild>
                       <a href={`/exchanges/execute/${existingSchedule.id}`}>
-                        <PlayCircle className="h-4 w-4 mr-2" />
+                        <PlayCircle className="mr-2 h-4 w-4" />
                         Tiếp tục
                       </a>
                     </Button>
                   )}
                   {existingSchedule.status === "DRAFT" && (
                     <>
-                      <Button
-                        onClick={handleApprove}
-                        disabled={isPending}
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
+                      <Button onClick={handleApprove} disabled={isPending}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
                         Duyệt lịch
                       </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={handleDelete}
-                        disabled={isPending}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
+                      <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Xóa
                       </Button>
                     </>
@@ -256,26 +251,22 @@ export function DailyScheduleBuilder({
         <Card>
           <CardHeader>
             <CardTitle>Tạo lịch trình mới</CardTitle>
-            <p className="text-sm text-gray-600">
-              Chọn các yêu cầu đổi cây để thêm vào lịch trình
-            </p>
+            <p className="text-sm text-gray-600">Chọn các yêu cầu đổi cây để thêm vào lịch trình</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Pending Requests List */}
             <div className="space-y-2">
-              <Label>
-                Yêu cầu chờ duyệt ({pendingRequests.length})
-              </Label>
+              <Label>Yêu cầu chờ duyệt ({pendingRequests.length})</Label>
               {pendingRequests.length === 0 ? (
-                <p className="text-sm text-gray-500 py-8 text-center">
+                <p className="py-8 text-center text-sm text-gray-500">
                   Không có yêu cầu đổi cây nào chờ lên lịch
                 </p>
               ) : (
-                <div className="max-h-96 overflow-y-auto space-y-2 border rounded-lg p-4">
+                <div className="max-h-96 space-y-2 overflow-y-auto rounded-lg border p-4">
                   {pendingRequests.map((request) => (
                     <label
                       key={request.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-gray-50"
                     >
                       <input
                         type="checkbox"
@@ -283,14 +274,12 @@ export function DailyScheduleBuilder({
                         onChange={() => toggleRequestSelection(request.id)}
                         className="mt-1"
                       />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">
-                          {request.customer.companyName}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-0.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium">{request.customer.companyName}</div>
+                        <div className="mt-0.5 text-xs text-gray-600">
                           {request.customer.address}, {request.customer.district}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="mt-1 text-xs text-gray-500">
                           {request.quantity} cây • Ưu tiên: {request.priority}
                         </div>
                       </div>

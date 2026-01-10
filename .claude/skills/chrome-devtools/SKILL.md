@@ -26,13 +26,13 @@ cd "$SKILL_DIR"
 
 ## Choosing Your Approach
 
-| Scenario | Approach |
-|----------|----------|
-| **Source-available sites** | Read source code first, write selectors directly |
-| **Unknown layouts** | Use `aria-snapshot.js` for semantic discovery |
-| **Visual inspection** | Take screenshots to verify rendering |
-| **Debug issues** | Collect console logs, analyze with session storage |
-| **Accessibility audit** | Use ARIA snapshot for semantic structure analysis |
+| Scenario                   | Approach                                           |
+| -------------------------- | -------------------------------------------------- |
+| **Source-available sites** | Read source code first, write selectors directly   |
+| **Unknown layouts**        | Use `aria-snapshot.js` for semantic discovery      |
+| **Visual inspection**      | Take screenshots to verify rendering               |
+| **Debug issues**           | Collect console logs, analyze with session storage |
+| **Accessibility audit**    | Use ARIA snapshot for semantic structure analysis  |
 
 ## ARIA Snapshot (Element Discovery)
 
@@ -70,16 +70,16 @@ node aria-snapshot.js --url https://example.com --output ./.claude/chrome-devtoo
 
 ### Interpreting ARIA Notation
 
-| Notation | Meaning |
-|----------|---------|
-| `[ref=eN]` | Stable identifier for interactive elements |
-| `[checked]` | Checkbox/radio is selected |
-| `[disabled]` | Element is inactive |
-| `[expanded]` | Accordion/dropdown is open |
-| `[level=N]` | Heading hierarchy (1-6) |
-| `/url:` | Link destination |
-| `/placeholder:` | Input placeholder text |
-| `/value:` | Current input value |
+| Notation        | Meaning                                    |
+| --------------- | ------------------------------------------ |
+| `[ref=eN]`      | Stable identifier for interactive elements |
+| `[checked]`     | Checkbox/radio is selected                 |
+| `[disabled]`    | Element is inactive                        |
+| `[expanded]`    | Accordion/dropdown is open                 |
+| `[level=N]`     | Heading hierarchy (1-6)                    |
+| `/url:`         | Link destination                           |
+| `/placeholder:` | Input placeholder text                     |
+| `/value:`       | Current input value                        |
 
 ### Interact by Ref
 
@@ -123,6 +123,7 @@ node aria-snapshot.js --url https://example.com --output .claude/chrome-devtools
 ### Workflow: Unknown Page Structure
 
 1. **Get snapshot** to discover elements:
+
    ```bash
    node aria-snapshot.js --url https://example.com
    ```
@@ -130,6 +131,7 @@ node aria-snapshot.js --url https://example.com --output .claude/chrome-devtools
 2. **Identify target** from YAML output (e.g., `[ref=e5]` for a button)
 
 3. **Interact by ref**:
+
    ```bash
    node select-ref.js --ref e5 --action click
    ```
@@ -199,6 +201,7 @@ node navigate.js --url about:blank --close true
 ```
 
 **Session management**:
+
 - `--close true`: Close browser and clear session
 - Default (no flag): Keep browser running for next script
 
@@ -207,19 +210,19 @@ node navigate.js --url about:blank --close true
 Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
 All in `.claude/skills/chrome-devtools/scripts/`:
 
-| Script | Purpose |
-|--------|---------|
-| `navigate.js` | Navigate to URLs |
-| `screenshot.js` | Capture screenshots (auto-compress >5MB via Sharp) |
-| `click.js` | Click elements |
-| `fill.js` | Fill form fields |
-| `evaluate.js` | Execute JS in page context |
-| `snapshot.js` | Extract interactive elements (JSON format) |
+| Script             | Purpose                                             |
+| ------------------ | --------------------------------------------------- |
+| `navigate.js`      | Navigate to URLs                                    |
+| `screenshot.js`    | Capture screenshots (auto-compress >5MB via Sharp)  |
+| `click.js`         | Click elements                                      |
+| `fill.js`          | Fill form fields                                    |
+| `evaluate.js`      | Execute JS in page context                          |
+| `snapshot.js`      | Extract interactive elements (JSON format)          |
 | `aria-snapshot.js` | Get ARIA accessibility tree (YAML format with refs) |
-| `select-ref.js` | Interact with elements by ref from ARIA snapshot |
-| `console.js` | Monitor console messages/errors |
-| `network.js` | Track HTTP requests/responses |
-| `performance.js` | Measure Core Web Vitals |
+| `select-ref.js`    | Interact with elements by ref from ARIA snapshot    |
+| `console.js`       | Monitor console messages/errors                     |
+| `network.js`       | Track HTTP requests/responses                       |
+| `performance.js`   | Measure Core Web Vitals                             |
 
 ## Workflow Loop
 
@@ -269,6 +272,7 @@ node $SKILL_DIR/.claude/chrome-devtools/tmp/login-test.js
 ```
 
 **Key principles for custom scripts**:
+
 - Single-purpose: one script, one task
 - Always call `disconnectBrowser()` at the end (keeps browser running)
 - Use `closeBrowser()` only when ending session completely
@@ -390,6 +394,7 @@ node click.js --selector "//button[contains(text(),'Submit')]"
 ## Common Patterns
 
 ### Web Scraping
+
 ```bash
 node evaluate.js --url https://example.com --script "
   Array.from(document.querySelectorAll('.item')).map(el => ({
@@ -400,6 +405,7 @@ node evaluate.js --url https://example.com --script "
 ```
 
 ### Form Automation
+
 ```bash
 node navigate.js --url https://example.com/form
 node fill.js --selector "#search" --value "query"
@@ -407,6 +413,7 @@ node click.js --selector "button[type=submit]"
 ```
 
 ### Performance Testing
+
 ```bash
 node performance.js --url https://example.com | jq '.vitals'
 ```
@@ -414,29 +421,32 @@ node performance.js --url https://example.com | jq '.vitals'
 ## Script Options
 
 All scripts support:
+
 - `--headless false` - Show browser window
 - `--close true` - Close browser completely (default: stay running)
 - `--timeout 30000` - Set timeout (ms)
 - `--wait-until networkidle2` - Wait strategy
-Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
+  Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
 
 ## Troubleshooting
+
 Skills can exist in **project-scope** or **user-scope**. Priority: project-scope > user-scope.
 
-| Error | Solution |
-|-------|----------|
-| `Cannot find package 'puppeteer'` | Run `npm install` in scripts directory |
-| `libnss3.so` missing (Linux) | Run `./install-deps.sh` |
-| Element not found | Use `snapshot.js` to find correct selector |
-| Script hangs | Use `--timeout 60000` or `--wait-until load` |
-| Screenshot >5MB | Auto-compressed; use `--max-size 3` for lower |
-| Session stale | Delete `.browser-session.json` and retry |
+| Error                             | Solution                                      |
+| --------------------------------- | --------------------------------------------- |
+| `Cannot find package 'puppeteer'` | Run `npm install` in scripts directory        |
+| `libnss3.so` missing (Linux)      | Run `./install-deps.sh`                       |
+| Element not found                 | Use `snapshot.js` to find correct selector    |
+| Script hangs                      | Use `--timeout 60000` or `--wait-until load`  |
+| Screenshot >5MB                   | Auto-compressed; use `--max-size 3` for lower |
+| Session stale                     | Delete `.browser-session.json` and retry      |
 
 ### Screenshot Analysis: Missing Images
 
 If images don't appear in screenshots, they may be waiting for animation triggers:
 
 1. **Scroll-triggered animations**: Scroll element into view first
+
    ```bash
    node evaluate.js --script "document.querySelector('.lazy-image').scrollIntoView()"
    # Wait for animation
@@ -445,6 +455,7 @@ If images don't appear in screenshots, they may be waiting for animation trigger
    ```
 
 2. **Sequential animation queue**: Wait longer and retry
+
    ```bash
    # First attempt
    node screenshot.js --url http://localhost:3000 --output ./attempt1.png
