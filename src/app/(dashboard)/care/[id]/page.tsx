@@ -211,11 +211,11 @@ async function CareDetailContent({ params }: DetailPageProps) {
                 </div>
               )}
 
-              {schedule.actionsToken && (
+              {schedule.actionsTaken && (
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Hành động đã thực hiện</div>
                   <div className="bg-green-50 p-3 rounded text-sm border border-green-200">
-                    {schedule.actionsToken}
+                    {schedule.actionsTaken}
                   </div>
                 </div>
               )}
