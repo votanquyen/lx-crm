@@ -3,7 +3,7 @@
  * Zod schemas for customer CRUD operations
  */
 import { z } from "zod";
-import { CustomerStatus, CustomerTier } from "@prisma/client";
+import { CustomerStatus } from "@prisma/client";
 
 /**
  * Vietnamese phone number regex: accepts 0xxxxxxxxx or +84xxxxxxxxx (9-10 digits after prefix)
@@ -39,7 +39,6 @@ export const customerSchema = z.object({
   district: z.string().max(100).optional().nullable(),
   city: z.string().max(100).default("TP.HCM").optional(),
   taxCode: z.string().max(20).optional().nullable(),
-  tier: z.nativeEnum(CustomerTier).default("STANDARD"),
   status: z.nativeEnum(CustomerStatus).optional(),
 
   // Primary Contact
@@ -118,7 +117,6 @@ export const customerSearchSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20),
   search: z.string().optional(),
   status: z.nativeEnum(CustomerStatus).optional(),
-  tier: z.nativeEnum(CustomerTier).optional(),
   district: z.string().optional(),
   hasDebt: z.coerce.boolean().optional(),
   sortBy: z.enum(["companyName", "createdAt", "updatedAt", "code"]).default("companyName"),

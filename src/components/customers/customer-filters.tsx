@@ -22,15 +22,9 @@ interface CustomerFiltersProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: "LEAD", label: "Tiềm năng" },
-  { value: "ACTIVE", label: "Hoạt động" },
-  { value: "INACTIVE", label: "Ngưng hoạt động" },
-];
-
-const TIER_OPTIONS = [
-  { value: "VIP", label: "VIP" },
-  { value: "PREMIUM", label: "Premium" },
-  { value: "STANDARD", label: "Standard" },
+  { value: "LEAD", label: "Tiem nang" },
+  { value: "ACTIVE", label: "Hoat dong" },
+  { value: "INACTIVE", label: "Ngung hoat dong" },
 ];
 
 export function CustomerFilters({ districts }: CustomerFiltersProps) {
@@ -39,13 +33,11 @@ export function CustomerFilters({ districts }: CustomerFiltersProps) {
   const [isPending, startTransition] = useTransition();
 
   const currentStatus = searchParams.get("status") ?? "";
-  const currentTier = searchParams.get("tier") ?? "";
   const currentDistrict = searchParams.get("district") ?? "";
   const hasDebt = searchParams.get("hasDebt") === "true";
 
   const activeFilters = [
     currentStatus && "status",
-    currentTier && "tier",
     currentDistrict && "district",
     hasDebt && "hasDebt",
   ].filter(Boolean).length;
@@ -67,7 +59,6 @@ export function CustomerFilters({ districts }: CustomerFiltersProps) {
   const clearFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("status");
-    params.delete("tier");
     params.delete("district");
     params.delete("hasDebt");
     params.delete("page");
@@ -105,20 +96,6 @@ export function CustomerFilters({ districts }: CustomerFiltersProps) {
         <SelectContent>
           <SelectItem value="all">Tất cả trạng thái</SelectItem>
           {STATUS_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={currentTier || "all"} onValueChange={(v) => updateFilter("tier", v)}>
-        <SelectTrigger className="w-[120px]">
-          <SelectValue placeholder="Hạng" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tất cả hạng</SelectItem>
-          {TIER_OPTIONS.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}
             </SelectItem>

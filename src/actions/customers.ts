@@ -16,6 +16,7 @@ import { requireRateLimit } from "@/lib/rate-limit";
 import { RATE_LIMITS, CACHE_TTL } from "@/lib/constants";
 import { sanitizeText, sanitizePhone, sanitizeEmail } from "@/lib/sanitize";
 import { logCustomerAction } from "@/lib/audit";
+import { CACHE_TAGS, invalidateCustomerCache } from "@/lib/cache-utils";
 import {
   createCustomerSchema,
   updateCustomerSchema,
@@ -24,13 +25,84 @@ import {
 } from "@/lib/validations/customer";
 
 /**
+ * Raw customer result type from trigram search
+ */
+type CustomerRawResult = {
+  id: string;
+  code: string;
+  company_name: string;
+  company_name_norm: string;
+  address: string;
+  address_normalized: string | null;
+  district: string | null;
+  city: string | null;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  tax_code: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: string;
+  ai_notes: string | null;
+  created_by_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+  similarity: number;
+  total_count: bigint;
+};
+
+/**
+ * Cached trigram search for Vietnamese fuzzy matching
+ * Uses window function for single-query pagination
+ * Cache TTL: 60s, invalidated on customer mutations
+ */
+const searchCustomersWithCache = unstable_cache(
+  async (
+    normalized: string,
+    codePattern: string,
+    status: string | null,
+    district: string | null,
+    limit: number,
+    skip: number
+  ): Promise<{ data: CustomerRawResult[]; total: number }> => {
+    // Use window function for single-query pagination
+    const customersRaw = await prisma.$queryRaw<CustomerRawResult[]>`
+      SELECT c.*,
+             GREATEST(
+               similarity(company_name_norm, ${normalized}),
+               similarity(COALESCE(address_normalized, ''), ${normalized}),
+               similarity(code, ${normalized})
+             ) as similarity,
+             COUNT(*) OVER() as total_count
+      FROM customers c
+      WHERE c.status != 'TERMINATED'
+        AND (
+          c.company_name_norm % ${normalized}
+          OR c.code ILIKE ${codePattern}
+          OR COALESCE(c.address_normalized, '') % ${normalized}
+        )
+        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
+        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
+      ORDER BY similarity DESC, c.company_name ASC
+      LIMIT ${limit} OFFSET ${skip}
+    `;
+
+    const total = customersRaw.length > 0 ? Number(customersRaw[0]!.total_count) : 0;
+    return { data: customersRaw, total };
+  },
+  [CACHE_TAGS.CUSTOMERS_LIST],
+  { revalidate: 60, tags: [CACHE_TAGS.CUSTOMERS_LIST] }
+);
+
+/**
  * Get paginated list of customers with optional search and filters
+ * Enhanced with financial aggregations for Enterprise view
  */
 export async function getCustomers(params: CustomerSearchParams) {
   await requireAuth();
 
   const validated = customerSearchSchema.parse(params);
-  const { page, limit, search, status, tier, district, hasDebt, sortBy, sortOrder } = validated;
+  const { page, limit, search, status, district, hasDebt, sortBy, sortOrder } = validated;
 
   // Rate limit search queries (expensive trigram operations)
   if (search && search.trim()) {
@@ -47,7 +119,6 @@ export async function getCustomers(params: CustomerSearchParams) {
     status: status ?? { not: "TERMINATED" },
   };
 
-  if (tier) where.tier = tier;
   if (district) where.district = district;
 
   // Has debt filter (customers with unpaid invoices)
@@ -60,74 +131,21 @@ export async function getCustomers(params: CustomerSearchParams) {
     };
   }
 
-  // Use trigram search for Vietnamese fuzzy matching
+  // Use cached trigram search for Vietnamese fuzzy matching
   if (search && search.trim()) {
-    // Sanitize search input and create pattern for ILIKE (properly parameterized)
     const sanitizedSearch = sanitizeText(search) ?? search.trim();
     const normalized = normalizeVietnamese(sanitizedSearch);
     const codePattern = `%${sanitizedSearch}%`;
 
-    // Use raw query for trigram search
-    const customersRaw = await prisma.$queryRaw<
-      Array<{
-        id: string;
-        code: string;
-        company_name: string;
-        company_name_norm: string;
-        address: string;
-        address_normalized: string | null;
-        district: string | null;
-        city: string | null;
-        contact_name: string | null;
-        contact_phone: string | null;
-        contact_email: string | null;
-        tax_code: string | null;
-        latitude: number | null;
-        longitude: number | null;
-        status: string;
-        tier: string;
-        ai_notes: string | null;
-        created_by_id: string | null;
-        created_at: Date;
-        updated_at: Date;
-        similarity: number;
-      }>
-    >`
-      SELECT c.*,
-             GREATEST(
-               similarity(company_name_norm, ${normalized}),
-               similarity(COALESCE(address_normalized, ''), ${normalized}),
-               similarity(code, ${normalized})
-             ) as similarity
-      FROM customers c
-      WHERE c.status != 'TERMINATED'
-        AND (
-          c.company_name_norm % ${normalized}
-          OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
-        )
-        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
-        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-      ORDER BY similarity DESC, c.company_name ASC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
-
-    // Get total count for pagination
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) as count FROM customers c
-      WHERE c.status != 'TERMINATED'
-        AND (
-          c.company_name_norm % ${normalized}
-          OR c.code ILIKE ${codePattern}
-          OR COALESCE(c.address_normalized, '') % ${normalized}
-        )
-        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${tier ? Prisma.sql`AND c.tier = ${tier}` : Prisma.empty}
-        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-    `;
-
-    const total = Number(countResult[0].count);
+    // Use cached search with window function (single query)
+    const { data: customersRaw, total } = await searchCustomersWithCache(
+      normalized,
+      codePattern,
+      status ?? null,
+      district ?? null,
+      limit,
+      skip
+    );
 
     // Map raw results to Prisma model format
     const customers = customersRaw.map((c) => ({
@@ -146,7 +164,6 @@ export async function getCustomers(params: CustomerSearchParams) {
       latitude: c.latitude,
       longitude: c.longitude,
       status: c.status,
-      tier: c.tier,
       aiNotes: c.ai_notes,
       createdById: c.created_by_id,
       createdAt: c.created_at,
@@ -184,8 +201,41 @@ export async function getCustomers(params: CustomerSearchParams) {
     prisma.customer.count({ where }),
   ]);
 
+  // ---- ENTERPRISE ENHANCEMENT: Financial Aggregations ----
+  // Fetch financial data for the paginated customers
+  const customerIds = customers.map((c) => c.id);
+
+  // Use a single raw query to get debt and monthly value for all customers at once
+  const financials = await prisma.$queryRaw<
+    { customer_id: string; total_debt: string | null; monthly_contract_value: string | null }[]
+  >`
+    SELECT
+      c.id as customer_id,
+      COALESCE(SUM(i."outstandingAmount") FILTER (WHERE i.status IN ('SENT', 'PARTIAL', 'OVERDUE')), 0) as total_debt,
+      COALESCE(SUM(ct."monthlyFee") FILTER (WHERE ct.status = 'ACTIVE'), 0) as monthly_contract_value
+    FROM customers c
+    LEFT JOIN invoices i ON i."customerId" = c.id
+    LEFT JOIN contracts ct ON ct."customerId" = c.id
+    WHERE c.id = ANY(${customerIds})
+    GROUP BY c.id
+  `;
+
+  // Create a lookup map for O(1) merge
+  const financialMap = new Map(
+    financials.map((f) => [f.customer_id, {
+      totalDebt: Number(f.total_debt || 0),
+      monthlyContractValue: Number(f.monthly_contract_value || 0),
+    }])
+  );
+
+  // Merge financial data into customer objects
+  const customersWithFinancials = customers.map((c) => ({
+    ...c,
+    financials: financialMap.get(c.id) ?? { totalDebt: 0, monthlyContractValue: 0 },
+  }));
+
   return {
-    data: customers,
+    data: customersWithFinancials,
     pagination: {
       page,
       limit,
@@ -315,7 +365,6 @@ export const createCustomer = createAction(
         contactPhone,
         contactEmail,
         taxCode,
-        tier: input.tier,
         status: input.status ?? "ACTIVE",
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
@@ -326,6 +375,7 @@ export const createCustomer = createAction(
     await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
 
     revalidatePath("/customers");
+    invalidateCustomerCache(); // Invalidate search cache
     return customer;
   }
 );
@@ -393,7 +443,6 @@ export const updateCustomer = createAction(
     if (updateData.contactPhone !== undefined) data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
     if (updateData.contactEmail !== undefined) data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
     if (updateData.taxCode !== undefined) data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
-    if (updateData.tier !== undefined) data.tier = updateData.tier;
     if (updateData.status !== undefined) data.status = updateData.status;
     if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
     if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
@@ -409,6 +458,7 @@ export const updateCustomer = createAction(
 
     revalidatePath(`/customers/${id}`);
     revalidatePath("/customers");
+    invalidateCustomerCache(); // Invalidate search cache
     return customer;
   }
 );
@@ -455,6 +505,7 @@ export const deleteCustomer = createSimpleAction(async (id: string) => {
   await logCustomerAction(session.user.id, "DELETE", customer.id, existing, undefined);
 
   revalidatePath("/customers");
+  invalidateCustomerCache(); // Invalidate search cache
   return { success: true };
 });
 
@@ -500,14 +551,12 @@ export async function getCustomerStats() {
     total: bigint;
     active: bigint;
     leads: bigint;
-    vip: bigint;
     with_debt: bigint;
   }]>`
     SELECT
       COUNT(DISTINCT c.id) FILTER (WHERE c.status != 'TERMINATED') as total,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'ACTIVE') as active,
       COUNT(DISTINCT c.id) FILTER (WHERE c.status = 'LEAD') as leads,
-      COUNT(DISTINCT c.id) FILTER (WHERE c.tier = 'VIP' AND c.status != 'TERMINATED') as vip,
       COUNT(DISTINCT CASE
         WHEN i.status IN ('SENT', 'PARTIAL', 'OVERDUE')
           AND i."outstandingAmount" > 0
@@ -521,7 +570,6 @@ export async function getCustomerStats() {
     total: Number(stats[0].total),
     active: Number(stats[0].active),
     leads: Number(stats[0].leads),
-    vip: Number(stats[0].vip),
     withDebt: Number(stats[0].with_debt),
   };
 }
@@ -532,7 +580,6 @@ export async function getCustomerStats() {
  */
 export async function getCustomersForMap(filters?: {
   district?: string;
-  tier?: "VIP" | "PREMIUM" | "STANDARD";
   status?: "ACTIVE" | "INACTIVE" | "LEAD" | "TERMINATED";
 }) {
   await requireAuth();
@@ -544,7 +591,6 @@ export async function getCustomersForMap(filters?: {
   };
 
   if (filters?.district) where.district = filters.district;
-  if (filters?.tier) where.tier = filters.tier;
 
   const customers = await prisma.customer.findMany({
     where,
@@ -557,7 +603,6 @@ export async function getCustomersForMap(filters?: {
       latitude: true,
       longitude: true,
       contactPhone: true,
-      tier: true,
       status: true,
       _count: {
         select: {
@@ -589,7 +634,6 @@ export async function getCustomersForMap(filters?: {
     latitude: c.latitude,
     longitude: c.longitude,
     contactPhone: c.contactPhone,
-    tier: c.tier,
     status: c.status,
     plantCount: c._count.customerPlants,
     hasPendingExchange: customersWithExchanges.has(c.id),

@@ -11,14 +11,12 @@ import {
   Leaf,
   FileText,
   StickyNote,
-  Crown,
-  Star,
+  Building2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
 
 interface CustomerCardProps {
   customer: {
@@ -31,7 +29,6 @@ interface CustomerCardProps {
     contactPhone: string | null;
     contactEmail: string | null;
     status: CustomerStatus;
-    tier: CustomerTier;
     _count?: {
       customerPlants: number;
       stickyNotes: number;
@@ -47,32 +44,15 @@ const statusConfig: Record<CustomerStatus, { label: string; variant: "default" |
   TERMINATED: { label: "Đã xóa", variant: "destructive" },
 };
 
-const tierConfig: Record<CustomerTier, { label: string; icon: typeof Crown; color: string }> = {
-  VIP: { label: "VIP", icon: Crown, color: "text-amber-500" },
-  PREMIUM: { label: "Premium", icon: Star, color: "text-purple-500" },
-  STANDARD: { label: "Standard", icon: Star, color: "text-muted-foreground" },
-};
-
 function CustomerCardComponent({ customer }: CustomerCardProps) {
   const status = statusConfig[customer.status];
-  const tier = tierConfig[customer.tier];
-  const TierIcon = tier.icon;
 
   return (
     <div className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
-      {/* Tier indicator */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={cn("flex h-10 w-10 items-center justify-center rounded-full bg-muted", tier.color)}>
-              <TierIcon className="h-5 w-5" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Hạng {tier.label}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Customer icon */}
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Building2 className="h-5 w-5" />
+      </div>
 
       {/* Main info */}
       <div className="flex-1 min-w-0">

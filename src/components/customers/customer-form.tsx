@@ -36,7 +36,7 @@ import {
   type CreateCustomerInput,
   type UpdateCustomerInput,
 } from "@/lib/validations/customer";
-import type { CustomerStatus, CustomerTier } from "@prisma/client";
+import type { CustomerStatus } from "@prisma/client";
 
 interface CustomerFormProps {
   customer?: {
@@ -49,7 +49,6 @@ interface CustomerFormProps {
     contactPhone: string | null;
     contactEmail: string | null;
     taxCode: string | null;
-    tier: CustomerTier;
     status: CustomerStatus;
     latitude: number | null;
     longitude: number | null;
@@ -82,7 +81,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           contactPhone: customer.contactPhone ?? undefined,
           contactEmail: customer.contactEmail ?? undefined,
           taxCode: customer.taxCode ?? undefined,
-          tier: customer.tier,
           status: customer.status,
           latitude: customer.latitude ?? undefined,
           longitude: customer.longitude ?? undefined,
@@ -96,7 +94,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
           contactPhone: undefined,
           contactEmail: undefined,
           taxCode: undefined,
-          tier: "STANDARD",
         },
   });
 
@@ -252,23 +249,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
               placeholder="0123456789"
               {...form.register("taxCode")}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tier">Hạng khách hàng</Label>
-            <Select
-              value={form.watch("tier")}
-              onValueChange={(v) => form.setValue("tier", v as CustomerTier)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn hạng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="STANDARD">Standard</SelectItem>
-                <SelectItem value="PREMIUM">Premium</SelectItem>
-                <SelectItem value="VIP">VIP</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {isEditing && (
