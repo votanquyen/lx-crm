@@ -97,15 +97,18 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
     return { subtotal, discountAmount, vatAmount, totalAmount };
   }, [items, discountRate, vatRate]);
 
+  // Extract stable setValue reference to avoid infinite loop
+  // (form object is not referentially stable, but setValue is)
+  const { setValue } = form;
+
   // Update form values when totals change (still needed for form submission)
-  // Use shouldValidate: false to prevent re-render loop
   useEffect(() => {
     const options = { shouldValidate: false, shouldDirty: false };
-    form.setValue("subtotal", calculatedTotals.subtotal, options);
-    form.setValue("discountAmount", calculatedTotals.discountAmount, options);
-    form.setValue("vatAmount", calculatedTotals.vatAmount, options);
-    form.setValue("totalAmount", calculatedTotals.totalAmount, options);
-  }, [calculatedTotals, form]);
+    setValue("subtotal", calculatedTotals.subtotal, options);
+    setValue("discountAmount", calculatedTotals.discountAmount, options);
+    setValue("vatAmount", calculatedTotals.vatAmount, options);
+    setValue("totalAmount", calculatedTotals.totalAmount, options);
+  }, [calculatedTotals, setValue]);
 
   function addItem() {
     append({

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
 /** Supported entity types for audit logging */
-export type EntityType = "Customer" | "Contract" | "Invoice" | "Payment" | "CareSchedule" | "User" | "PlantType";
+export type EntityType = "Customer" | "Contract" | "Invoice" | "Payment" | "CareSchedule" | "User" | "PlantType" | "Setting";
 
 /** Supported action types for audit logging */
 export type ActionType = "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "EXPORT" | "IMPORT";

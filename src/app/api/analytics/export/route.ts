@@ -233,7 +233,6 @@ async function exportTopCustomers() {
     select: {
       code: true,
       companyName: true,
-      tier: true,
       invoices: {
         select: {
           totalAmount: true,
@@ -260,7 +259,6 @@ async function exportTopCustomers() {
     return {
       code: customer.code,
       companyName: customer.companyName,
-      tier: customer.tier,
       totalRevenue,
       activeContracts: customer.contracts.length,
       totalInvoices: customer.invoices.length,

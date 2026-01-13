@@ -1,15 +1,12 @@
-/**
- * Care Schedule Page
- */
 import { Suspense } from "react";
 import Link from "next/link";
 import { Plus, Calendar, CheckCircle, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CareScheduleList } from "@/components/care/care-schedule-list";
 import { Pagination } from "@/components/ui/pagination";
 import { getCareSchedules, getCareStats } from "@/actions/care-schedules";
+import { cn } from "@/lib/utils";
 import type { CareStatus } from "@prisma/client";
 
 interface CarePageProps {
@@ -26,46 +23,51 @@ async function CareStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Hôm nay</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.todayCount}</div>
-          <p className="text-xs text-muted-foreground">lịch chăm sóc</p>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card p-5 bg-white">
+        <p className="kpi-title mb-2">Hôm nay</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="kpi-value text-slate-900">{stats.todayCount}</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Lịch dự kiến</p>
+          </div>
+          <div className="p-2 rounded bg-slate-50 text-slate-400">
+            <Calendar className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Đang thực hiện</CardTitle>
-          <Clock className="h-4 w-4 text-blue-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card p-5 bg-white">
+        <p className="kpi-title mb-2">Đang thực hiện</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-blue-600">{stats.inProgress}</p>
+          <div className="p-2 rounded bg-blue-50 text-blue-500">
+            <Clock className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Đã hoàn thành</CardTitle>
-          <CheckCircle className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card p-5 bg-white">
+        <p className="kpi-title mb-2">Đã hoàn thành</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-emerald-600">{stats.completed}</p>
+          <div className="p-2 rounded bg-emerald-50 text-emerald-500">
+            <CheckCircle className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Tỷ lệ hoàn thành</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.completionRate}%</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card p-5 bg-white">
+        <p className="kpi-title mb-2">Hiệu suất</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="kpi-value text-slate-900">{stats.completionRate}%</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Tỷ lệ hoàn thành</p>
+          </div>
+          <div className="p-2 rounded bg-slate-50 text-slate-400">
+            <Users className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -90,16 +92,18 @@ async function CareList({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="enterprise-card overflow-hidden bg-white">
       <CareScheduleList schedules={result.data} />
 
       {result.pagination.totalPages > 1 && (
-        <Pagination
-          page={result.pagination.page}
-          limit={result.pagination.limit}
-          total={result.pagination.total}
-          totalPages={result.pagination.totalPages}
-        />
+        <div className="p-4 border-t bg-slate-50/30">
+          <Pagination
+            page={result.pagination.page}
+            limit={result.pagination.limit}
+            total={result.pagination.total}
+            totalPages={result.pagination.totalPages}
+          />
+        </div>
       )}
     </div>
   );
@@ -114,17 +118,17 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lịch chăm sóc</h1>
-          <p className="text-muted-foreground">
-            Quản lý lịch chăm sóc cây tại khách hàng
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Lịch chăm sóc</h1>
+          <p className="text-sm font-medium text-muted-foreground">
+            Điều phối nhân sự và theo dõi dịch vụ tại hiện trường
           </p>
         </div>
-        <Button asChild>
-          <Link href="/care/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Tạo lịch mới
+        <Button asChild className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-4">
+          <Link href="/care/new" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Tạo lịch chăm sóc
           </Link>
         </Button>
       </div>
@@ -133,14 +137,10 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         fallback={
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16" />
-                </CardContent>
-              </Card>
+              <div key={i} className="enterprise-card p-5 bg-white">
+                <Skeleton className="h-4 w-24 mb-3" />
+                <Skeleton className="h-8 w-16" />
+              </div>
             ))}
           </div>
         }
@@ -148,37 +148,50 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         <CareStats />
       </Suspense>
 
-      {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
+      {/* Filters Navigation */}
+      <div className="flex items-center gap-1 p-1 border rounded-lg bg-slate-50/50 w-fit max-w-full overflow-x-auto scrollbar-hide">
         <Link
           href="/care"
-          className={`px-3 py-1.5 rounded-full text-sm ${
-            !status ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            !status
+              ? "bg-white text-primary shadow-sm border border-primary/10"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Tất cả
         </Link>
+        <div className="w-px h-3 bg-slate-200 mx-1" />
         <Link
           href="/care?status=SCHEDULED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
-            status === "SCHEDULED" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            status === "SCHEDULED"
+              ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Đã lên lịch
         </Link>
         <Link
           href="/care?status=IN_PROGRESS"
-          className={`px-3 py-1.5 rounded-full text-sm ${
-            status === "IN_PROGRESS" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            status === "IN_PROGRESS"
+              ? "bg-white text-blue-600 shadow-sm border border-blue-100"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Đang thực hiện
         </Link>
         <Link
           href="/care?status=COMPLETED"
-          className={`px-3 py-1.5 rounded-full text-sm ${
-            status === "COMPLETED" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            status === "COMPLETED"
+              ? "bg-white text-emerald-600 shadow-sm border border-emerald-100"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Hoàn thành
         </Link>
@@ -186,9 +199,9 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="enterprise-card bg-white p-4 space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full" />
+              <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
         }

@@ -4,6 +4,7 @@
  */
 import { prisma } from "@/lib/prisma";
 import { normalizeVietnamese } from "@/lib/utils";
+import { invalidateCustomerCache } from "@/lib/cache-utils";
 import type { AnalyzedRow } from "@/lib/ai/import-analyzer";
 
 export interface ImportResult {
@@ -43,6 +44,7 @@ export async function executeCustomerImport(
 
   if (approvedRows.length === 0) {
     result.success = true;
+
     return result;
   }
 
@@ -149,6 +151,9 @@ export async function executeCustomerImport(
     });
 
     result.success = true;
+
+    // Invalidate customer search cache after successful import
+    invalidateCustomerCache();
     result.skipped = rows.length - approvedRows.length;
   } catch (error) {
     result.errors.push({

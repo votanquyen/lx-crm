@@ -33,7 +33,7 @@ interface DailyScheduleBuilderProps {
     })[];
   }) | null;
   pendingRequests: (ExchangeRequest & {
-    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude" | "tier">;
+    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "latitude" | "longitude">;
   })[];
 }
 

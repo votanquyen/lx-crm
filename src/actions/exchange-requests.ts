@@ -5,7 +5,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma, type ExchangePriority, type CustomerTier } from "@prisma/client";
+import { Prisma, type ExchangePriority } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
@@ -33,13 +33,11 @@ import {
 function calculatePriorityScore(
   priority: ExchangePriority,
   plantCount: number,
-  customerTier: CustomerTier,
   reason?: string | null,
   createdAt?: Date
 ): number {
   return calculateEnhancedPriorityScore({
     priority,
-    customerTier,
     quantity: plantCount,
     reason,
     createdAt: createdAt || new Date(),
@@ -81,7 +79,6 @@ export async function getExchangeRequests(params: ExchangeSearchParams) {
             companyName: true,
             address: true,
             district: true,
-            tier: true,
           },
         },
       },
@@ -121,7 +118,6 @@ export async function getPendingExchanges() {
           district: true,
           latitude: true,
           longitude: true,
-          tier: true,
         },
       },
     },
@@ -150,7 +146,6 @@ export async function getExchangeRequestById(id: string) {
           district: true,
           contactName: true,
           contactPhone: true,
-          tier: true,
         },
       },
     },
@@ -179,7 +174,6 @@ export const createExchangeRequest = createAction(
     const priorityScore = calculatePriorityScore(
       input.priority,
       input.quantity,
-      customer.tier,
       input.reason
     );
 
@@ -247,7 +241,6 @@ export const updateExchangeRequest = createAction(
       priorityScore = calculatePriorityScore(
         updateData.priority || existing.priority,
         quantity,
-        existing.customer.tier,
         updateData.reason || existing.reason,
         existing.createdAt
       );

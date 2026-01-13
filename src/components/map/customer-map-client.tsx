@@ -5,9 +5,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Phone, MapPin, Building2, TreeDeciduous, Plus } from "lucide-react";
-import type { CustomerTier } from "@prisma/client";
 
 // Fix for default marker icons in Next.js
 // @ts-expect-error - Leaflet private property access needed for icon fix
@@ -30,7 +28,6 @@ export interface CustomerMapData {
   latitude: number | null;
   longitude: number | null;
   contactPhone: string | null;
-  tier: CustomerTier;
   status: string;
   plantCount?: number;
   hasPendingExchange?: boolean;
@@ -56,15 +53,9 @@ interface CustomerMapClientProps {
   className?: string;
 }
 
-// Custom marker icons based on customer tier
-function createCustomerIcon(tier: CustomerTier, hasExchange: boolean): L.DivIcon {
-  const colors: Record<CustomerTier, string> = {
-    VIP: "#dc2626", // red-600
-    PREMIUM: "#2563eb", // blue-600
-    STANDARD: "#16a34a", // green-600
-  };
-
-  const color = colors[tier] || colors.STANDARD;
+// Custom marker icons based on customer status
+function createCustomerIcon(hasExchange: boolean): L.DivIcon {
+  const color = "#16a34a"; // green-600 - default color for all customers
   const ringColor = hasExchange ? "#f59e0b" : "transparent"; // amber-500 for pending exchange
 
   return L.divIcon({
@@ -115,13 +106,6 @@ function createExchangeIcon(priorityScore: number): L.DivIcon {
     popupAnchor: [0, -16],
   });
 }
-
-// Tier badge colors
-const tierColors: Record<CustomerTier, "destructive" | "default" | "secondary"> = {
-  VIP: "destructive",
-  PREMIUM: "default",
-  STANDARD: "secondary",
-};
 
 // Map bounds controller
 function MapBoundsController({ customers }: { customers: CustomerMapData[] }) {
@@ -185,7 +169,7 @@ export function CustomerMapClient({
           <Marker
             key={customer.id}
             position={[customer.latitude!, customer.longitude!]}
-            icon={createCustomerIcon(customer.tier, customersWithExchanges.has(customer.id))}
+            icon={createCustomerIcon(customersWithExchanges.has(customer.id))}
           >
             <Popup minWidth={280} maxWidth={320}>
               <div className="p-2 space-y-3">
@@ -195,7 +179,6 @@ export function CustomerMapClient({
                     <div className="font-semibold text-sm">{customer.companyName}</div>
                     <div className="text-xs text-muted-foreground">{customer.code}</div>
                   </div>
-                  <Badge variant={tierColors[customer.tier]}>{customer.tier}</Badge>
                 </div>
 
                 {/* Details */}

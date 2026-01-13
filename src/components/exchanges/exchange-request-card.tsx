@@ -17,7 +17,7 @@ import type { ExchangeRequest, Customer } from "@prisma/client";
 
 interface ExchangeRequestCardProps {
   request: ExchangeRequest & {
-    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "tier">;
+    customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district">;
   };
   onApprove?: (id: string) => void;
   onCancel?: (id: string) => void;

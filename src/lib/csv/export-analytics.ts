@@ -67,7 +67,6 @@ export function generateInvoiceAgingCSV(data: InvoiceAgingData[]): string {
 export interface TopCustomerData {
   code: string;
   companyName: string;
-  tier: string;
   totalRevenue: number;
   activeContracts: number;
   totalInvoices: number;
@@ -84,7 +83,6 @@ export function generateTopCustomersCSV(data: TopCustomerData[]): string {
   return arrayToCSV(formattedData, [
     { key: "code", label: "Mã khách hàng" },
     { key: "companyName", label: "Tên công ty" },
-    { key: "tier", label: "Phân loại" },
     { key: "totalRevenue", label: "Tổng doanh thu (VND)" },
     { key: "activeContracts", label: "Hợp đồng đang hoạt động" },
     { key: "totalInvoices", label: "Tổng số hóa đơn" },

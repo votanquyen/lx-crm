@@ -13,11 +13,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Filter, X, Layers } from "lucide-react";
-import type { CustomerTier } from "@prisma/client";
 
 export interface MapFilters {
   district?: string;
-  tier?: CustomerTier | "ALL";
   status?: string;
   showExchanges: boolean;
 }
@@ -40,12 +38,11 @@ export function MapControls({
   const [isOpen, setIsOpen] = useState(false);
 
   const hasActiveFilters =
-    filters.district || (filters.tier && filters.tier !== "ALL") || filters.status;
+    filters.district || filters.status;
 
   const clearFilters = () => {
     onFiltersChange({
       district: undefined,
-      tier: "ALL",
       status: undefined,
       showExchanges: filters.showExchanges,
     });
@@ -111,30 +108,6 @@ export function MapControls({
             </Select>
           </div>
 
-          {/* Tier */}
-          <div className="space-y-1.5">
-            <Label className="text-xs">Hạng khách hàng</Label>
-            <Select
-              value={filters.tier || "ALL"}
-              onValueChange={(v) =>
-                onFiltersChange({
-                  ...filters,
-                  tier: v === "ALL" ? "ALL" : (v as CustomerTier),
-                })
-              }
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Tất cả" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tất cả</SelectItem>
-                <SelectItem value="VIP">VIP</SelectItem>
-                <SelectItem value="PREMIUM">Premium</SelectItem>
-                <SelectItem value="STANDARD">Standard</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Status */}
           <div className="space-y-1.5">
             <Label className="text-xs">Trạng thái</Label>
@@ -175,20 +148,12 @@ export function MapControls({
       {/* Legend */}
       <div className="px-3 pb-3 flex flex-wrap gap-3 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-600" />
-          <span>VIP</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-blue-600" />
-          <span>Premium</span>
-        </div>
-        <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-green-600" />
-          <span>Standard</span>
+          <span>Khach hang</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-          <span>Có yêu cầu đổi</span>
+          <span>Co yeu cau doi</span>
         </div>
       </div>
     </div>

@@ -9,9 +9,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Receipt, Eye, MoreHorizontal, Send, XCircle, DollarSign } from "lucide-react";
+import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Building2, FileText, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { InvoiceStatus } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility
@@ -44,16 +44,6 @@ type Invoice = {
     contractNumber: string;
   } | null;
   _count: { payments: number };
-};
-
-const statusConfig: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  DRAFT: { label: "Nháp", variant: "secondary" },
-  SENT: { label: "Đã gửi", variant: "outline" },
-  PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
-  PAID: { label: "Đã thanh toán", variant: "default" },
-  OVERDUE: { label: "Quá hạn", variant: "destructive" },
-  CANCELLED: { label: "Đã hủy", variant: "destructive" },
-  REFUNDED: { label: "Đã hoàn tiền", variant: "secondary" },
 };
 
 /** Check if invoice is overdue */
@@ -87,7 +77,6 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
   onCancel?: (id: string) => void;
   onRecordPayment?: (id: string) => void;
 }) {
-  const status = statusConfig[invoice.status];
   const overdue = isOverdue(invoice.dueDate, invoice.status);
 
   return (
@@ -101,94 +90,121 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
         width: "100%",
         transform: `translateY(${virtualStart}px)`,
       }}
-      className="flex items-center border-b hover:bg-muted/50 transition-colors"
+      className="flex items-center data-table-row group h-[72px]"
     >
       {/* Invoice Number */}
-      <div className="flex-1 p-4">
-        <Link
-          href={`/invoices/${invoice.id}`}
-          className="font-medium hover:underline"
-        >
-          {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
-        </Link>
-        {invoice.contract && (
-          <p className="text-sm text-muted-foreground">
-            HĐ: {invoice.contract.contractNumber}
-          </p>
-        )}
+      <div className="w-[160px] px-4 py-2 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="h-8 w-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors shrink-0">
+            <FileText className="h-4 w-4" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <Link
+              href={`/invoices/${invoice.id}`}
+              className="text-xs font-bold text-slate-900 hover:text-primary transition-colors truncate"
+            >
+              #{invoice.invoiceNumber}
+            </Link>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+              Kỳ {format(new Date(invoice.issueDate), "MM/yyyy")}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Customer */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 px-4 py-2 min-w-0">
         <Link
           href={`/customers/${invoice.customer.id}`}
-          className="font-medium hover:underline"
+          className="text-xs font-bold text-slate-900 hover:text-primary transition-colors block truncate"
         >
           {invoice.customer.companyName}
         </Link>
-        <p className="text-sm text-muted-foreground">
-          {invoice.customer.code}
-        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <Building2 className="h-2.5 w-2.5 text-muted-foreground" />
+          <span className="text-[10px] font-bold text-muted-foreground tracking-tight">
+            {invoice.customer.code}
+          </span>
+        </div>
       </div>
 
       {/* Status */}
-      <div className="w-40 p-4">
-        <Badge variant={status.variant}>{status.label}</Badge>
-        {overdue && invoice.status !== "OVERDUE" && (
-          <Badge variant="destructive" className="ml-2">
-            Quá hạn
-          </Badge>
-        )}
+      <div className="w-36 px-4 py-2 shrink-0">
+        <div className={cn(
+          "status-badge",
+          invoice.status === "PAID" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+            invoice.status === "DRAFT" ? "bg-slate-50 text-slate-600 border-slate-200" :
+              invoice.status === "SENT" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                invoice.status === "PARTIAL" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                  (invoice.status === "OVERDUE" || overdue) ? "bg-rose-50 text-rose-700 border-rose-200" :
+                    "bg-slate-50 text-slate-500"
+        )}>
+          {overdue && invoice.status !== "PAID" ? "Quá hạn" :
+            invoice.status === "PAID" ? "Đã tất toán" :
+              invoice.status === "SENT" ? "Đã gửi" :
+                invoice.status === "PARTIAL" ? "Thanh toán một phần" :
+                  invoice.status === "DRAFT" ? "Nháp" : "Đã hủy"}
+        </div>
       </div>
 
       {/* Due Date */}
-      <div className="w-32 p-4">
-        <span className={overdue ? "text-destructive font-medium" : ""}>
-          {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-        </span>
+      <div className="w-32 px-4 py-2 shrink-0">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Hạn nộp</span>
+          <span className={cn(
+            "text-xs font-bold",
+            overdue && invoice.status !== "PAID" ? "text-rose-600" : "text-slate-600"
+          )}>
+            {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
+          </span>
+        </div>
       </div>
 
       {/* Total Amount */}
-      <div className="w-32 p-4 text-right">
-        {formatCurrency(invoice.totalAmount)}
+      <div className="w-32 px-4 py-2 shrink-0 text-right">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1 text-right">Tổng tiền</p>
+        <p className="text-xs font-black text-slate-900">
+          {formatCurrency(invoice.totalAmount)}
+        </p>
       </div>
 
       {/* Outstanding */}
-      <div className="w-32 p-4 text-right font-medium">
+      <div className="w-32 px-4 py-2 shrink-0 text-right">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1 text-right">Còn nợ</p>
         {invoice.outstandingAmount > 0 ? (
-          <span className="text-orange-600">
+          <span className="text-sm font-black text-rose-600">
             {formatCurrency(invoice.outstandingAmount)}
           </span>
         ) : (
-          <span className="text-green-600">0</span>
+          <span className="text-xs font-bold text-emerald-600 uppercase tracking-tighter">Đã thu đủ</span>
         )}
       </div>
 
       {/* Actions */}
-      <div className="w-12 p-4">
+      <div className="w-12 px-4 py-2 shrink-0 flex justify-end">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Mở menu thao tác">
-              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary transition-colors">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem asChild className="text-xs font-bold font-sans uppercase tracking-tight py-2.5">
               <Link href={`/invoices/${invoice.id}`}>
-                <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
-                Xem chi tiết
+                <Eye className="mr-2 h-4 w-4" />
+                Dữ liệu chi tiết
               </Link>
             </DropdownMenuItem>
             {invoice.status === "DRAFT" && onSend && (
-              <DropdownMenuItem onClick={() => onSend(invoice.id)}>
-                <Send className="mr-2 h-4 w-4" aria-hidden="true" />
-                Gửi hóa đơn
+              <DropdownMenuItem onClick={() => onSend(invoice.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5">
+                <Send className="mr-2 h-4 w-4" />
+                Gửi đối tác
               </DropdownMenuItem>
             )}
             {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) &&
               onRecordPayment && (
-                <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
-                  <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
+                <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-primary">
+                  <DollarSign className="mr-2 h-4 w-4" />
                   Ghi nhận thanh toán
                 </DropdownMenuItem>
               )}
@@ -198,9 +214,9 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
               onCancel && (
                 <DropdownMenuItem
                   onClick={() => onCancel(invoice.id)}
-                  className="text-destructive"
+                  className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-rose-600 focus:text-rose-600"
                 >
-                  <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                  <XCircle className="mr-2 h-4 w-4" />
                   Hủy hóa đơn
                 </DropdownMenuItem>
               )}
@@ -217,7 +233,7 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
   const virtualizer = useVirtualizer({
     count: invoices.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 72, // Approximate row height with 2-line content
+    estimateSize: () => 72,
     overscan: 5,
   });
 
@@ -226,39 +242,43 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
   // Empty state
   if (invoices.length === 0) {
     return (
-      <div className="rounded-md border p-8 text-center text-muted-foreground">
-        <Receipt className="mx-auto h-8 w-8 mb-2 opacity-50" />
-        Chưa có hóa đơn nào
+      <div className="p-12 text-center">
+        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mx-auto mb-4 border shadow-sm">
+          <Receipt className="h-8 w-8" />
+        </div>
+        <h4 className="text-base font-bold text-slate-900">Không có dữ liệu hóa đơn</h4>
+        <p className="text-sm font-medium text-slate-400 mt-1">Vui lòng kiểm tra lại bộ lọc hoặc tạo hóa đơn mới.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="w-full">
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex font-medium text-sm text-muted-foreground">
-          <div className="flex-1 p-4">Số hóa đơn</div>
-          <div className="flex-1 p-4">Khách hàng</div>
-          <div className="w-40 p-4">Trạng thái</div>
-          <div className="w-32 p-4">Hạn thanh toán</div>
-          <div className="w-32 p-4 text-right">Tổng tiền</div>
-          <div className="w-32 p-4 text-right">Còn nợ</div>
-          <div className="w-12 p-4"></div>
+      <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm border-b">
+        <div className="flex items-center h-10">
+          <div className="w-[160px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Hóa đơn</div>
+          <div className="flex-1 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Đối tác / Khách hàng</div>
+          <div className="w-36 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Trạng thái</div>
+          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Hạn nộp</div>
+          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Tổng cộng</div>
+          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Phải thu</div>
+          <div className="w-12 px-4 shrink-0"></div>
         </div>
       </div>
 
       {/* Virtualized body */}
       <div
         ref={parentRef}
-        className="overflow-auto"
-        style={{ maxHeight: "calc(100vh - 320px)" }}
+        className="overflow-auto scrollbar-hide"
+        style={{ maxHeight: "calc(100vh - 440px)" }}
       >
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
             position: "relative",
           }}
+          className="divide-y divide-border/50"
         >
           {virtualItems.map((virtualRow) => {
             const invoice = invoices[virtualRow.index];

@@ -18,7 +18,7 @@ import type { ExchangeRequest, Customer } from "@prisma/client";
 interface ExchangeRequestListProps {
   initialData: {
     data: (ExchangeRequest & {
-      customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district" | "tier">;
+      customer: Pick<Customer, "id" | "code" | "companyName" | "address" | "district">;
     })[];
     pagination: {
       page: number;

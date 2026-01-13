@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3,
@@ -159,7 +158,6 @@ async function CustomerSection() {
               <TableRow>
                 <TableHead>Mã KH</TableHead>
                 <TableHead>Tên công ty</TableHead>
-                <TableHead>Hạng</TableHead>
                 <TableHead className="text-right">Tổng doanh thu</TableHead>
                 <TableHead className="text-right">Phí hàng tháng</TableHead>
                 <TableHead className="text-right">Số hóa đơn</TableHead>
@@ -168,7 +166,7 @@ async function CustomerSection() {
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     Chưa có dữ liệu khách hàng
                   </TableCell>
                 </TableRow>
@@ -184,19 +182,6 @@ async function CustomerSection() {
                       </Link>
                     </TableCell>
                     <TableCell>{customer.companyName}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          customer.tier === "VIP"
-                            ? "default"
-                            : customer.tier === "PREMIUM"
-                            ? "secondary"
-                            : "outline"
-                        }
-                      >
-                        {customer.tier}
-                      </Badge>
-                    </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(customer.totalRevenue)}
                     </TableCell>

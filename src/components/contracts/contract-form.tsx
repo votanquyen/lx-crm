@@ -108,13 +108,16 @@ export function ContractForm({ customers, plantTypes, defaultCustomerId, contrac
     [watchItems]
   );
 
+  // Extract stable setValue to avoid unnecessary callback re-creation
+  const setValue = form.setValue;
+
   const handlePlantTypeChange = useCallback((index: number, plantTypeId: string) => {
     const plantType = plantTypes.find((pt) => pt.id === plantTypeId);
     if (plantType) {
-      form.setValue(`items.${index}.plantTypeId`, plantTypeId);
-      form.setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
+      setValue(`items.${index}.plantTypeId`, plantTypeId);
+      setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
     }
-  }, [plantTypes, form]);
+  }, [plantTypes, setValue]);
 
   const onSubmit = (data: CreateContractInput) => {
     setError(null);

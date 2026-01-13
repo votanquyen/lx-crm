@@ -3,11 +3,10 @@
  * Calculates priority score (0-100) based on multiple factors
  */
 
-import type { ExchangePriority, CustomerTier } from "@prisma/client";
+import type { ExchangePriority } from "@prisma/client";
 
 export interface PriorityScoringInput {
   priority: ExchangePriority;
-  customerTier: CustomerTier;
   quantity: number;
   reason?: string | null;
   createdAt: Date;
@@ -18,6 +17,7 @@ export interface PriorityScoringInput {
  */
 const URGENT_KEYWORDS = [
   "chết",
+  "chet",
   "vàng lá",
   "vang la",
   "sâu bệnh",
@@ -45,10 +45,9 @@ const URGENT_KEYWORDS = [
  *
  * Scoring breakdown:
  * - Priority level: 0-40 points
- * - Customer tier: 0-25 points
- * - Plant quantity: 0-15 points
- * - Request age: 0-10 points
- * - Urgent keywords: 0-10 points
+ * - Plant quantity: 0-20 points
+ * - Request age: 0-20 points
+ * - Urgent keywords: 0-20 points
  */
 export function calculatePriorityScore(input: PriorityScoringInput): number {
   let score = 0;
@@ -62,22 +61,14 @@ export function calculatePriorityScore(input: PriorityScoringInput): number {
   };
   score += priorityScores[input.priority] ?? 15;
 
-  // Customer tier weight (0-25)
-  const tierScores: Record<CustomerTier, number> = {
-    VIP: 25,
-    PREMIUM: 15,
-    STANDARD: 8,
-  };
-  score += tierScores[input.customerTier] ?? 8;
+  // Plant quantity weight (0-20) - more plants = higher priority
+  score += Math.min(input.quantity * 4, 20);
 
-  // Plant quantity weight (0-15) - more plants = higher priority
-  score += Math.min(input.quantity * 3, 15);
-
-  // Request age weight (0-10) - older requests get higher priority
+  // Request age weight (0-20) - older requests get higher priority
   const ageInDays = Math.floor(
     (Date.now() - input.createdAt.getTime()) / (1000 * 60 * 60 * 24)
   );
-  score += Math.min(ageInDays, 10);
+  score += Math.min(ageInDays * 2, 20);
 
   // Urgent keywords weight (0-10)
   if (input.reason) {

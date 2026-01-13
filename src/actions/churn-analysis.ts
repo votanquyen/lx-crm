@@ -22,7 +22,6 @@ export interface CustomerChurnAnalysis {
   customerId: string;
   customerCode: string;
   customerName: string;
-  tier: string;
   status: string;
   riskResult: ChurnRiskResult;
 }
@@ -364,6 +363,8 @@ async function batchFetchChurnData(customerIds: string[]): Promise<{
   // Populate notes map (limit to 5 per customer)
   const noteCountMap = new Map<string, number>();
   for (const n of allNotes) {
+    // Skip notes without customerId (global notes)
+    if (!n.customerId) continue;
     const currentCount = noteCountMap.get(n.customerId) || 0;
     if (currentCount < 5) {
       const list = noteMap.get(n.customerId) || [];
@@ -480,7 +481,6 @@ export async function analyzeCustomerChurnRisk(
       id: true,
       code: true,
       companyName: true,
-      tier: true,
       status: true,
     },
   });
@@ -513,7 +513,6 @@ export async function analyzeCustomerChurnRisk(
     customerId: customer.id,
     customerCode: customer.code,
     customerName: customer.companyName,
-    tier: customer.tier,
     status: customer.status,
     riskResult,
   };
@@ -540,7 +539,6 @@ export async function getAtRiskCustomers(options?: {
       id: true,
       code: true,
       companyName: true,
-      tier: true,
       status: true,
     },
     orderBy: { companyName: "asc" },
@@ -588,7 +586,6 @@ export async function getAtRiskCustomers(options?: {
           customerId: customer.id,
           customerCode: customer.code,
           customerName: customer.companyName,
-          tier: customer.tier,
           status: customer.status,
           riskResult,
         });

@@ -1,28 +1,14 @@
-/**
- * Today's Care Schedules Page
- * Quick view for staff to see today's care tasks
- */
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, MapPin, Clock, User, CheckCircle } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Phone, ArrowLeft, ChevronRight } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "Chờ thực hiện", color: "bg-yellow-100 text-yellow-800" },
-  IN_PROGRESS: { label: "Đang thực hiện", color: "bg-blue-100 text-blue-800" },
-  COMPLETED: { label: "Hoàn thành", color: "bg-green-100 text-green-800" },
-  CANCELLED: { label: "Đã hủy", color: "bg-gray-100 text-gray-800" },
-  RESCHEDULED: { label: "Dời lịch", color: "bg-purple-100 text-purple-800" },
-  SKIPPED: { label: "Bỏ qua", color: "bg-orange-100 text-orange-800" },
-};
+import { cn } from "@/lib/utils";
 
 async function TodaySchedulesContent() {
   const session = await auth();
@@ -56,6 +42,7 @@ async function TodaySchedulesContent() {
         select: {
           id: true,
           name: true,
+          email: true,
         },
       },
     },
@@ -75,169 +62,153 @@ async function TodaySchedulesContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Lịch chăm sóc hôm nay</h1>
-        <p className="text-gray-600 mt-1">
-          {format(today, "EEEE, dd MMMM yyyy", { locale: vi })}
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Điều phối thực địa</h1>
+          <p className="text-sm font-medium text-muted-foreground flex items-center gap-2 mt-1">
+            <Calendar className="h-3.5 w-3.5 text-primary" />
+            {format(today, "EEEE, dd 'Tháng' MM, yyyy", { locale: vi })}
+          </p>
+        </div>
+        <Button asChild variant="outline" className="h-9 border-slate-200 text-slate-600 font-bold px-4 hover:bg-slate-50">
+          <Link href="/care" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Lịch tổng quát
+          </Link>
+        </Button>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">{stats.total}</div>
-              <div className="text-sm text-gray-600 mt-1">Tổng lịch</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-600">
-                {stats.scheduled}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Chờ thực hiện</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">
-                {stats.inProgress}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Đang thực hiện</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">
-                {stats.completed}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Hoàn thành</div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="enterprise-card p-4 bg-white">
+          <p className="kpi-title mb-1 text-slate-500">Tổng lịch hôm nay</p>
+          <p className="kpi-value text-slate-900">{stats.total}</p>
+        </div>
+        <div className="enterprise-card p-4 bg-white border-blue-100">
+          <p className="kpi-title mb-1 text-blue-600">Chờ thực hiện</p>
+          <p className="kpi-value text-blue-600">{stats.scheduled}</p>
+        </div>
+        <div className="enterprise-card p-4 bg-white border-amber-100">
+          <p className="kpi-title mb-1 text-amber-600">Đang xử lý</p>
+          <p className="kpi-value text-amber-600">{stats.inProgress}</p>
+        </div>
+        <div className="enterprise-card p-4 bg-white border-emerald-100">
+          <p className="kpi-title mb-1 text-emerald-600">Đã xong</p>
+          <p className="kpi-value text-emerald-600">{stats.completed}</p>
+        </div>
       </div>
 
-      {/* Schedules List */}
-      {schedules.length === 0 ? (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center text-gray-500">
-              <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="text-lg font-medium">Không có lịch chăm sóc nào hôm nay</p>
-              <p className="text-sm mt-1">Hãy tận hưởng ngày nghỉ!</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {schedules.map((schedule) => (
-            <Card key={schedule.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl">
-                      {schedule.customer.companyName}
-                    </CardTitle>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {schedule.customer.code}
-                    </div>
-                  </div>
-                  <Badge className={statusConfig[schedule.status]?.color ?? "bg-gray-100 text-gray-800"}>
-                    {statusConfig[schedule.status]?.label ?? schedule.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Address */}
-                <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 mt-0.5 text-gray-500" />
-                  <div>
-                    {schedule.customer.address}, {schedule.customer.district}
-                  </div>
-                </div>
-
-                {/* Time Slot */}
-                {schedule.timeSlot && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <div>Khung giờ: {schedule.timeSlot}</div>
-                  </div>
-                )}
-
-                {/* Staff */}
-                {schedule.staff && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <div>Nhân viên: {schedule.staff.name}</div>
-                  </div>
-                )}
-
-                {/* Contact */}
-                {schedule.customer.contactPhone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="text-gray-600">
-                      📞 {schedule.customer.contactPhone}
-                      {schedule.customer.contactName && (
-                        <span className="ml-2">({schedule.customer.contactName})</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {schedule.notes && (
-                  <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                    <strong>Ghi chú:</strong> {schedule.notes}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  {schedule.status === "SCHEDULED" && (
-                    <Link href={`/care/${schedule.id}/complete`}>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Bắt đầu thực hiện
-                      </Button>
-                    </Link>
-                  )}
-                  {schedule.status === "IN_PROGRESS" && (
-                    <Link href={`/care/${schedule.id}/complete`}>
-                      <Button size="sm" variant="outline">
-                        Tiếp tục thực hiện
-                      </Button>
-                    </Link>
-                  )}
-                  <Link href={`/care/${schedule.id}`}>
-                    <Button size="sm" variant="outline">
-                      Xem chi tiết
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Schedules List Header */}
+      <div className="enterprise-card overflow-hidden bg-white">
+        <div className="bg-slate-50 border-b px-4 h-10 flex items-center">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Danh sách nhiệm vụ hôm nay</span>
         </div>
-      )}
 
-      {/* Back to Calendar */}
-      <Link href="/care">
-        <Card className="border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
-              <Calendar className="h-5 w-5" />
-              Xem lịch cả tuần
+        <div className="divide-y divide-border/50">
+          {schedules.length === 0 ? (
+            <div className="py-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mx-auto mb-4 border shadow-sm">
+                <Calendar className="h-8 w-8" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">Hôm nay không có lịch</h4>
+              <p className="text-sm font-medium text-slate-400 mt-1">Nhân sự có thể tập trung các công việc khác.</p>
             </div>
-          </CardContent>
-        </Card>
-      </Link>
+          ) : (
+            schedules.map((schedule) => (
+              <div key={schedule.id} className="flex flex-col md:flex-row md:items-center data-table-row group p-4 gap-4 min-h-[80px]">
+                {/* Status Icon */}
+                <div className="hidden md:flex w-10 h-10 rounded-full border items-center justify-center shrink-0 transition-colors group-hover:bg-primary/5 group-hover:border-primary/20">
+                  <Clock className={cn(
+                    "h-5 w-5",
+                    schedule.status === "COMPLETED" ? "text-emerald-500" :
+                      schedule.status === "IN_PROGRESS" ? "text-blue-500" :
+                        "text-slate-300"
+                  )} />
+                </div>
+
+                {/* Customer & Time */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link
+                      href={`/customers/${schedule.customer.id}`}
+                      className="text-sm font-black text-slate-900 hover:text-primary transition-colors truncate block"
+                    >
+                      {schedule.customer.companyName}
+                    </Link>
+                    <div className={cn(
+                      "status-badge scale-75 origin-left",
+                      schedule.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                        schedule.status === "IN_PROGRESS" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          "bg-slate-50 text-slate-500 border-slate-200"
+                    )}>
+                      {schedule.status === "COMPLETED" ? "Đã xong" :
+                        schedule.status === "IN_PROGRESS" ? "Đang xử lý" : "Chờ xử lý"}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                      <MapPin className="h-2.5 w-2.5" />
+                      {schedule.customer.address}
+                    </div>
+                    {schedule.scheduledTime && (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-tight">
+                        <Clock className="h-2.5 w-2.5" />
+                        {String(schedule.scheduledTime)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Ops Info */}
+                <div className="flex flex-col md:w-48 shrink-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <User className="h-3 w-3 text-slate-400" />
+                    <span className="text-xs font-bold text-slate-600">
+                      {schedule.staff?.name || "Chưa phân công"}
+                    </span>
+                  </div>
+                  {schedule.customer.contactPhone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3 w-3 text-primary/60" />
+                      <span className="text-xs font-black text-primary">
+                        {schedule.customer.contactPhone}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action */}
+                <div className="flex items-center justify-between md:justify-end gap-3 md:w-32">
+                  <div className="flex md:hidden items-center gap-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    Thao tác
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {schedule.status === "SCHEDULED" && (
+                      <Link href={`/care/${schedule.id}/complete`}>
+                        <Button size="sm" className="h-8 bg-primary hover:bg-primary/90 text-white font-bold px-3 text-[10px] uppercase tracking-tighter shadow-sm">
+                          Bắt đầu
+                        </Button>
+                      </Link>
+                    )}
+                    {schedule.status === "IN_PROGRESS" && (
+                      <Link href={`/care/${schedule.id}/complete`}>
+                        <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 text-[10px] uppercase tracking-tighter shadow-sm">
+                          Cập nhật
+                        </Button>
+                      </Link>
+                    )}
+                    <Link href={`/care/${schedule.id}`}>
+                      <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-slate-200">
+                        <ChevronRight className="h-4 w-4 text-slate-400" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -247,16 +218,22 @@ export default async function TodayCarePage() {
     <Suspense
       fallback={
         <div className="space-y-6">
-          <Skeleton className="h-12 w-64" />
-          <div className="grid grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24" />
+          <Skeleton className="h-10 w-64" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="enterprise-card p-4 bg-white">
+                <Skeleton className="h-3 w-20 mb-2" />
+                <Skeleton className="h-8 w-12" />
+              </div>
             ))}
           </div>
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-48" />
-            ))}
+          <div className="enterprise-card bg-white overflow-hidden">
+            <div className="h-10 bg-slate-50 border-b" />
+            <div className="p-4 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
           </div>
         </div>
       }
