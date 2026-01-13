@@ -34,12 +34,6 @@ enum CustomerStatus {
   TERMINATED // Đã kết thúc hợp đồng
 }
 
-enum CustomerTier {
-  STANDARD // Khách hàng thông thường
-  PREMIUM  // Khách hàng cao cấp
-  VIP      // Khách hàng VIP
-}
-
 enum ContractStatus {
   DRAFT       // Bản nháp
   SENT        // Đã gửi khách
@@ -391,7 +385,6 @@ model Customer {
 
   // Business Information
   status   CustomerStatus @default(LEAD)
-  tier     CustomerTier   @default(STANDARD)
   source   String? // Referral, Website, Cold call, Exhibition
   industry String? // IT, Finance, Healthcare, Retail, F&B, Education
 
@@ -442,7 +435,6 @@ model Customer {
   @@index([code])
   @@index([status])
   @@index([district])
-  @@index([tier])
   @@index([careWeekday])
   @@index([taxCode])
   @@map("customers")
@@ -499,6 +491,7 @@ model CustomerPlant {
   @@index([status])
   @@index([condition])
   @@index([nextExchange])
+  @@index([customerId, status]) // Composite: active plants per customer
   @@map("customer_plants")
 }
 
@@ -996,6 +989,8 @@ model CareSchedule {
   @@index([staffId])
   @@index([customerId])
   @@index([status])
+  @@index([scheduledDate, status]) // Composite: daily schedule
+  @@index([staffId, scheduledDate]) // Composite: staff workload
   @@map("care_schedules")
 }
 
@@ -1006,7 +1001,7 @@ model CareSchedule {
 model StickyNote {
   id String @id @default(cuid())
 
-  customerId   String
+  customerId   String? // Optional for global dashboard notes
   createdById  String?
   assignedToId String?
 
@@ -1055,7 +1050,7 @@ model StickyNote {
   updatedAt DateTime @updatedAt
 
   // Relations
-  customer   Customer @relation(fields: [customerId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
   createdBy  User?    @relation("NoteCreatedBy", fields: [createdById], references: [id])
   resolvedBy User?    @relation("NoteResolvedBy", fields: [resolvedById], references: [id])
   assignedTo User?    @relation("NoteAssignedTo", fields: [assignedToId], references: [id])
@@ -1313,6 +1308,8 @@ model ExchangeHistory {
   @@index([customerId])
   @@index([exchangeDate])
   @@index([staffId])
+  @@index([customerId, exchangeDate]) // Composite: customer history
+  @@index([staffId, exchangeDate]) // Composite: staff performance
   @@map("exchange_history")
 }
 

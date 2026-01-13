@@ -82,7 +82,17 @@
       "Bash(npx prisma db execute:*)",
       "Bash(pnpm prisma db push:*)",
       "Bash(npx eslint:*)",
-      "Skill(scout)"
+      "Skill(scout)",
+      "Bash(pnpm prisma generate)",
+      "SlashCommand(/ck:plan:hard Admin Settings API Keys Management - Extend /admin/settings with API Keys tab (ADMIN role only). Features: Groq AI key input with masked display, Test Connection button to validate key before save, encrypted storage using existing crypto.ts, instant cache invalidation (no restart). Extensible for future API keys. See brainstorm report: plans/reports/brainstorm-260110-1626-api-keys-settings.md)",
+      "SlashCommand(/ck:plan:fast API Keys Settings UX Redesign - Create card-based UI for API key management with status badges, friendly Vietnamese labels, visible \"Kiểm tra kết nối\" buttons, and help links. Providers: Groq AI, Google Gemini, Google Maps, OpenRouter. See brainstorm: plans/reports/brainstorm-260110-1900-api-keys-ux-redesign.md)",
+      "SlashCommand(/ck:code plans/260110-1900-api-keys-ux-redesign)",
+      "Bash(npm run typecheck)",
+      "Bash(pnpm tsc:*)",
+      "Bash(powershell:*)",
+      "SlashCommand(/ck:plan:hard Google Workspace Authentication & Admin User Management - Implement production-ready Google OAuth with domain restriction (ALLOWED_EMAIL_DOMAINS), create /admin/users page for role management (ADMIN/MANAGER/ACCOUNTANT/STAFF/VIEWER), add isActive check in signIn callback, set default role to STAFF for new users. Existing infrastructure: NextAuth.js v5 + PrismaAdapter, User model with role/isActive fields, RBAC helpers in auth-utils.ts, user CRUD in actions/users.ts. See brainstorm: plans/reports/brainstorm-260112-1027-google-workspace-authentication.md)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [
       "Bash(dd if=/dev/zero of=/dev/sd:*)",
