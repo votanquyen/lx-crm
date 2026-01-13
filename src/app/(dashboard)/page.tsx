@@ -1,153 +1,85 @@
 /**
- * Dashboard Page with Real Data
+ * Dashboard Page - Finance First Redesign
+ * Tailored for Owner/Accountant persona
  */
 import { Suspense } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
-  Leaf,
   FileText,
   Receipt,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
   RefreshCcw,
-  AlertTriangle,
-  StickyNote,
+  Calendar,
 } from "lucide-react";
-import { getCustomerStats } from "@/actions/customers";
-import { getContractStats, getExpiringContracts } from "@/actions/contracts";
-import { getInvoiceStats, getOverdueInvoices } from "@/actions/invoices";
+import { getFinancialKPIs, getBillingActionItems } from "@/actions/dashboard-billing";
+import { getGlobalNotes } from "@/actions/sticky-notes";
 import { getTodaySchedule } from "@/actions/care-schedules";
-import { getRecentNotes } from "@/actions/sticky-notes";
-import { formatCurrencyDecimal } from "@/lib/db-utils";
+import { DashboardStickyNote } from "@/components/dashboard";
+import { BillingActionCenter } from "@/components/dashboard/billing-action-center";
+import { FinancialStats } from "@/components/dashboard/financial-kpis";
+import { cn } from "@/lib/utils";
 
-// Stats Card Component
-function StatsCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  trend,
-  trendValue,
-  color,
-}: {
-  title: string;
-  value: string;
-  description?: string;
-  icon: React.ElementType;
-  trend?: "up" | "down";
-  trendValue?: string;
-  color?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className={`h-4 w-4 ${color || "text-muted-foreground"}`} />
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${color || ""}`}>{value}</div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {trend && trendValue && (
-            <span
-              className={trend === "up" ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}
-            >
-              {trend === "up" ? <TrendingUp className="h-3 w-3 mr-1" /> : <TrendingDown className="h-3 w-3 mr-1" />}
-              {trendValue}
-            </span>
-          )}
-          {description && <span>{description}</span>}
-        </div>
-      </CardContent>
-    </Card>
-  );
+// --- Wrapper Components for Suspense ---
+
+async function FinancialStatsWrapper() {
+  const kpis = await getFinancialKPIs();
+  return <FinancialStats data={kpis} />;
 }
 
-async function DashboardStats() {
-  const [customerStats, contractStats, invoiceStats] = await Promise.all([
-    getCustomerStats(),
-    getContractStats(),
-    getInvoiceStats(),
-  ]);
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <StatsCard
-        title="Khách hàng"
-        value={customerStats.total.toString()}
-        description={`${customerStats.active} đang hoạt động`}
-        icon={Users}
-      />
-      <StatsCard
-        title="Hợp đồng"
-        value={contractStats.active.toString()}
-        description={`${contractStats.expiringSoon} sắp hết hạn`}
-        icon={FileText}
-        color={contractStats.expiringSoon > 0 ? "text-orange-600" : undefined}
-      />
-      <StatsCard
-        title="Doanh thu định kỳ"
-        value={formatCurrencyDecimal(contractStats.monthlyRecurring)}
-        description="mỗi tháng"
-        icon={Leaf}
-        color="text-green-600"
-      />
-      <StatsCard
-        title="Công nợ"
-        value={formatCurrencyDecimal(invoiceStats.totalReceivables)}
-        description={`${invoiceStats.overdue} quá hạn`}
-        icon={Receipt}
-        color={invoiceStats.overdue > 0 ? "text-red-600" : undefined}
-      />
-    </div>
-  );
+async function ActionCenterWrapper() {
+  const actions = await getBillingActionItems();
+  return <BillingActionCenter data={actions} />;
 }
 
-async function TodaySchedules() {
+async function TodaySchedulesWrapper() {
   const schedules = await getTodaySchedule();
 
   if (schedules.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <Calendar className="mx-auto h-8 w-8 mb-2 opacity-50" />
-        <p>Không có lịch chăm sóc hôm nay</p>
+      <div className="text-center py-12 text-muted-foreground bg-slate-50/30 rounded-lg border border-dashed">
+        <Calendar className="mx-auto h-8 w-8 mb-2 opacity-30" />
+        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Không có lịch trình</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col divide-y divide-border/50">
       {schedules.slice(0, 5).map((schedule) => (
         <div
           key={schedule.id}
-          className="flex items-center justify-between rounded-lg border p-3"
+          className="data-table-row flex items-center justify-between py-3 px-1"
         >
-          <div>
+          <div className="flex flex-col gap-0.5">
             <Link
               href={`/customers/${schedule.customer.id}`}
-              className="font-medium hover:underline"
+              className="text-sm font-bold text-slate-800 hover:text-primary transition-colors"
             >
               {schedule.customer.companyName}
             </Link>
-            <p className="text-sm text-muted-foreground">
-              {schedule.customer.district} • {schedule.scheduledTime ? new Date(schedule.scheduledTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Chưa xác định giờ"}
-            </p>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+              <span>{schedule.customer.district}</span>
+              <span>•</span>
+              <span>
+                {schedule.scheduledTime ? new Date(schedule.scheduledTime).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "Chưa xác định"}
+              </span>
+            </div>
           </div>
-          <Badge
-            variant={schedule.status === "IN_PROGRESS" ? "default" : "secondary"}
-          >
-            {schedule.status === "IN_PROGRESS" ? "Đang thực hiện" : "Đã lên lịch"}
-          </Badge>
+          <div className={cn(
+            "status-badge",
+            schedule.status === "IN_PROGRESS"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-slate-50 text-slate-600 border-slate-200"
+          )}>
+            {schedule.status === "IN_PROGRESS" ? "Đang làm" : "Đã lên lịch"}
+          </div>
         </div>
       ))}
       {schedules.length > 5 && (
         <Link
           href="/care"
-          className="block text-center text-sm text-primary hover:underline"
+          className="mt-3 text-center text-[10px] font-bold text-primary hover:text-primary/80 tracking-widest uppercase transition-colors py-2 bg-slate-50 rounded"
         >
           Xem thêm {schedules.length - 5} lịch khác
         </Link>
@@ -156,265 +88,138 @@ async function TodaySchedules() {
   );
 }
 
-/**
- * Display component for recent notes (receives pre-fetched data)
- */
-function RecentNotesDisplay({ notes }: { notes: Awaited<ReturnType<typeof getRecentNotes>> }) {
-  if (notes.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <StickyNote className="mx-auto h-8 w-8 mb-2 opacity-50" />
-        <p>Không có ghi chú nào cần xử lý</p>
-      </div>
-    );
-  }
+async function StickyNoteWrapper() {
+  const notes = await getGlobalNotes(10);
+  return <DashboardStickyNote initialNotes={notes} />;
+}
 
+export default async function DashboardPage() {
   return (
-    <div className="space-y-4">
-      {notes.map((note) => (
-        <div key={note.id} className="flex items-start gap-3">
-          <div
-            className={`rounded-full p-2 ${
-              note.category === "URGENT"
-                ? "bg-red-100 text-red-600"
-                : note.category === "COMPLAINT"
-                  ? "bg-orange-100 text-orange-600"
-                  : "bg-muted"
-            }`}
-          >
-            <StickyNote className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <Link
-              href={`/customers/${note.customer.id}`}
-              className="font-medium text-sm hover:underline"
-            >
-              {note.customer.companyName}
-            </Link>
-            <p className="text-sm text-muted-foreground truncate">{note.content}</p>
-          </div>
-          <Badge variant={note.category === "URGENT" ? "destructive" : "secondary"}>
-            {note.category}
-          </Badge>
+    <div className="space-y-6 pb-10">
+      {/* Header */}
+      <div className="flex items-end justify-between border-b pb-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            Tổng quan tài chính
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            Theo dõi dòng tiền, công nợ và các tác vụ hóa đơn quan trọng.
+          </p>
         </div>
-      ))}
+        <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+          <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 bg-white shadow-sm rounded-md text-slate-900">Tài chính</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors">Vận hành</span>
+        </div>
+      </div>
+
+      {/* 1. Top Row: Financial KPIs */}
+      <Suspense fallback={<KPIsSkeleton />}>
+        <FinancialStatsWrapper />
+      </Suspense>
+
+      {/* 2. Middle Row: Action Center & Operations Pulse */}
+      <div className="grid gap-6 lg:grid-cols-3 min-h-[400px]">
+        {/* Action Center - Takes up 2/3 space */}
+        <div className="lg:col-span-2 shadow-sm rounded-xl">
+          <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-xl" />}>
+            <ActionCenterWrapper />
+          </Suspense>
+        </div>
+
+        {/* Right Column: Quick Ops & Sticky Notes */}
+        <div className="space-y-6">
+          {/* Operations Snapshot */}
+          <div className="enterprise-card bg-white h-auto">
+            <div className="border-b px-4 py-3 bg-slate-50/50">
+              <h3 className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-widest">
+                <Calendar className="h-3.5 w-3.5" />
+                Tiến độ vận hành
+              </h3>
+            </div>
+            <div className="p-4">
+              <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+                <TodaySchedulesWrapper />
+              </Suspense>
+            </div>
+          </div>
+
+          {/* AI Sticky Note */}
+          <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+            <StickyNoteWrapper />
+          </Suspense>
+        </div>
+      </div>
+
+      {/* 3. Bottom Row: Quick Actions */}
+      <div className="enterprise-card p-5 bg-gradient-to-r from-slate-50 to-white">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Lối tắt nghiệp vụ</h3>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Link
+            href="/invoices/new"
+            className="flex items-center gap-3 rounded-lg border bg-white p-3.5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 group"
+          >
+            <div className="p-2.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <Receipt className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Xuất hóa đơn</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">VAT & Dịch vụ</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/contracts/new"
+            className="flex items-center gap-3 rounded-lg border bg-white p-3.5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 group"
+          >
+            <div className="p-2.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Hợp đồng mới</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Soạn thảo</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/customers/new"
+            className="flex items-center gap-3 rounded-lg border bg-white p-3.5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 group"
+          >
+            <div className="p-2.5 rounded-md bg-amber-50 text-amber-600 border border-amber-100 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Khách hàng</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Thêm đối tác</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/exchanges"
+            className="flex items-center gap-3 rounded-lg border bg-white p-3.5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 group"
+          >
+            <div className="p-2.5 rounded-md bg-purple-50 text-purple-600 border border-purple-100 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <RefreshCcw className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Đổi cây</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Yêu cầu mới</p>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
 
-/**
- * Wrapper for Alerts that only fetches expiring contracts and overdue invoices
- * Notes are fetched separately by RecentNotesWrapper
- */
-async function AlertsAndNotesWrapper() {
-  const [expiringContracts, overdueInvoices] = await Promise.all([
-    getExpiringContracts(14),
-    getOverdueInvoices(5),
-  ]);
-
-  const hasAlerts = expiringContracts.length > 0 || overdueInvoices.length > 0;
-
-  if (!hasAlerts) return null;
-
+function KPIsSkeleton() {
   return (
-    <Card className="border-orange-200 bg-orange-50/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-orange-700">
-          <AlertTriangle className="h-5 w-5" />
-          Cảnh báo cần xử lý
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {expiringContracts.length > 0 && (
-          <div>
-            <p className="font-medium text-sm mb-2">
-              Hợp đồng sắp hết hạn ({expiringContracts.length})
-            </p>
-            <div className="space-y-2">
-              {expiringContracts.slice(0, 3).map((contract) => (
-                <Link
-                  key={contract.id}
-                  href={`/contracts/${contract.id}`}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
-                >
-                  • {contract.customer.companyName} - {contract.contractNumber}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-        {overdueInvoices.length > 0 && (
-          <div>
-            <p className="font-medium text-sm mb-2 text-red-600">
-              Hóa đơn quá hạn ({overdueInvoices.length})
-            </p>
-            <div className="space-y-2">
-              {overdueInvoices.slice(0, 3).map((invoice) => (
-                <Link
-                  key={invoice.id}
-                  href={`/invoices/${invoice.id}`}
-                  className="block text-sm text-muted-foreground hover:text-foreground"
-                >
-                  • {invoice.customer.companyName} - {new Intl.NumberFormat("vi-VN").format(Number(invoice.outstandingAmount))} VND
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * Wrapper for recent notes section
- */
-async function RecentNotesWrapper() {
-  const notes = await getRecentNotes(5);
-  return <RecentNotesDisplay notes={notes} />;
-}
-
-export default async function DashboardPage() {
-  // Note: auth() is already called in layout.tsx - no need to duplicate here
-
-  return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Xin chào!
-        </h1>
-        <p className="text-muted-foreground">
-          Đây là tổng quan hoạt động kinh doanh hôm nay.
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        }
-      >
-        <DashboardStats />
-      </Suspense>
-
-      {/* Alerts and Notes - Single data fetch for both sections */}
-      <Suspense fallback={null}>
-        <AlertsAndNotesWrapper />
-      </Suspense>
-
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Today's Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Lịch chăm sóc hôm nay
-            </CardTitle>
-            <CardDescription>Các lịch cần thực hiện trong ngày</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense
-              fallback={
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
-              }
-            >
-              <TodaySchedules />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        {/* Recent Notes - Now part of AlertsAndNotesData above */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <StickyNote className="h-5 w-5" />
-              Ghi chú cần xử lý
-            </CardTitle>
-            <CardDescription>Các ghi chú từ khách hàng đang mở</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense
-              fallback={
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              }
-            >
-              <RecentNotesWrapper />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Thao tác nhanh</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <Link
-              href="/customers/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
-            >
-              <Users className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">Thêm khách hàng</p>
-                <p className="text-xs text-muted-foreground">Tạo khách hàng mới</p>
-              </div>
-            </Link>
-            <Link
-              href="/contracts/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
-            >
-              <FileText className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">Tạo hợp đồng</p>
-                <p className="text-xs text-muted-foreground">Soạn hợp đồng mới</p>
-              </div>
-            </Link>
-            <Link
-              href="/invoices/new"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
-            >
-              <Receipt className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">Xuất hóa đơn</p>
-                <p className="text-xs text-muted-foreground">Tạo hóa đơn thanh toán</p>
-              </div>
-            </Link>
-            <Link
-              href="/exchanges"
-              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent"
-            >
-              <RefreshCcw className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">Đổi cây</p>
-                <p className="text-xs text-muted-foreground">Xử lý yêu cầu đổi cây</p>
-              </div>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-3">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="enterprise-card p-5 h-32">
+          <Skeleton className="h-4 w-32 mb-4" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+      ))}
     </div>
   );
 }

@@ -12,7 +12,8 @@ import { auth } from "@/lib/auth";
 import { requireAuth } from "@/lib/action-utils";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
 import { AppError, NotFoundError } from "@/lib/errors";
-import { analyzeNote } from "@/lib/ai";
+import { analyzeNote, extractEntitiesAndMatch, generateNoteSuggestions, type CustomerContext, type Suggestion } from "@/lib/ai";
+import { fetchCustomerContext } from "@/lib/ai/entity-extractor";
 import { CACHE_TTL } from "@/lib/constants";
 import type { NoteStatus, NoteCategory } from "@prisma/client";
 
@@ -24,7 +25,7 @@ const createNoteSchema = z.object({
   content: z.string().min(1, "Nội dung không được để trống").max(2000),
   priority: z.number().int().min(1).max(10).optional(),
   category: z
-    .enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"])
+    .enum(["GENERAL", "URGENT", "COMPLAINT", "REQUEST", "FEEDBACK", "EXCHANGE", "CARE", "PAYMENT"])
     .optional(),
 });
 
@@ -37,7 +38,7 @@ const updateNoteSchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CANCELLED"]).optional(),
   priority: z.number().int().min(1).max(10).optional(),
   category: z
-    .enum(["GENERAL", "COMPLAINT", "REQUEST", "PAYMENT", "CARE", "OTHER"])
+    .enum(["GENERAL", "URGENT", "COMPLAINT", "REQUEST", "FEEDBACK", "EXCHANGE", "CARE", "PAYMENT"])
     .optional(),
 });
 
@@ -204,13 +205,15 @@ export const updateStickyNote = createAction(updateNoteSchema, async (input) => 
   });
 
   // Re-analyze if content changed
-  if (updateData.content && updateData.content !== existing.content) {
+  if (updateData.content && updateData.content !== existing.content && existing.customer) {
     analyzeNoteAsync(id, updateData.content, existing.customer).catch(
       (err) => console.error("Re-analysis failed:", err)
     );
   }
 
-  revalidatePath(`/customers/${existing.customerId}`);
+  if (existing.customerId) {
+    revalidatePath(`/customers/${existing.customerId}`);
+  }
   return note;
 });
 
@@ -230,7 +233,9 @@ export const deleteStickyNote = createSimpleAction(async (id: string) => {
     where: { id },
   });
 
-  revalidatePath(`/customers/${existing.customerId}`);
+  if (existing.customerId) {
+    revalidatePath(`/customers/${existing.customerId}`);
+  }
   return { success: true };
 });
 
@@ -322,4 +327,121 @@ export async function getRecentNotes(limit: number = 10) {
   });
 
   return notes;
+}
+
+// ============================================================================
+// Quick Note with AI (Dashboard Feature)
+// ============================================================================
+
+/**
+ * Schema for quick note (no customerId required - AI will figure it out)
+ */
+const quickNoteSchema = z.object({
+  content: z.string().min(1, "Nội dung không được để trống").max(2000),
+});
+
+/**
+ * Response type for quick note with AI
+ */
+export interface QuickNoteResponse {
+  note: Awaited<ReturnType<typeof prisma.stickyNote.create>>;
+  aiResponse: {
+    entities: {
+      companies: string[];
+      dates: string[];
+      actions: string[];
+      amounts: string[];
+    };
+    matchedCustomer: {
+      id: string;
+      companyName: string;
+      score: number;
+    } | null;
+    customerContext: CustomerContext | null;
+    suggestions: Suggestion[];
+    noMatchCompanies: string[];
+  };
+}
+
+/**
+ * Create a quick note with AI analysis
+ * - Extracts entities from free-text
+ * - Matches to customers using fuzzy search
+ * - Fetches customer context
+ * - Generates actionable suggestions
+ */
+export const createQuickNoteWithAI = createAction(quickNoteSchema, async (input): Promise<QuickNoteResponse> => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+
+  // 1. Extract entities and match customers
+  const { entities, matchedCustomers, noMatchCompanies } = await extractEntitiesAndMatch(input.content);
+
+  // 2. Get best match (highest score)
+  const bestMatch = matchedCustomers.length > 0 ? matchedCustomers[0] : null;
+  const customerId = bestMatch?.id;
+
+  // 3. Fetch customer context if matched
+  let customerContext: CustomerContext | null = null;
+  if (customerId) {
+    customerContext = await fetchCustomerContext(customerId);
+  }
+
+  // 4. Generate suggestions
+  const suggestions = generateNoteSuggestions(entities, customerContext, customerId);
+
+  // 5. Determine category based on actions
+  let category: NoteCategory = "GENERAL";
+  const actionStr = entities.actions.join(" ").toLowerCase();
+  if (actionStr.includes("thanh toán") || actionStr.includes("hóa đơn")) category = "PAYMENT";
+  else if (actionStr.includes("đổi cây")) category = "EXCHANGE";
+  else if (actionStr.includes("chăm sóc")) category = "CARE";
+  else if (actionStr.includes("khẩn") || actionStr.includes("gấp")) category = "URGENT";
+
+  // 6. Create sticky note
+  const note = await prisma.stickyNote.create({
+    data: {
+      customerId: customerId ?? null,
+      content: input.content,
+      status: "OPEN",
+      priority: 5,
+      category,
+      createdById: session.user.id,
+      aiAnalysis: {
+        entities,
+        matchedCustomers,
+        noMatchCompanies,
+        suggestions,
+      } as unknown as Prisma.JsonObject,
+      aiProcessedAt: new Date(),
+    },
+    include: {
+      customer: {
+        select: { id: true, code: true, companyName: true },
+      },
+      createdBy: {
+        select: { id: true, name: true },
+      },
+    },
+  });
+
+  revalidatePath("/");
+
+  return {
+    note,
+    aiResponse: {
+      entities,
+      matchedCustomer: bestMatch ?? null,
+      customerContext,
+      suggestions,
+      noMatchCompanies,
+    },
+  };
+});
+
+/**
+ * Get global notes for dashboard (alias for getRecentNotes)
+ */
+export async function getGlobalNotes(limit: number = 10) {
+  return getRecentNotes(limit);
 }
