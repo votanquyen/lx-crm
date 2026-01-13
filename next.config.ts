@@ -28,15 +28,17 @@ const nextConfig: NextConfig = {
   // Fix workspace root warning - specify project root explicitly
   outputFileTracingRoot: __dirname,
 
-  serverExternalPackages: ["@prisma/client", "prisma"],
+  serverExternalPackages: ["@prisma/client", "prisma", "xlsx", "pg"],
 
-  // Webpack configuration for custom file loaders
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.txt$/,
-      type: 'asset/source',
-    });
-    return config;
+  // Turbopack configuration for custom file loaders
+  turbopack: {
+    rules: {
+      '*.txt': {
+        loaders: ['raw-loader'],
+        as: '*.js',
+      },
+    },
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json', '.txt'],
   },
 
   experimental: {

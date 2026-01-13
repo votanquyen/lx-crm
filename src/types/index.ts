@@ -25,7 +25,6 @@ export type {
 export {
   UserRole,
   CustomerStatus,
-  CustomerTier,
   ContractStatus,
   InvoiceStatus,
   PaymentMethod,

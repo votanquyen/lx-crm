@@ -18,6 +18,10 @@ import {
   FileSpreadsheet,
   CreditCard,
   ClipboardList,
+  CalendarCheck,
+  CalendarClock,
+  Upload,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,17 +36,26 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  // 1. Core Business (Daily Workflow)
   { title: "Tổng quan", href: "/", icon: LayoutDashboard },
   { title: "Khách hàng", href: "/customers", icon: Users },
-  { title: "Hóa đơn", href: "/invoices", icon: Receipt },
   { title: "Bảng Kê", href: "/bang-ke", icon: ClipboardList },
-  { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
+  { title: "Hóa đơn", href: "/invoices", icon: Receipt },
+
+  // 2. Operations (Field)
   { title: "Cây xanh", href: "/plant-types", icon: Leaf },
+  { title: "Lịch chăm sóc", href: "/care", icon: Calendar }, // Includes "Today" view
+  { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw }, // Includes "Exchange Schedule"
+
+  // 3. Occasional / Monitoring
   { title: "Hợp đồng", href: "/contracts", icon: FileText },
+  { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
   { title: "Thanh toán", href: "/payments", icon: CreditCard },
-  { title: "Lịch chăm sóc", href: "/care", icon: Calendar },
-  { title: "Đổi cây", href: "/exchanges", icon: RefreshCcw },
+
+  // 4. Admin / System
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },
+  { title: "Nhập dữ liệu", href: "/admin/data-import", icon: Upload },
+  { title: "Quản lý user", href: "/admin/users", icon: UserCog },
 ];
 
 interface SidebarProps {
@@ -82,7 +95,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 alt="Lộc Xanh"
                 width={32}
                 height={32}
-                className="h-8 w-8 object-contain"
+                className="h-8 w-auto object-contain"
                 priority
               />
             </Link>
@@ -104,16 +117,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          "flex h-12 w-12 items-center justify-center rounded-lg transition-colors mx-auto",
+                          "flex h-10 w-10 items-center justify-center rounded-md transition-all mx-auto mb-1",
                           isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
                         )}
                       >
-                        <Icon className="h-6 w-6" />
+                        <Icon className="h-5 w-5" />
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right">{item.title}</TooltipContent>
+                    <TooltipContent side="right" className="font-medium">{item.title}</TooltipContent>
                   </Tooltip>
                 );
               }
@@ -123,16 +136,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all mb-0.5",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
                   )}
                 >
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-4.5 w-4.5" />
                   <span>{item.title}</span>
                   {item.badge && (
-                    <span className="ml-auto rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs">
+                    <span className="ml-auto rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                       {item.badge}
                     </span>
                   )}
