@@ -175,11 +175,13 @@ export default function BangKePage() {
 
             if (rollover.success && rollover.data && rollover.data.created > 0) {
                 toast.success(rollover.data.message);
-            } else if (!rollover.success) {
-                // Rollover failed (auth error, permission error, etc.)
-                toast.error(rollover.error || "Không thể tạo bảng kê từ tháng trước");
             } else {
-                // No previous data to rollover (created = 0), create empty statement
+                // Either rollover failed (permission/auth) or no previous data (created = 0)
+                // Log rollover failure for debugging but proceed with fallback
+                if (!rollover.success) {
+                    console.warn("Rollover failed, falling back to create empty statement:", rollover.error);
+                }
+                // Fallback to creating empty statement
                 const customer = customers.find(c => c.id === selectedCustomerId);
                 const created = await createMonthlyStatement({
                     customerId: selectedCustomerId,
@@ -304,6 +306,27 @@ export default function BangKePage() {
     const currentStatement = useMemo(
         () => customerStatements.find((s) => s.month === selectedMonth),
         [customerStatements, selectedMonth]
+    );
+
+    // Memoized monthly statement filters for KPI cards (avoids repeated O(n) filters in render)
+    const monthlyStatements = useMemo(
+        () => statements.filter(s => s.month === selectedMonth),
+        [statements, selectedMonth]
+    );
+
+    const pendingStatements = useMemo(
+        () => monthlyStatements.filter(s => s.needsConfirmation),
+        [monthlyStatements]
+    );
+
+    const confirmedStatements = useMemo(
+        () => monthlyStatements.filter(s => !s.needsConfirmation),
+        [monthlyStatements]
+    );
+
+    const monthlyTotal = useMemo(
+        () => monthlyStatements.reduce((sum, s) => sum + s.total, 0),
+        [monthlyStatements]
     );
 
     // Years selector - starts from business start year, expands as years pass
@@ -678,44 +701,43 @@ export default function BangKePage() {
                             {/* Total Statements */}
                             <div className="enterprise-card p-5 bg-white border-l-4 border-l-slate-400">
                                 <p className="kpi-title text-slate-500 mb-1">Tổng bảng kê</p>
-                                <p className="text-3xl font-black text-slate-900">{statements.filter(s => s.month === selectedMonth).length}</p>
+                                <p className="text-3xl font-black text-slate-900">{monthlyStatements.length}</p>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-1">Kỳ hiện tại</p>
                             </div>
 
                             {/* Needs Confirmation */}
                             <div className="enterprise-card p-5 bg-white border-l-4 border-l-amber-500">
                                 <p className="kpi-title text-slate-500 mb-1">Chờ duyệt</p>
-                                <p className="text-3xl font-black text-amber-600">{statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length}</p>
+                                <p className="text-3xl font-black text-amber-600">{pendingStatements.length}</p>
                                 <p className="text-[10px] font-bold text-amber-500 uppercase tracking-tight mt-1">Cần xử lý</p>
                             </div>
 
                             {/* Confirmed */}
                             <div className="enterprise-card p-5 bg-white border-l-4 border-l-emerald-500">
                                 <p className="kpi-title text-slate-500 mb-1">Đã xác nhận</p>
-                                <p className="text-3xl font-black text-emerald-600">{statements.filter(s => s.month === selectedMonth && !s.needsConfirmation).length}</p>
+                                <p className="text-3xl font-black text-emerald-600">{confirmedStatements.length}</p>
                                 <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-tight mt-1">Sẵn sàng xuất đơn</p>
                             </div>
 
                             {/* Total Revenue */}
                             <div className="enterprise-card p-5 bg-white border-l-4 border-l-primary">
                                 <p className="kpi-title text-slate-500 mb-1">Tổng giá trị</p>
-                                <p className="text-2xl font-black text-primary">{formatCurrency(statements.filter(s => s.month === selectedMonth).reduce((sum, s) => sum + s.total, 0))}</p>
+                                <p className="text-2xl font-black text-primary">{formatCurrency(monthlyTotal)}</p>
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-1">Doanh thu kỳ</p>
                             </div>
                         </div>
 
                         {/* Pending Confirmation List */}
-                        {statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length > 0 && (
+                        {pendingStatements.length > 0 && (
                             <div className="enterprise-card bg-white">
                                 <div className="p-4 border-b bg-amber-50/50">
                                     <h3 className="flex items-center gap-2 text-sm font-bold text-amber-700 uppercase tracking-wider">
                                         <AlertCircle className="h-4 w-4" />
-                                        Cần duyệt ({statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length})
+                                        Cần duyệt ({pendingStatements.length})
                                     </h3>
                                 </div>
                                 <div className="divide-y divide-border/50">
-                                    {statements
-                                        .filter(s => s.month === selectedMonth && s.needsConfirmation)
+                                    {pendingStatements
                                         .slice(0, 5)
                                         .map((stmt) => {
                                             const customer = customers.find(c => c.id === stmt.customerId);
@@ -742,10 +764,10 @@ export default function BangKePage() {
                                             );
                                         })}
                                 </div>
-                                {statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length > 5 && (
+                                {pendingStatements.length > 5 && (
                                     <div className="p-3 bg-slate-50 border-t text-center">
                                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                            +{statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length - 5} bảng kê khác cần duyệt
+                                            +{pendingStatements.length - 5} bảng kê khác cần duyệt
                                         </span>
                                     </div>
                                 )}
@@ -753,7 +775,7 @@ export default function BangKePage() {
                         )}
 
                         {/* All Clear State */}
-                        {statements.filter(s => s.month === selectedMonth && s.needsConfirmation).length === 0 && statements.filter(s => s.month === selectedMonth).length > 0 && (
+                        {pendingStatements.length === 0 && monthlyStatements.length > 0 && (
                             <div className="enterprise-card p-8 text-center bg-emerald-50/30 border-emerald-200">
                                 <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 mb-4" />
                                 <h3 className="text-lg font-bold text-emerald-700">Tất cả bảng kê đã được duyệt</h3>
@@ -762,7 +784,7 @@ export default function BangKePage() {
                         )}
 
                         {/* Empty State - No statements at all */}
-                        {statements.filter(s => s.month === selectedMonth).length === 0 && (
+                        {monthlyStatements.length === 0 && (
                             <div className="enterprise-card p-12 text-center bg-slate-50/50 border-dashed">
                                 <Calendar className="h-16 w-16 mx-auto text-slate-300 mb-4" />
                                 <h3 className="text-lg font-bold text-slate-600">Chưa có dữ liệu</h3>

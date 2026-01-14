@@ -396,8 +396,9 @@ export const autoRolloverStatements = createAction(
       throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
-    if (ctx.user.role !== "ADMIN") {
-      throw new ForbiddenError("Chỉ Admin mới có quyền tự động tạo bảng kê");
+    // Allow ADMIN, MANAGER, ACCOUNTANT to auto-rollover statements
+    if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
+      throw new ForbiddenError("Bạn không có quyền tự động tạo bảng kê");
     }
 
     // Get previous month
@@ -497,7 +498,8 @@ export const autoRolloverStatements = createAction(
 export const getCustomersForStatements = createSimpleAction(async () => {
   const customers = await prisma.customer.findMany({
     where: {
-      status: "ACTIVE",
+      // Include both ACTIVE and LEAD customers (LEAD is default status for new customers)
+      status: { in: ["ACTIVE", "LEAD"] },
     },
     select: {
       id: true,
