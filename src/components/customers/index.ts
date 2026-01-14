@@ -14,3 +14,6 @@ export { RecentActivityFeed, createActivityFromInvoice, createActivityFromNote }
 export { CustomerStatementsTable } from "./customer-statements-table";
 export { FinanceTab } from "./finance-tab";
 export { OperationsTab } from "./operations-tab";
+export { CustomerMapMapcn } from "./customer-map-mapcn";
+export { CustomerPopupContent } from "./customer-popup-content";
+export { ViewToggle } from "./view-toggle";

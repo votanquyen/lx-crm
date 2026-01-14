@@ -1,12 +1,14 @@
 /**
  * Customers List Page
  * Server Component with search, filters, and pagination
+ * Supports table and map views via URL param
  */
 import { Suspense } from "react";
 import Link from "next/link";
-import { Plus, Download, Upload } from "lucide-react";
-import { getCustomers, getDistricts, getCustomerStats } from "@/actions/customers";
-import { CustomerSearch, CustomerFilters, CustomerTable } from "@/components/customers";
+import { Plus, Download, Upload, Users, CheckCircle2, Target, AlertCircle } from "lucide-react";
+import { getCustomers, getCustomerStats } from "@/actions/customers";
+import { CustomerSearch, CustomerTable, CustomerMapMapcn, ViewToggle } from "@/components/customers";
+import { CustomerSheetManager } from "@/components/customers/customer-sheet-manager";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ interface PageProps {
     status?: CustomerStatus;
     district?: string;
     hasDebt?: string;
+    view?: "table" | "map";
   }>;
 }
 
@@ -28,19 +31,26 @@ export default async function CustomersPage({ searchParams }: PageProps) {
 
   const page = parseInt(params.page ?? "1", 10);
   const limit = parseInt(params.limit ?? "20", 10);
+  const view = params.view ?? "table";
 
-  const [customersResult, districts, stats] = await Promise.all([
+  const [customersResult, stats] = await Promise.all([
     getCustomers({
       page,
       limit,
       search: params.search,
       status: params.status,
-      district: params.district,
-      hasDebt: params.hasDebt === "true",
+      // district: params.district,
+      // hasDebt: params.hasDebt === "true",
     }),
-    getDistricts(),
+    // getDistricts(),
     getCustomerStats(),
   ]);
+
+  // Build GeoJSON URL with filter params
+  const geojsonParams = new URLSearchParams();
+  if (params.status) geojsonParams.set("status", params.status);
+  if (params.district) geojsonParams.set("district", params.district);
+  const geojsonUrl = `/api/customers/geojson${geojsonParams.toString() ? `?${geojsonParams.toString()}` : ""}`;
 
   return (
     <div className="space-y-6">
@@ -49,7 +59,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Khách hàng</h1>
           <p className="text-sm font-medium text-muted-foreground">
-            Quản lý database khách hàng ({stats.total} đối tác)
+            Quản lý database khách hàng ({stats.total} khách hàng)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -64,8 +74,9 @@ export default async function CustomersPage({ searchParams }: PageProps) {
               Export
             </Button>
           </div>
+          <ViewToggle currentView={view} />
           <Button asChild className="h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-4">
-            <Link href="/customers/new" className="gap-2">
+            <Link href="/customers?action=new" className="gap-2">
               <Plus className="h-4 w-4" />
               Thêm khách hàng
             </Link>
@@ -73,68 +84,83 @@ export default async function CustomersPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Tổng cộng" value={stats.total} color="text-slate-600" />
-        <StatCard title="Đang hoạt động" value={stats.active} color="text-emerald-600" />
-        <StatCard title="Khách tiềm năng" value={stats.leads} color="text-blue-600" />
-        <StatCard title="Đang nợ phí" value={stats.withDebt} color="text-rose-600" />
+      {/* Stats Ribbon */}
+      <div className="bg-white rounded-xl border shadow-sm grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x">
+        <StatItem title="Tổng cộng" value={stats.total} icon={Users} color="text-slate-600" bg="bg-slate-50" />
+        <StatItem title="Hoạt động" value={stats.active} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" />
+        <StatItem title="Tiềm năng" value={stats.leads} icon={Target} color="text-blue-600" bg="bg-blue-50" />
+        <StatItem title="Nợ phí" value={stats.withDebt} icon={AlertCircle} color="text-rose-600" bg="bg-rose-50" />
       </div>
 
-      {/* Search and Filters Shell */}
-      <div className="enterprise-card p-4 bg-white/50">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      {/* Main Content Area */}
+      <div className="space-y-4">
+        {/* Search & filters */}
+        <div className="bg-white p-1 rounded-lg border shadow-sm inline-block w-full max-w-md">
           <CustomerSearch defaultValue={params.search} />
-          <Suspense fallback={<Skeleton className="h-9 w-[400px]" />}>
-            <CustomerFilters districts={districts} />
-          </Suspense>
         </div>
+
+        {/* Content: Table or Map based on view param */}
+        {view === "table" ? (
+          <div className="enterprise-card overflow-hidden bg-white border rounded-xl shadow-sm">
+            <Suspense fallback={<TableSkeleton />}>
+              <CustomerTable
+                customers={customersResult.data as Array<{
+                  id: string;
+                  code: string;
+                  companyName: string;
+                  address: string;
+                  district: string | null;
+                  contactName: string | null;
+                  contactPhone: string | null;
+                  contactEmail: string | null;
+                  status: CustomerStatus;
+                  financials?: { totalDebt: number; monthlyContractValue: number };
+                  _count?: {
+                    customerPlants: number;
+                    stickyNotes: number;
+                    contracts: number;
+                  };
+                }>}
+                pagination={customersResult.pagination}
+              />
+            </Suspense>
+          </div>
+        ) : (
+          <div className="enterprise-card overflow-hidden bg-white border rounded-xl shadow-sm">
+            <Suspense fallback={<MapSkeleton />}>
+              <CustomerMapMapcn geojsonUrl={geojsonUrl} />
+            </Suspense>
+          </div>
+        )}
       </div>
 
-      {/* Table Section */}
-      <div className="enterprise-card overflow-hidden bg-white">
-        <Suspense fallback={<TableSkeleton />}>
-          <CustomerTable
-            customers={customersResult.data as Array<{
-              id: string;
-              code: string;
-              companyName: string;
-              address: string;
-              district: string | null;
-              contactName: string | null;
-              contactPhone: string | null;
-              contactEmail: string | null;
-              status: CustomerStatus;
-              financials?: { totalDebt: number; monthlyContractValue: number };
-              _count?: {
-                customerPlants: number;
-                stickyNotes: number;
-                contracts: number;
-              };
-            }>}
-            pagination={customersResult.pagination}
-          />
-        </Suspense>
-      </div>
+      <CustomerSheetManager />
     </div>
   );
 }
 
-function StatCard({
+// Stat Item for Ribbon
+function StatItem({
   title,
   value,
+  icon: Icon,
   color,
+  bg,
 }: {
   title: string;
   value: number;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
+  bg: string;
 }) {
   return (
-    <div className="enterprise-card p-5 bg-white">
-      <p className="kpi-title mb-2">{title}</p>
-      <div className="flex items-end gap-2">
-        <p className={cn("kpi-value", color)}>{value}</p>
-        <p className="text-xs font-bold text-muted-foreground uppercase pb-1">Đơn vị</p>
+    <div className="p-4 flex items-center gap-4 group hover:bg-slate-50/50 transition-colors">
+      <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center shrink-0", bg, color)}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-tight">{title}</p>
+        <p className="text-2xl font-bold text-slate-900 leading-tight">{value}</p>
       </div>
     </div>
   );
@@ -147,6 +173,17 @@ function TableSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <Skeleton key={i} className="h-12 w-full" />
       ))}
+    </div>
+  );
+}
+
+function MapSkeleton() {
+  return (
+    <div className="h-[600px] w-full flex items-center justify-center bg-muted/10">
+      <div className="text-center space-y-2">
+        <Skeleton className="h-8 w-32 mx-auto" />
+        <p className="text-sm text-muted-foreground">Đang tải bản đồ...</p>
+      </div>
     </div>
   );
 }
