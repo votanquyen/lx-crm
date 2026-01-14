@@ -200,9 +200,9 @@ export function generateNoteSuggestions(
 
     if (actionLower.includes("hóa đơn") || actionLower.includes("hđ")) {
       suggestions.push({
-        action: "Tạo hóa đơn mới",
+        action: "Xem hóa đơn",
         actionType: "INVOICE",
-        link: customerId ? `/invoices/new?customerId=${customerId}` : undefined,
+        link: customerId ? `/invoices?customerId=${customerId}` : "/invoices",
         priority: 3,
       });
     }

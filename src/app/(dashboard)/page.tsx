@@ -155,15 +155,15 @@ export default async function DashboardPage() {
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Lối tắt nghiệp vụ</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
-            href="/invoices/new"
+            href="/invoices"
             className="flex items-center gap-3 rounded-lg border bg-white p-3.5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 group"
           >
             <div className="p-2.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 group-hover:bg-blue-600 group-hover:text-white transition-colors">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900 leading-tight">Xuất hóa đơn</p>
-              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">VAT & Dịch vụ</p>
+              <p className="text-sm font-bold text-slate-900 leading-tight">Theo dõi Hóa đơn</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-medium">SmartVAS</p>
             </div>
           </Link>
 

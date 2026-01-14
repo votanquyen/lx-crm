@@ -219,9 +219,9 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           )}
           {contract.status === "ACTIVE" && (
             <Button variant="outline" asChild>
-              <Link href={`/invoices/new?contractId=${contract.id}`}>
+              <Link href={`/invoices?contractId=${contract.id}`}>
                 <Receipt className="mr-2 h-4 w-4" />
-                Tạo hóa đơn
+                Xem hóa đơn
               </Link>
             </Button>
           )}

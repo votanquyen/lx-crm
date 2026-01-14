@@ -112,7 +112,7 @@ export function BillingActionCenter({ data }: BillingActionCenterProps) {
                                                 </div>
                                             </div>
                                             <Button asChild size="sm" variant="outline" className="h-8 text-xs font-bold border-primary/20 text-primary hover:bg-primary hover:text-white transition-colors">
-                                                <Link href={`/invoices/new?customerId=${item.customerId}`}>Tạo hóa đơn</Link>
+                                                <Link href={`/invoices?customerId=${item.customerId}`}>Xem hóa đơn</Link>
                                             </Button>
                                         </div>
                                     ))}

@@ -153,11 +153,11 @@ export function CustomerTable({ customers, pagination }: CustomerTableProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
-                      {/* Quick Action: Create Invoice */}
+                      {/* Quick Action: View Invoices */}
                       <Link
-                        href={`/invoices/new?customerId=${customer.id}`}
+                        href={`/invoices?customerId=${customer.id}`}
                         className="p-1.5 rounded hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
-                        title="Tạo hóa đơn"
+                        title="Xem hóa đơn"
                       >
                         <Receipt className="h-4 w-4" />
                       </Link>

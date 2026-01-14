@@ -9,7 +9,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Building2, FileText, Receipt } from "lucide-react";
+import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Building2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,10 +34,18 @@ type Invoice = {
   totalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
+  // SmartVAS fields (placeholders until Phase 2 migration)
+  smartvasInvoiceNumber?: string | null;
+  smartvasSerial?: string | null;
+  smartvasIssueDate?: DateOrString | null;
+  paymentDate?: DateOrString | null;
+  subtotalAmount?: number | null;
+  vatAmount?: number | null;
   customer: {
     id: string;
     code: string;
     companyName: string;
+    taxCode?: string | null;
   };
   contract: {
     id: string;
@@ -92,28 +100,8 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
       }}
       className="flex items-center data-table-row group h-[72px]"
     >
-      {/* Invoice Number */}
-      <div className="w-[160px] px-4 py-2 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors shrink-0">
-            <FileText className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <Link
-              href={`/invoices/${invoice.id}`}
-              className="text-xs font-bold text-slate-900 hover:text-primary transition-colors truncate"
-            >
-              #{invoice.invoiceNumber}
-            </Link>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-              Kỳ {format(new Date(invoice.issueDate), "MM/yyyy")}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Customer */}
-      <div className="flex-1 px-4 py-2 min-w-0">
+      {/* Company Name (First) */}
+      <div className="w-[200px] px-4 py-2 shrink-0">
         <Link
           href={`/customers/${invoice.customer.id}`}
           className="text-xs font-bold text-slate-900 hover:text-primary transition-colors block truncate"
@@ -123,15 +111,68 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
         <div className="flex items-center gap-1.5 mt-0.5">
           <Building2 className="h-2.5 w-2.5 text-muted-foreground" />
           <span className="text-[10px] font-bold text-muted-foreground tracking-tight">
-            {invoice.customer.code}
+            {invoice.customer.taxCode || invoice.customer.code}
           </span>
         </div>
       </div>
 
+      {/* SmartVAS Invoice Number */}
+      <div className="w-[100px] px-4 py-2 shrink-0">
+        <span className="text-xs font-bold text-slate-900">
+          {invoice.smartvasInvoiceNumber || invoice.invoiceNumber}
+        </span>
+      </div>
+
+      {/* SmartVAS Serial */}
+      <div className="w-[80px] px-4 py-2 shrink-0">
+        <span className="text-xs font-medium text-slate-600">
+          {invoice.smartvasSerial || "-"}
+        </span>
+      </div>
+
+      {/* Issue Date */}
+      <div className="w-[100px] px-4 py-2 shrink-0">
+        <span className="text-xs font-medium text-slate-600">
+          {format(new Date(invoice.smartvasIssueDate || invoice.issueDate), "dd/MM/yyyy", { locale: vi })}
+        </span>
+      </div>
+
+      {/* Subtotal (Chưa VAT) */}
+      <div className="w-[100px] px-4 py-2 shrink-0 text-right">
+        <span className="text-xs font-medium text-slate-600">
+          {invoice.subtotalAmount != null ? formatCurrency(invoice.subtotalAmount) : "-"}
+        </span>
+      </div>
+
+      {/* VAT */}
+      <div className="w-[80px] px-4 py-2 shrink-0 text-right">
+        <span className="text-xs font-medium text-slate-600">
+          {invoice.vatAmount != null ? formatCurrency(invoice.vatAmount) : "-"}
+        </span>
+      </div>
+
+      {/* Total Amount */}
+      <div className="w-[100px] px-4 py-2 shrink-0 text-right">
+        <span className="text-xs font-black text-slate-900">
+          {formatCurrency(invoice.totalAmount)}
+        </span>
+      </div>
+
+      {/* Payment Date */}
+      <div className="w-[100px] px-4 py-2 shrink-0">
+        {invoice.paymentDate ? (
+          <span className="text-xs font-medium text-emerald-600">
+            {format(new Date(invoice.paymentDate), "dd/MM/yyyy", { locale: vi })}
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-slate-400">-</span>
+        )}
+      </div>
+
       {/* Status */}
-      <div className="w-36 px-4 py-2 shrink-0">
+      <div className="w-[100px] px-4 py-2 shrink-0">
         <div className={cn(
-          "status-badge",
+          "status-badge text-[10px]",
           invoice.status === "PAID" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
             invoice.status === "DRAFT" ? "bg-slate-50 text-slate-600 border-slate-200" :
               invoice.status === "SENT" ? "bg-blue-50 text-blue-700 border-blue-200" :
@@ -140,44 +181,11 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
                     "bg-slate-50 text-slate-500"
         )}>
           {overdue && invoice.status !== "PAID" ? "Quá hạn" :
-            invoice.status === "PAID" ? "Đã tất toán" :
+            invoice.status === "PAID" ? "Đã TT" :
               invoice.status === "SENT" ? "Đã gửi" :
-                invoice.status === "PARTIAL" ? "Thanh toán một phần" :
+                invoice.status === "PARTIAL" ? "TT 1 phần" :
                   invoice.status === "DRAFT" ? "Nháp" : "Đã hủy"}
         </div>
-      </div>
-
-      {/* Due Date */}
-      <div className="w-32 px-4 py-2 shrink-0">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Hạn nộp</span>
-          <span className={cn(
-            "text-xs font-bold",
-            overdue && invoice.status !== "PAID" ? "text-rose-600" : "text-slate-600"
-          )}>
-            {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-          </span>
-        </div>
-      </div>
-
-      {/* Total Amount */}
-      <div className="w-32 px-4 py-2 shrink-0 text-right">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1 text-right">Tổng tiền</p>
-        <p className="text-xs font-black text-slate-900">
-          {formatCurrency(invoice.totalAmount)}
-        </p>
-      </div>
-
-      {/* Outstanding */}
-      <div className="w-32 px-4 py-2 shrink-0 text-right">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1 text-right">Còn nợ</p>
-        {invoice.outstandingAmount > 0 ? (
-          <span className="text-sm font-black text-rose-600">
-            {formatCurrency(invoice.outstandingAmount)}
-          </span>
-        ) : (
-          <span className="text-xs font-bold text-emerald-600 uppercase tracking-tighter">Đã thu đủ</span>
-        )}
       </div>
 
       {/* Actions */}
@@ -246,8 +254,8 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
         <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mx-auto mb-4 border shadow-sm">
           <Receipt className="h-8 w-8" />
         </div>
-        <h4 className="text-base font-bold text-slate-900">Không có dữ liệu hóa đơn</h4>
-        <p className="text-sm font-medium text-slate-400 mt-1">Vui lòng kiểm tra lại bộ lọc hoặc tạo hóa đơn mới.</p>
+        <h4 className="text-base font-bold text-slate-900">Chưa có hóa đơn</h4>
+        <p className="text-sm font-medium text-slate-400 mt-1">Hóa đơn sẽ được tạo tự động từ bảng kê đã xác nhận.</p>
       </div>
     );
   }
@@ -257,12 +265,15 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
       {/* Sticky header */}
       <div className="sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm border-b">
         <div className="flex items-center h-10">
-          <div className="w-[160px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Hóa đơn</div>
-          <div className="flex-1 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Đối tác / Khách hàng</div>
-          <div className="w-36 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Trạng thái</div>
-          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Hạn nộp</div>
-          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Tổng cộng</div>
-          <div className="w-32 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Phải thu</div>
+          <div className="w-[200px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Công ty</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Số HĐ</div>
+          <div className="w-[80px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Ký hiệu</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Ngày xuất</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Chưa VAT</div>
+          <div className="w-[80px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">VAT</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Tổng cộng</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Ngày TT</div>
+          <div className="w-[100px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Trạng thái</div>
           <div className="w-12 px-4 shrink-0"></div>
         </div>
       </div>

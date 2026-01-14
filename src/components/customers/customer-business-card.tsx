@@ -264,9 +264,9 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
                                 </Link>
                             </Button>
                             <Button asChild size="sm" className="h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700">
-                                <Link href={`/invoices/new?customerId=${customer.id}`}>
+                                <Link href={`/invoices?customerId=${customer.id}`}>
                                     <Receipt className="mr-1.5 h-3.5 w-3.5" />
-                                    Tạo hóa đơn
+                                    Xem hóa đơn
                                 </Link>
                             </Button>
                         </div>

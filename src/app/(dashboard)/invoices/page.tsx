@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Plus, Receipt, AlertTriangle, DollarSign, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Receipt, AlertTriangle, DollarSign, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InvoiceTable } from "@/components/invoices/invoice-table";
 import { Pagination } from "@/components/ui/pagination";
@@ -123,17 +122,11 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Hóa đơn</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Theo dõi Hóa đơn</h1>
           <p className="text-sm font-medium text-muted-foreground">
-            Quản lý công nợ và lịch sử thanh toán đối tác
+            Quản lý hóa đơn VAT từ SmartVAS
           </p>
         </div>
-        <Button asChild className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-4">
-          <Link href="/invoices/new" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Tạo hóa đơn
-          </Link>
-        </Button>
       </div>
 
       <Suspense
