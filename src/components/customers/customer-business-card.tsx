@@ -12,11 +12,9 @@ import {
     Check,
     AlertTriangle,
     TrendingUp,
-    Plus,
-    StickyNote,
-    RefreshCw,
     Calendar,
-    ChevronDown,
+    MoreVertical,
+    Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +22,24 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuSeparator,
+    DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { CustomerStatus } from "@prisma/client";
+import { deleteCustomer } from "@/actions/customers";
 
 interface CustomerFinancialSummary {
     totalDebt: number;
@@ -73,7 +83,10 @@ const statusConfig: Record<CustomerStatus, { label: string; className: string }>
 };
 
 export function CustomerBusinessCard({ customer, financials, stats }: CustomerBusinessCardProps) {
+    const router = useRouter();
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isPending, startTransition] = useTransition();
     const status = statusConfig[customer.status];
     const hasDebt = (financials?.totalDebt ?? 0) > 0;
     const hasOverdue = (financials?.overdueInvoices ?? 0) > 0;
@@ -91,6 +104,16 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
         navigator.clipboard.writeText(value);
         setCopiedField(field);
         setTimeout(() => setCopiedField(null), 2000);
+    };
+
+    const handleDelete = () => {
+        startTransition(async () => {
+            const result = await deleteCustomer(customer.id);
+            if (result.success) {
+                setShowDeleteDialog(false);
+                router.push("/customers");
+            }
+        });
     };
 
     return (
@@ -219,46 +242,51 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
 
                         {/* Action Buttons + Quick Actions Speed Dial */}
                         <div className="flex items-center gap-2">
-                            {/* Quick Actions Dropdown */}
+                            {/* More Options Dropdown */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-9 text-xs font-bold gap-1">
-                                        <Plus className="h-3.5 w-3.5" />
-                                        Thêm
-                                        <ChevronDown className="h-3 w-3 opacity-50" />
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-slate-700">
+                                        <MoreVertical className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/customers/${customer.id}?tab=notes&action=new`} className="flex items-center gap-2">
-                                            <StickyNote className="h-4 w-4 text-amber-500" />
-                                            Ghi chú mới
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/exchanges/new?customerId=${customer.id}`} className="flex items-center gap-2">
-                                            <RefreshCw className="h-4 w-4 text-violet-500" />
-                                            Yêu cầu đổi cây
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/care-schedules/new?customerId=${customer.id}`} className="flex items-center gap-2">
-                                            <Calendar className="h-4 w-4 text-emerald-500" />
-                                            Lên lịch chăm sóc
-                                        </Link>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem asChild>
-                                        <Link href={`/quotations/new?customerId=${customer.id}`} className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-blue-500" />
-                                            Tạo báo giá
-                                        </Link>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Tùy chọn khác</DropdownMenuLabel>
+                                    <DropdownMenuItem
+                                        onClick={() => setShowDeleteDialog(true)}
+                                        className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Xóa khách hàng
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
+                            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Hành động này không thể hoàn tác. Khách hàng <strong>{customer.companyName}</strong> và tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isPending}>Hủy</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleDelete();
+                                            }}
+                                            disabled={isPending}
+                                            className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-600"
+                                        >
+                                            {isPending ? "Đang xóa..." : "Xóa vĩnh viễn"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
                             <Button asChild variant="outline" size="sm" className="h-9 text-xs font-bold">
-                                <Link href={`/customers/${customer.id}/edit`}>
+                                <Link href={`/customers/${customer.id}?action=edit&id=${customer.id}`}>
                                     <Edit className="mr-1.5 h-3.5 w-3.5" />
                                     Chỉnh sửa
                                 </Link>
