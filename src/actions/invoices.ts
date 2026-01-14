@@ -17,6 +17,8 @@ import {
   createInvoiceSchema,
   invoiceSearchSchema,
   paymentSchema,
+  linkSmartvasSchema,
+  updatePaymentDateSchema,
   type InvoiceSearchParams,
 } from "@/lib/validations/contract";
 
@@ -24,6 +26,9 @@ import {
  * Generate next invoice number (simple sequential: 1, 2, 3...)
  * Format: Just number (e.g., 752)
  * Date is stored separately in issueDate field
+ *
+ * Note: Invoice numbers typically come from third-party app (SmartVAS).
+ * This is a fallback for manual invoice creation.
  */
 async function generateInvoiceNumber(): Promise<string> {
   const lastInvoice = await prisma.invoice.findFirst({
@@ -90,10 +95,13 @@ export async function getInvoices(params: InvoiceSearchParams) {
       orderBy: { issueDate: "desc" },
       include: {
         customer: {
-          select: { id: true, code: true, companyName: true },
+          select: { id: true, code: true, companyName: true, taxCode: true },
         },
         contract: {
           select: { id: true, contractNumber: true },
+        },
+        monthlyStatement: {
+          select: { id: true, year: true, month: true },
         },
         _count: {
           select: { payments: true },
@@ -429,28 +437,38 @@ export const cancelInvoice = createSimpleAction(async (id: string) => {
 
 /**
  * Record a payment
+ * Uses transaction with fresh read to prevent concurrent payment race conditions
  */
 export const recordPayment = createAction(paymentSchema, async (input) => {
   const session = await requireAuth();
 
-  const invoice = await prisma.invoice.findUnique({
+  // Only validate invoice exists and status outside transaction
+  const invoiceCheck = await prisma.invoice.findUnique({
     where: { id: input.invoiceId },
+    select: { id: true, status: true, customerId: true },
   });
-  if (!invoice) throw new NotFoundError("Hóa đơn");
+  if (!invoiceCheck) throw new NotFoundError("Hóa đơn");
 
-  if (!["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status)) {
+  if (!["SENT", "PARTIAL", "OVERDUE"].includes(invoiceCheck.status)) {
     throw new AppError("Hóa đơn không thể nhận thanh toán", "INVALID_STATUS");
   }
 
-  if (compareDecimal(toDecimal(input.amount), invoice.outstandingAmount) > 0) {
-    throw new AppError(
-      `Số tiền thanh toán vượt quá số tiền còn nợ (${toNumber(invoice.outstandingAmount).toLocaleString("vi-VN")} VND)`,
-      "AMOUNT_EXCEEDS_OUTSTANDING"
-    );
-  }
-
-  // Create payment and update invoice
+  // Create payment and update invoice atomically
   const result = await prisma.$transaction(async (tx) => {
+    // Re-fetch invoice inside transaction for accurate balance (prevents race condition)
+    const invoice = await tx.invoice.findUnique({
+      where: { id: input.invoiceId },
+    });
+    if (!invoice) throw new NotFoundError("Hóa đơn");
+
+    // Check balance INSIDE transaction to prevent concurrent overpayment
+    if (compareDecimal(toDecimal(input.amount), invoice.outstandingAmount) > 0) {
+      throw new AppError(
+        `Số tiền thanh toán vượt quá số tiền còn nợ (${toNumber(invoice.outstandingAmount).toLocaleString("vi-VN")} VND)`,
+        "AMOUNT_EXCEEDS_OUTSTANDING"
+      );
+    }
+
     // Create payment
     const payment = await tx.payment.create({
       data: {
@@ -459,7 +477,6 @@ export const recordPayment = createAction(paymentSchema, async (input) => {
         paymentDate: input.paymentDate ?? new Date(),
         paymentMethod: input.method,
         bankRef: input.reference,
-        // notes field doesn't exist in Payment schema
       },
     });
 
@@ -480,7 +497,7 @@ export const recordPayment = createAction(paymentSchema, async (input) => {
     return { payment, invoice: updatedInvoice };
   });
 
-  // Log activity
+  // Log activity after transaction succeeds
   await prisma.activityLog.create({
     data: {
       userId: session.user.id,
@@ -493,7 +510,7 @@ export const recordPayment = createAction(paymentSchema, async (input) => {
 
   revalidatePath(`/invoices/${input.invoiceId}`);
   revalidatePath("/invoices");
-  revalidatePath(`/customers/${invoice.customerId}`);
+  revalidatePath(`/customers/${invoiceCheck.customerId}`);
   return result;
 });
 
@@ -583,3 +600,98 @@ export async function updateOverdueStatus() {
 
   return { updated: result.count };
 }
+
+/**
+ * Manually link SmartVAS data to an existing invoice
+ * For cases where automatic matching fails
+ */
+export const linkSmartvasToInvoice = createAction(
+  linkSmartvasSchema,
+  async (input) => {
+    const session = await requireAccountant();
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: input.invoiceId },
+    });
+    if (!invoice) throw new NotFoundError("Hóa đơn");
+
+    // Check for duplicate SmartVAS invoice number
+    const existing = await prisma.invoice.findFirst({
+      where: {
+        smartvasInvoiceNumber: input.smartvasInvoiceNumber,
+        smartvasSerialNumber: input.smartvasSerialNumber,
+        id: { not: input.invoiceId },
+      },
+    });
+    if (existing) {
+      throw new AppError(
+        `Số hóa đơn SmartVAS ${input.smartvasInvoiceNumber} đã được liên kết với hóa đơn khác`,
+        "DUPLICATE_SMARTVAS"
+      );
+    }
+
+    const updated = await prisma.invoice.update({
+      where: { id: input.invoiceId },
+      data: {
+        smartvasInvoiceNumber: input.smartvasInvoiceNumber,
+        smartvasSerialNumber: input.smartvasSerialNumber,
+        smartvasIssueDate: input.smartvasIssueDate,
+        smartvasPdfUrl: input.smartvasPdfUrl,
+        smartvasXmlUrl: input.smartvasXmlUrl,
+        status: invoice.status === "DRAFT" ? "SENT" : invoice.status,
+      },
+    });
+
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: "LINK_SMARTVAS",
+        entityType: "Invoice",
+        entityId: input.invoiceId,
+        newValues: {
+          smartvasInvoiceNumber: input.smartvasInvoiceNumber,
+          smartvasSerialNumber: input.smartvasSerialNumber,
+        } as Prisma.JsonObject,
+      },
+    });
+
+    revalidatePath(`/invoices/${input.invoiceId}`);
+    revalidatePath("/invoices");
+    return updated;
+  }
+);
+
+/**
+ * Update payment date for an invoice
+ */
+export const updatePaymentDate = createAction(
+  updatePaymentDateSchema,
+  async (input) => {
+    const session = await requireAccountant();
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: input.invoiceId },
+    });
+    if (!invoice) throw new NotFoundError("Hóa đơn");
+
+    const updated = await prisma.invoice.update({
+      where: { id: input.invoiceId },
+      data: { paymentDate: input.paymentDate },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: "UPDATE_PAYMENT_DATE",
+        entityType: "Invoice",
+        entityId: input.invoiceId,
+        newValues: { paymentDate: input.paymentDate.toISOString() } as Prisma.JsonObject,
+      },
+    });
+
+    revalidatePath(`/invoices/${input.invoiceId}`);
+    revalidatePath("/invoices");
+    return updated;
+  }
+);
