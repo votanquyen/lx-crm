@@ -15,6 +15,7 @@ import {
     Calendar,
     MoreVertical,
     Trash2,
+    StickyNote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
     AlertDialog,
@@ -156,6 +158,12 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
                                         Sắp hết hạn HĐ
                                     </span>
                                 )}
+                                {(stats?.notes ?? 0) > 0 && (
+                                    <span className="status-badge bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center gap-1">
+                                        <StickyNote className="h-3 w-3" />
+                                        {stats?.notes} ghi chú
+                                    </span>
+                                )}
                             </div>
 
                             {/* Address with copy */}
@@ -251,6 +259,13 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Tùy chọn khác</DropdownMenuLabel>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/customers/${customer.id}?tab=notes`}>
+                                            <StickyNote className="mr-2 h-4 w-4" />
+                                            Xem ghi chú ({stats?.notes ?? 0})
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                         onClick={() => setShowDeleteDialog(true)}
                                         className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"

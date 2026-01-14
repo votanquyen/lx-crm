@@ -1,7 +1,3 @@
-/**
- * Customer Detail Component
- * Shows customer info with tabbed sections
- */
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -17,11 +13,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteList } from "@/components/notes";
 import { CustomerBusinessCard } from "./customer-business-card";
-import { ActionItemsWidget } from "./action-items-widget";
-import { OpsSnapshotWidget } from "./ops-snapshot-widget";
-import { RecentActivityFeed } from "./recent-activity-feed";
 import { FinanceTab } from "./finance-tab";
 import { OperationsTab } from "./operations-tab";
+import { CustomerTimeline } from "./customer-timeline";
 import type { getCustomerNotes } from "@/actions/sticky-notes";
 import type { CustomerStatus, InvoiceStatus } from "@prisma/client";
 
@@ -72,9 +66,10 @@ interface CustomerDetailProps {
     };
   };
   notes?: Awaited<ReturnType<typeof getCustomerNotes>>;
+  defaultTab?: string;
 }
 
-export function CustomerDetail({ customer, notes = [] }: CustomerDetailProps) {
+export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDetailProps) {
 
   // Compute financial summary from invoices
   const financials = {
@@ -87,6 +82,27 @@ export function CustomerDetail({ customer, notes = [] }: CustomerDetailProps) {
       (i) => i.status === "OVERDUE" || (i.status !== "PAID" && i.status !== "CANCELLED" && new Date(i.dueDate) < new Date())
     ).length,
   };
+
+  // Merge events for Timeline
+  const timelineEvents = [
+    ...customer.invoices.map((inv) => ({
+      id: `inv-${inv.id}`,
+      type: "INVOICE" as const,
+      date: new Date(inv.issueDate),
+      title: `Hóa đơn #${inv.invoiceNumber}`,
+      description: "Hóa đơn đã được tạo",
+      amount: Number(inv.totalAmount),
+      status: inv.status,
+    })),
+    ...notes.map((note) => ({
+      id: `note-${note.id}`,
+      type: "NOTE" as const,
+      date: new Date(note.createdAt),
+      title: "Ghi chú mới",
+      description: note.content,
+      user: { name: note.createdBy?.name || "Hệ thống", image: note.createdBy?.image },
+    })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -114,7 +130,7 @@ export function CustomerDetail({ customer, notes = [] }: CustomerDetailProps) {
       />
 
       {/* Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue={defaultTab || "overview"} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
           <TabsTrigger value="finance">
@@ -128,67 +144,34 @@ export function CustomerDetail({ customer, notes = [] }: CustomerDetailProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
-          {/* Command Center Layout */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Left Column: Action Items */}
-            <div className="space-y-4">
-              <ActionItemsWidget
-                invoices={customer.invoices.map(inv => ({
-                  ...inv,
-                  dueDate: new Date(inv.dueDate),
-                  totalAmount: Number(inv.totalAmount),
-                  outstandingAmount: Number(inv.outstandingAmount),
-                }))}
-                contractsCount={customer._count.contracts}
-                exchangeRequestsCount={customer._count.exchangeRequests ?? 0}
-                urgentNotesCount={0}
-                customerId={customer.id}
-              />
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Column: Timeline */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* AI Summary Card */}
+              {customer.aiNotes && (
+                <Card className="bg-slate-50 border-blue-100">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-bold text-slate-700">AI Phân tích</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-slate-600 leading-relaxed">{customer.aiNotes}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-slate-900">Hoạt động gần đây</h3>
+                <CustomerTimeline events={timelineEvents} />
+              </div>
             </div>
 
-            {/* Middle Column: Operations Snapshot */}
-            <div className="space-y-4">
-              <OpsSnapshotWidget
-                plantsCount={customer._count.customerPlants}
-                plantsHealthAvg={7.5}
-                careSchedulesCount={customer._count.careSchedules}
-                nextCareDate={null}
-                lastCareDate={null}
-              />
-            </div>
-
-            {/* Right Column: Recent Activity */}
-            <div>
-              <RecentActivityFeed
-                activities={customer.invoices.slice(0, 5).map(inv => ({
-                  id: `inv-${inv.id}`,
-                  type: "invoice_created" as const,
-                  title: `Hóa đơn ${inv.invoiceNumber}`,
-                  description: inv.status === "PAID" ? "Đã thanh toán" : "Đang chờ thanh toán",
-                  amount: Number(inv.totalAmount),
-                  date: new Date(inv.issueDate),
-                  linkHref: `/invoices/${inv.id}`,
-                }))}
-                maxItems={5}
-              />
+            {/* Right Column: Context (Map, etc) - Placeholder for now or moved content */}
+            <div className="space-y-6">
+              {/* Could put Map here, or Pending Tasks */}
+              {/* Currently empty as map is not implemented in detail view logic yet */}
             </div>
           </div>
-
-          {/* AI Notes (if any) */}
-          {customer.aiNotes && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>AI Notes</CardTitle>
-                <CardDescription>
-                  Tóm tắt được tạo bởi AI từ các ghi chú
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm">{customer.aiNotes}</p>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="finance">
