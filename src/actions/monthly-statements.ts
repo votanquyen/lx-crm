@@ -1,6 +1,14 @@
 "use server";
 
 import { createAction, createSimpleAction } from "@/lib/action-utils";
+import { VAT_RATE } from "@/lib/constants/billing";
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
 import {
   calculateStatementPeriod,
@@ -117,7 +125,7 @@ export const getMonthlyStatement = createAction(
     });
 
     if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     // Convert to DTO
@@ -156,12 +164,12 @@ export const createMonthlyStatement = createAction(
   async (input, ctx) => {
     // Check authentication
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     // Only ADMIN, MANAGER, ACCOUNTANT can create
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error("Bạn không có quyền tạo bảng kê");
+      throw new ForbiddenError("Bạn không có quyền tạo bảng kê");
     }
 
     const { customerId, year, month, contactName, plants, notes, internalNotes } =
@@ -175,7 +183,7 @@ export const createMonthlyStatement = createAction(
     });
 
     if (existing) {
-      throw new Error(
+      throw new ConflictError(
         `Bảng kê cho tháng ${month}/${year} đã tồn tại`
       );
     }
@@ -197,7 +205,7 @@ export const createMonthlyStatement = createAction(
         contactName,
         plants: plants as unknown as Prisma.InputJsonValue,
         subtotal,
-        vatRate: 8, // Fixed 8% VAT
+        vatRate: VAT_RATE,
         vatAmount,
         total,
         notes,
@@ -229,12 +237,12 @@ export const updateMonthlyStatement = createAction(
   async (input, ctx) => {
     // Check authentication
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     // Only ADMIN, MANAGER, ACCOUNTANT can update
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error("Bạn không có quyền sửa bảng kê");
+      throw new ForbiddenError("Bạn không có quyền sửa bảng kê");
     }
 
     const { id, contactName, plants, notes, internalNotes } = input;
@@ -245,12 +253,13 @@ export const updateMonthlyStatement = createAction(
     });
 
     if (!existing) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     if (!existing.needsConfirmation && existing.confirmedAt) {
-      throw new Error(
-        "Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý."
+      throw new AppError(
+        "Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý.",
+        "STATEMENT_CONFIRMED"
       );
     }
 
@@ -287,12 +296,12 @@ export const confirmMonthlyStatement = createAction(
   confirmMonthlyStatementSchema,
   async ({ id }, ctx) => {
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập để xác nhận bảng kê");
+      throw new UnauthorizedError("Bạn phải đăng nhập để xác nhận bảng kê");
     }
 
     // Check permissions
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error(
+      throw new ForbiddenError(
         "Bạn không có quyền xác nhận bảng kê. Chỉ Manager/Accountant mới được xác nhận."
       );
     }
@@ -307,11 +316,11 @@ export const confirmMonthlyStatement = createAction(
     });
 
     if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     if (!statement.needsConfirmation) {
-      throw new Error("Bảng kê đã được xác nhận trước đó");
+      throw new AppError("Bảng kê đã được xác nhận trước đó", "ALREADY_CONFIRMED");
     }
 
     // Confirm
@@ -340,12 +349,12 @@ export const deleteMonthlyStatement = createAction(
   deleteMonthlyStatementSchema,
   async ({ id }, ctx) => {
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     // Only ADMIN can delete
     if (ctx.user.role !== "ADMIN") {
-      throw new Error("Chỉ Admin mới có quyền xóa bảng kê");
+      throw new ForbiddenError("Chỉ Admin mới có quyền xóa bảng kê");
     }
 
     const statement = await prisma.monthlyStatement.findUnique({
@@ -353,12 +362,13 @@ export const deleteMonthlyStatement = createAction(
     });
 
     if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     if (!statement.needsConfirmation) {
-      throw new Error(
-        "Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support."
+      throw new AppError(
+        "Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support.",
+        "STATEMENT_CONFIRMED"
       );
     }
 
@@ -383,11 +393,11 @@ export const autoRolloverStatements = createAction(
   async ({ targetYear, targetMonth, customerIds }, ctx) => {
     // Check authentication - auto-rollover should be restricted to ADMIN
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     if (ctx.user.role !== "ADMIN") {
-      throw new Error("Chỉ Admin mới có quyền tự động tạo bảng kê");
+      throw new ForbiddenError("Chỉ Admin mới có quyền tự động tạo bảng kê");
     }
 
     // Get previous month
@@ -460,7 +470,7 @@ export const autoRolloverStatements = createAction(
           contactName: prevStmt.contactName ?? prevStmt.customer.contactName,
           plants: prevStmt.plants as Prisma.InputJsonValue, // Copy plants from previous month
           subtotal: prevStmt.subtotal,
-          vatRate: 8,
+          vatRate: VAT_RATE,
           vatAmount: prevStmt.vatAmount,
           total: prevStmt.total,
           needsConfirmation: true, // Require confirmation
