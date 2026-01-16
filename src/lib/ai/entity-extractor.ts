@@ -96,9 +96,7 @@ function escapeLikePattern(input: string): string {
 /**
  * Extract entities from note content using AI
  */
-export async function extractEntities(
-  content: string
-): Promise<ExtractedEntities | null> {
+export async function extractEntities(content: string): Promise<ExtractedEntities | null> {
   if (!content.trim()) return null;
 
   // Limit content length to prevent token overflow
@@ -157,7 +155,7 @@ export async function matchCompaniesToCustomers(
     normalizedNames.push(normalized);
 
     conditions.push(
-      Prisma.sql`(COALESCE(company_name_norm, '') % ${normalized} OR company_name ILIKE ${escapedPattern})`
+      Prisma.sql`(COALESCE("companyNameNorm", '') % ${normalized} OR "companyName" ILIKE ${escapedPattern})`
     );
   }
 
@@ -167,12 +165,12 @@ export async function matchCompaniesToCustomers(
 
     // Build similarity calculation for each name
     const similarityExpressions = normalizedNames.map(
-      (norm) => Prisma.sql`similarity(COALESCE(company_name_norm, ''), ${norm})`
+      (norm) => Prisma.sql`similarity(COALESCE("companyNameNorm", ''), ${norm})`
     );
     const maxSimilarity = Prisma.sql`GREATEST(${Prisma.join(similarityExpressions, ", ")})`;
 
     const matches = await prisma.$queryRaw<FuzzyMatchResult[]>`
-      SELECT id, company_name, ${maxSimilarity} as score
+      SELECT id, "companyName" as company_name, ${maxSimilarity} as score
       FROM customers
       WHERE status != 'TERMINATED'
         AND (${combinedCondition})
@@ -204,9 +202,7 @@ export async function matchCompaniesToCustomers(
 /**
  * Fetch customer context (contracts, invoices, debt)
  */
-export async function fetchCustomerContext(
-  customerId: string
-): Promise<CustomerContext> {
+export async function fetchCustomerContext(customerId: string): Promise<CustomerContext> {
   const [contractCount, invoiceData, noteCount] = await Promise.all([
     prisma.contract.count({
       where: { customerId, status: "ACTIVE" },
@@ -239,9 +235,7 @@ export async function fetchCustomerContext(
 /**
  * Extract entities from note content and match to customers
  */
-export async function extractEntitiesAndMatch(
-  content: string
-): Promise<EntityExtractionResult> {
+export async function extractEntitiesAndMatch(content: string): Promise<EntityExtractionResult> {
   // Extract entities using AI
   const entities = await extractEntities(content);
 
@@ -257,9 +251,7 @@ export async function extractEntitiesAndMatch(
   const matchedCustomers = await matchCompaniesToCustomers(entities.companies);
 
   // Find companies that didn't match
-  const matchedCompanyNames = new Set(
-    matchedCustomers.map((c) => c.companyName.toLowerCase())
-  );
+  const matchedCompanyNames = new Set(matchedCustomers.map((c) => c.companyName.toLowerCase()));
   const noMatchCompanies = entities.companies.filter(
     (name) => !matchedCompanyNames.has(name.toLowerCase())
   );
