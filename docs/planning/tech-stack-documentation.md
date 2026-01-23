@@ -7,6 +7,7 @@ Comprehensive documentation reference for Lộc Xanh CRM tech stack.
 ## Next.js 16
 
 ### Official Documentation
+
 - **Main Docs**: https://nextjs.org/docs
 - **App Router**: https://nextjs.org/docs/app
 - **Server Actions**: https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations
@@ -15,30 +16,34 @@ Comprehensive documentation reference for Lộc Xanh CRM tech stack.
 ### Key Concepts
 
 #### App Router Architecture
+
 - **File-based routing** in `app/` directory
 - **Layouts** for shared UI across routes
 - **Server Components** by default (RSC)
 - **Client Components** with `'use client'` directive
 
 #### Server Actions
+
 ```typescript
-'use server'
+"use server";
 
 export async function createCustomer(formData: FormData) {
-  const name = formData.get('name')
+  const name = formData.get("name");
   // Database operations
-  await prisma.customer.create({ data: { name } })
-  revalidatePath('/customers')
+  await prisma.customer.create({ data: { name } });
+  revalidatePath("/customers");
 }
 ```
 
 #### Data Fetching Patterns
+
 - **Server Components**: Direct database queries, no API needed
 - **Client Components**: Use React Query for client-side fetching
 - **Streaming**: Use `loading.tsx` and Suspense boundaries
 - **Caching**: Automatic request memoization, opt-out with `{ cache: 'no-store' }`
 
 #### Best Practices
+
 - Use Server Components by default
 - Only use Client Components when needed (interactivity, hooks, browser APIs)
 - Leverage Server Actions for mutations
@@ -50,6 +55,7 @@ export async function createCustomer(formData: FormData) {
 ## React 19
 
 ### Official Documentation
+
 - **Main Docs**: https://react.dev
 - **React 19 Release**: https://react.dev/blog/2024/12/05/react-19
 - **Hooks Reference**: https://react.dev/reference/react
@@ -57,7 +63,9 @@ export async function createCustomer(formData: FormData) {
 ### New Features in React 19
 
 #### 1. Actions
+
 Built-in support for async functions in transitions:
+
 ```typescript
 function UpdateName({ name }) {
   const [isPending, startTransition] = useTransition()
@@ -73,7 +81,9 @@ function UpdateName({ name }) {
 ```
 
 #### 2. useFormStatus Hook
+
 Access form submission state:
+
 ```typescript
 import { useFormStatus } from 'react-dom'
 
@@ -84,7 +94,9 @@ function SubmitButton() {
 ```
 
 #### 3. useOptimistic Hook
+
 Optimistic UI updates:
+
 ```typescript
 function TodoList({ todos }) {
   const [optimisticTodos, addOptimisticTodo] = useOptimistic(
@@ -105,7 +117,9 @@ function TodoList({ todos }) {
 ```
 
 #### 4. use() Hook
+
 Unwrap promises and context in render:
+
 ```typescript
 function CustomerData({ customerPromise }) {
   const customer = use(customerPromise)
@@ -114,6 +128,7 @@ function CustomerData({ customerPromise }) {
 ```
 
 #### Best Practices
+
 - Embrace Server Components + Server Actions pattern
 - Use `useOptimistic` for better UX during mutations
 - Leverage `useFormStatus` for form state
@@ -124,11 +139,13 @@ function CustomerData({ customerPromise }) {
 ## TypeScript 5.7+
 
 ### Official Documentation
+
 - **Main Docs**: https://www.typescriptlang.org/docs
 - **Handbook**: https://www.typescriptlang.org/docs/handbook/intro.html
 - **tsconfig Reference**: https://www.typescriptlang.org/tsconfig
 
 ### Key Configuration for Next.js
+
 ```json
 {
   "compilerOptions": {
@@ -154,6 +171,7 @@ function CustomerData({ customerPromise }) {
 ```
 
 ### Best Practices
+
 - Enable `strict` mode always
 - Use proper type imports: `import type { User } from './types'`
 - Define Prisma types: `type Customer = Prisma.CustomerGetPayload<{}>`
@@ -165,12 +183,14 @@ function CustomerData({ customerPromise }) {
 ## Prisma ORM
 
 ### Official Documentation
+
 - **Main Docs**: https://www.prisma.io/docs
 - **Schema Reference**: https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference
 - **Client API**: https://www.prisma.io/docs/reference/api-reference/prisma-client-reference
 - **PostgreSQL**: https://www.prisma.io/docs/concepts/database-connectors/postgresql
 
 ### Schema Example
+
 ```prisma
 generator client {
   provider = "prisma-client-js"
@@ -221,38 +241,40 @@ enum OrderStatus {
 ```
 
 ### Common Queries
+
 ```typescript
 // Create
 const customer = await prisma.customer.create({
-  data: { name: 'John', email: 'john@example.com' }
-})
+  data: { name: "John", email: "john@example.com" },
+});
 
 // Read with relations
 const customerWithOrders = await prisma.customer.findUnique({
-  where: { id: 'xxx' },
-  include: { orders: true }
-})
+  where: { id: "xxx" },
+  include: { orders: true },
+});
 
 // Update
 await prisma.customer.update({
-  where: { id: 'xxx' },
-  data: { name: 'Jane' }
-})
+  where: { id: "xxx" },
+  data: { name: "Jane" },
+});
 
 // Delete
-await prisma.customer.delete({ where: { id: 'xxx' } })
+await prisma.customer.delete({ where: { id: "xxx" } });
 
 // Complex queries
 const customers = await prisma.customer.findMany({
   where: {
-    orders: { some: { status: 'PENDING' } }
+    orders: { some: { status: "PENDING" } },
   },
-  orderBy: { createdAt: 'desc' },
-  take: 10
-})
+  orderBy: { createdAt: "desc" },
+  take: 10,
+});
 ```
 
 ### Migrations
+
 ```bash
 # Development
 pnpm db:migrate        # Create and apply migration
@@ -265,6 +287,7 @@ pnpm db:migrate:prod  # Apply migrations in production
 ```
 
 ### Best Practices
+
 - Use `@@map()` for custom table names (snake_case)
 - Add indexes on foreign keys and frequently queried fields
 - Use `onDelete: Cascade` for cleanup
@@ -277,11 +300,13 @@ pnpm db:migrate:prod  # Apply migrations in production
 ## TailwindCSS
 
 ### Official Documentation
+
 - **Main Docs**: https://tailwindcss.com/docs
 - **Configuration**: https://tailwindcss.com/docs/configuration
 - **Customization**: https://tailwindcss.com/docs/theme
 
 ### Configuration Example
+
 ```javascript
 // tailwind.config.ts
 import type { Config } from "tailwindcss"
@@ -317,6 +342,7 @@ export default config
 ```
 
 ### Common Patterns
+
 ```tsx
 // Responsive design
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -332,6 +358,7 @@ export default config
 ```
 
 ### Best Practices
+
 - Use CSS variables for theming (`hsl(var(--primary))`)
 - Leverage `@apply` sparingly (prefer utilities)
 - Use `cn()` utility for conditional classes
@@ -343,11 +370,13 @@ export default config
 ## shadcn/ui
 
 ### Official Documentation
+
 - **Main Docs**: https://ui.shadcn.com
 - **Components**: https://ui.shadcn.com/docs/components
 - **Installation**: https://ui.shadcn.com/docs/installation/next
 
 ### Installation
+
 ```bash
 # Initialize
 npx shadcn-ui@latest init
@@ -363,6 +392,7 @@ npx shadcn-ui@latest add dialog
 ### Component Usage Examples
 
 #### Button
+
 ```tsx
 import { Button } from "@/components/ui/button"
 
@@ -373,27 +403,28 @@ import { Button } from "@/components/ui/button"
 ```
 
 #### Form with React Hook Form + Zod
+
 ```tsx
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
   name: z.string().min(2).max(50),
   email: z.string().email(),
-})
+});
 
 function CustomerForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", email: "" },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await createCustomer(values)
+    await createCustomer(values);
   }
 
   return (
@@ -414,27 +445,29 @@ function CustomerForm() {
         <Button type="submit">Submit</Button>
       </form>
     </Form>
-  )
+  );
 }
 ```
 
 #### Data Table
+
 ```tsx
-import { DataTable } from "@/components/ui/data-table"
-import { ColumnDef } from "@tanstack/react-table"
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 
 const columns: ColumnDef<Customer>[] = [
   { accessorKey: "name", header: "Name" },
   { accessorKey: "email", header: "Email" },
   { accessorKey: "phone", header: "Phone" },
-]
+];
 
 function CustomersTable({ customers }: { customers: Customer[] }) {
-  return <DataTable columns={columns} data={customers} />
+  return <DataTable columns={columns} data={customers} />;
 }
 ```
 
 ### Best Practices
+
 - Copy component source to `src/components/ui/` for customization
 - Use Radix UI primitives (included via shadcn/ui)
 - Combine with React Hook Form + Zod for forms
@@ -446,15 +479,18 @@ function CustomersTable({ customers }: { customers: Customer[] }) {
 ## Additional Resources
 
 ### State Management
+
 - **Zustand**: https://zustand-demo.pmnd.rs
 - **TanStack Query**: https://tanstack.com/query/latest/docs/react/overview
 
 ### PostGIS (Geospatial)
+
 - **PostGIS Docs**: https://postgis.net/documentation
 - **Leaflet**: https://leafletjs.com
 - **React Leaflet**: https://react-leaflet.js.org
 
 ### Authentication
+
 - **NextAuth.js v5**: https://authjs.dev
 
 ---
@@ -462,50 +498,53 @@ function CustomersTable({ customers }: { customers: Customer[] }) {
 ## Project-Specific Patterns
 
 ### Server Action Pattern
+
 ```typescript
 // app/actions/customers.ts
-'use server'
+"use server";
 
-import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 const createCustomerSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-})
+});
 
 export async function createCustomer(data: FormData) {
   const validated = createCustomerSchema.parse({
-    name: data.get('name'),
-    email: data.get('email'),
-  })
+    name: data.get("name"),
+    email: data.get("email"),
+  });
 
-  const customer = await prisma.customer.create({ data: validated })
-  revalidatePath('/customers')
-  return customer
+  const customer = await prisma.customer.create({ data: validated });
+  revalidatePath("/customers");
+  return customer;
 }
 ```
 
 ### API Route Pattern (when needed)
+
 ```typescript
 // app/api/customers/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
-  const customers = await prisma.customer.findMany()
-  return NextResponse.json(customers)
+  const customers = await prisma.customer.findMany();
+  return NextResponse.json(customers);
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const customer = await prisma.customer.create({ data: body })
-  return NextResponse.json(customer, { status: 201 })
+  const body = await request.json();
+  const customer = await prisma.customer.create({ data: body });
+  return NextResponse.json(customer, { status: 201 });
 }
 ```
 
 ### File Structure
+
 ```
 src/
 ├── app/

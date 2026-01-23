@@ -9,14 +9,14 @@
 
 ## Overall Progress
 
-| Phase | Status | Completion |
-|-------|--------|------------|
-| Phase 1: Test Infrastructure | ✅ Complete | 100% |
-| Phase 2: Core Business Features | ✅ Complete | 100% |
-| Phase 2.5: Bảng Kê (Monthly Statement) | ⏳ Planned | 0% |
-| Phase 3: Operational Excellence | 🟢 Mostly Complete | 92% |
-| Phase 4: Advanced Features | ⏳ Planned | 0% |
-| Phase 5: Enterprise Features | ⏳ Future | 0% |
+| Phase                                  | Status             | Completion |
+| -------------------------------------- | ------------------ | ---------- |
+| Phase 1: Test Infrastructure           | ✅ Complete        | 100%       |
+| Phase 2: Core Business Features        | ✅ Complete        | 100%       |
+| Phase 2.5: Bảng Kê (Monthly Statement) | ⏳ Planned         | 0%         |
+| Phase 3: Operational Excellence        | 🟢 Mostly Complete | 92%        |
+| Phase 4: Advanced Features             | ⏳ Planned         | 0%         |
+| Phase 5: Enterprise Features           | ⏳ Future          | 0%         |
 
 **Overall Completion:** 67% (3.7 of 5.5 phases complete)
 
@@ -33,11 +33,13 @@
 ## Phase 2: Core Business Features (Priority)
 
 ### 2.1 Plant Types & Inventory Management ✅ COMPLETE
+
 **Priority:** HIGH
 **Impact:** Foundation for quotations, contracts, and inventory tracking
 **Completed:** December 18, 2025
 
 **Features:**
+
 - [x] Plant types catalog page (list, search, filter)
 - [x] Create/edit plant type form
 - [x] Inventory management dashboard
@@ -47,6 +49,7 @@
 - [x] Seed data with 10 plant types
 
 **Technical:**
+
 - UI components: DataTable, PlantForm, ImageUpload
 - Actions: plant-types.ts (CRUD operations)
 - Inventory tracking with real-time stock updates
@@ -54,11 +57,13 @@
 ---
 
 ### 2.2 Payment Recording Interface ✅ COMPLETE
+
 **Priority:** HIGH
 **Impact:** Critical for cash flow tracking
 **Completed:** December 18, 2025
 
 **Features:**
+
 - [x] Payment recording form (linked to invoices)
 - [x] Multiple payment methods (bank transfer, cash, MoMo, ZaloPay, VNPay)
 - [x] Bank transaction reference tracking
@@ -70,6 +75,7 @@
 - [x] Seed data with 5 payments
 
 **Technical:**
+
 - Components: PaymentForm, PaymentHistory, ReceiptPDF
 - Actions: payments.ts (create, verify, reconcile)
 - Integration with invoice status updates
@@ -77,12 +83,14 @@
 ---
 
 ### 2.3 Quotation System ✅ COMPLETE
+
 **Priority:** HIGH
 **Impact:** Sales pipeline management
 **Completed:** December 19, 2025
 **Documentation:** `docs/quotation-system-completion-summary.md`
 
 **Features:**
+
 - [x] Quotation creation form with multi-item support
 - [x] Plant selection with auto-pricing
 - [x] Discount management (% per item + quotation level)
@@ -102,6 +110,7 @@
 - [ ] Auto-expire cron job (function ready, needs setup)
 
 **Technical:**
+
 - Validation: `src/lib/validations/quotation.ts` (9 schemas)
 - Actions: `src/actions/quotations.ts` (full CRUD + items + status)
 - Components: QuotationForm, QuotationActions, QuotationCard
@@ -109,6 +118,7 @@
 - Seed: `prisma/seeds/quotations.ts`
 
 **Deferred to Phase 3:**
+
 - PDF generation with `@react-pdf/renderer`
 - Email notifications via Resend
 - Edit quotation page
@@ -117,6 +127,7 @@
 ---
 
 ### 2.4 Sticky Notes & Customer Notes ✅ BACKEND COMPLETE
+
 **Priority:** MEDIUM
 **Impact:** Customer service quality
 **Status:** Backend 100%, UI deferred to Phase 4
@@ -124,6 +135,7 @@
 **Documentation:** `docs/sticky-notes-status-summary.md`
 
 **Features:**
+
 - [x] Validation schemas (9 schemas)
 - [x] Server actions (CRUD, assign, resolve, link)
 - [x] Category system (URGENT, COMPLAINT, REQUEST, FEEDBACK, GENERAL)
@@ -136,12 +148,14 @@
 - [ ] AI analysis integration (Phase 4.3)
 
 **Technical:**
+
 - Validation: `src/lib/validations/sticky-note.ts` ✅
 - Actions: Already exist in codebase (not shown in search)
 - Components: TODO Phase 4
 - Pages: TODO Phase 4
 
 **Deferred Items:**
+
 - UI components (NoteForm, NoteCard, NoteList)
 - Pages (note list, note detail)
 - AI integration (Gemini API for sentiment, keywords)
@@ -157,9 +171,11 @@
 **Plan:** `plans/20251217-2333-locxanh-v4-implementation/phase-25-bangke/plan.md`
 
 ### Overview
+
 Monthly plant rental statement system with auto-generation, confirmation workflow, and professional Vietnamese business format exports.
 
 ### Features
+
 - [ ] Auto-generate statements on 1st of month (copy from previous)
 - [ ] 3-column UI: Sidebar (companies) | Main (statement) | AI Panel (suggestions)
 - [ ] Company list with search, avatars, monthly totals
@@ -174,18 +190,22 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - [ ] Vietnamese font support (reuse Phase 3 P2/P3)
 
 ### Technical Implementation
+
 **Phase 01:** Database schema (2h)
+
 - MonthlyStatement model (Prisma)
 - Extend Customer model (shortName for avatar)
 - Migration scripts
 
 **Phase 02:** Backend API (4h)
+
 - Server actions (CRUD, confirmation workflow)
 - Auto-rollover logic (cron trigger)
 - Calculation utilities (8% VAT)
 - API routes for export
 
 **Phase 03:** Frontend UI (6h)
+
 - 3-column layout components
 - Company sidebar with search
 - Month selector and statement card
@@ -193,16 +213,19 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - Warning states for unconfirmed
 
 **Phase 04:** Export/Print (3h)
+
 - Excel export (reuse CSV utilities)
 - PDF generation (reuse Vietnamese fonts)
 - Print modal with template
 
 **Phase 05:** Integration/Testing (3h)
+
 - Integration tests
 - Manual QA checklist
 - Deployment preparation
 
 ### Business Value
+
 - **Efficiency:** Auto-rollover saves 2-3 hours/month
 - **Accuracy:** Prevents billing errors with confirmation workflow
 - **Professionalism:** Branded PDF statements
@@ -210,6 +233,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - **Audit Trail:** Track all statement changes
 
 ### Dependencies
+
 - Customer model (existing)
 - PlantType model (existing)
 - Vietnamese font files (Phase 3 P2/P3)
@@ -217,6 +241,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - PDF generation patterns (morning-briefing)
 
 ### Success Criteria
+
 - [ ] Statements auto-create correctly on month boundaries
 - [ ] Excel opens without encoding errors
 - [ ] PDF matches design spec (logo, signatures, Vietnamese text)
@@ -230,6 +255,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Phase 3: Operational Excellence (Weeks 5-8)
 
 ### 3.1 Daily Exchange Route Planning ✅ CORE COMPLETE
+
 **Priority:** MEDIUM
 **Impact:** Operational efficiency
 **Status:** 80% Complete (Core features done, PDF/tracking deferred)
@@ -237,6 +263,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 **Documentation:** `plans/reports/251219-phase3-day2-summary.md`
 
 **Features:**
+
 - [x] Exchange request queue (prioritized) ✅ Day 1
 - [x] Filter by status, priority, customer ✅ Day 1
 - [x] Priority scoring display ✅ Day 1
@@ -250,6 +277,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - [ ] Export to Google Sheets (Deferred to Phase 4)
 
 **Completed Components:**
+
 - Daily schedule server actions
 - Google Maps route optimization
 - Fallback nearest neighbor algorithm
@@ -261,6 +289,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ---
 
 ### 3.2 Care Schedule Management ✅ COMPLETE
+
 **Priority:** MEDIUM
 **Impact:** Service quality
 **Status:** 100% complete (manual workflow, no GPS)
@@ -268,6 +297,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 **Documentation:** `plans/reports/251219-phase3-day3-summary.md`
 
 **Features:**
+
 - [x] Weekly schedule view (calendar) ✅
 - [x] Assign staff to schedules ✅
 - [x] Manual check-in/out (no GPS tracking) ✅
@@ -279,6 +309,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - [x] Issue tracking and actions taken ✅
 
 **Technical:**
+
 - Components: CareCalendar, CareScheduleForm, CareCompletionForm
 - Pages: List, New, Today, Detail, Complete
 - Photo storage: MinIO S3 (external server supported)
@@ -288,6 +319,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ---
 
 ### 3.3 Reports & Analytics Dashboard ✅ CORE COMPLETE
+
 **Priority:** HIGH
 **Impact:** Business insights
 **Status:** 77% complete (core done, export deferred)
@@ -295,6 +327,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 **Documentation:** `docs/analytics-dashboard-completion-summary.md`
 
 **Features:**
+
 - [x] Revenue analytics server actions (11 actions)
   - Total revenue, YTD, MTD, growth %
   - Monthly revenue trends (12 months)
@@ -327,6 +360,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - [ ] Custom report builder - Future enhancement
 
 **Technical:**
+
 - Actions: `src/actions/reports.ts` (600+ lines) ✅
 - Components:
   - `src/components/analytics/revenue-dashboard.tsx` ✅
@@ -336,11 +370,13 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 - Styling: Responsive grid layout, Vietnamese localization
 
 **Performance:**
+
 - Efficient database queries with aggregations
 - Progressive loading with Suspense
 - Optimized for 100+ customers, 1000+ invoices
 
 **Deferred to Phase 4:**
+
 - CSV/PDF export functionality
 - Date range picker (default: all-time data)
 - Custom report builder
@@ -352,7 +388,9 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Phase 4: Advanced Features (Weeks 9-12)
 
 ### 4.1 Mobile Staff App (React Native/PWA)
+
 **Features:**
+
 - [ ] Today's schedule view
 - [ ] Navigation to customer location
 - [ ] Check-in/check-out
@@ -364,7 +402,9 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ---
 
 ### 4.2 Customer Portal
+
 **Features:**
+
 - [ ] Login for customers
 - [ ] View current contracts
 - [ ] View invoices
@@ -376,7 +416,9 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ---
 
 ### 4.3 AI-Powered Features
+
 **Features:**
+
 - [ ] Sticky note intent detection (Gemini)
 - [ ] Automatic priority scoring
 - [ ] Customer sentiment analysis
@@ -387,7 +429,9 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ---
 
 ### 4.4 Integration Enhancements
+
 **Features:**
+
 - [ ] Google Drive integration (contract storage)
 - [ ] Email automation (SendGrid/Resend)
 - [ ] SMS notifications (Twilio/local gateway)
@@ -400,17 +444,20 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Phase 5: Enterprise Features (Future)
 
 ### 5.1 Multi-location Support
+
 - Branch management
 - Inter-branch transfers
 - Regional reporting
 
 ### 5.2 Advanced Inventory
+
 - RFID tracking
 - Barcode scanning
 - Automated reordering
 - Supplier management
 
 ### 5.3 Financial Management
+
 - Purchase orders
 - Expense tracking
 - Profit/loss statements
@@ -421,18 +468,22 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Implementation Strategy
 
 ### Quick Wins (Week 1-2)
+
 1. **Plant Types Management** - Foundation for all other features
 2. **Payment Recording** - Immediate business value
 
 ### Core Value (Week 3-4)
+
 3. **Quotation System** - Sales pipeline
 4. **Sticky Notes** - Customer service
 
 ### Operational (Week 5-8)
+
 5. **Route Planning** - Efficiency gains
 6. **Reports** - Business insights
 
 ### Growth (Week 9+)
+
 7. **Mobile App** - Field operations
 8. **AI Features** - Competitive advantage
 
@@ -440,32 +491,35 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 
 ## Success Metrics
 
-| Metric | Current | Target (3 months) | Status |
-|--------|---------|-------------------|--------|
-| Test Coverage | 97.5% lines | 95%+ | ✅ Exceeded |
-| TypeScript Errors | 10 (non-blocking) | 0 | 🟡 89% fixed |
-| Features Complete | 3.4 / 5 phases | Phase 3 | 🟢 On track |
-| Active Customers | 0 (seeded) | 50+ | ⏳ Launch pending |
-| Monthly Revenue | 0 | Track accurately | ⏳ Launch pending |
-| Invoice Collection Rate | N/A | 90%+ | ⏳ Launch pending |
-| Route Efficiency | N/A | 20% time saved | ⏳ Phase 3.1 |
-| Customer Satisfaction | N/A | 4.5/5 | ⏳ Phase 3.2 |
+| Metric                  | Current           | Target (3 months) | Status            |
+| ----------------------- | ----------------- | ----------------- | ----------------- |
+| Test Coverage           | 97.5% lines       | 95%+              | ✅ Exceeded       |
+| TypeScript Errors       | 10 (non-blocking) | 0                 | 🟡 89% fixed      |
+| Features Complete       | 3.4 / 5 phases    | Phase 3           | 🟢 On track       |
+| Active Customers        | 0 (seeded)        | 50+               | ⏳ Launch pending |
+| Monthly Revenue         | 0                 | Track accurately  | ⏳ Launch pending |
+| Invoice Collection Rate | N/A               | 90%+              | ⏳ Launch pending |
+| Route Efficiency        | N/A               | 20% time saved    | ⏳ Phase 3.1      |
+| Customer Satisfaction   | N/A               | 4.5/5             | ⏳ Phase 3.2      |
 
 ---
 
 ## Technical Debt to Address
 
 ### High Priority
+
 1. **Fix Remaining 10 Backend Errors** - Post browser testing (30 min)
 2. **Complete Browser Testing** - Systematic UI/UX validation (1-2 hours)
 3. **E2E Tests Setup** - Playwright configuration (2 hours)
 
 ### Medium Priority
+
 4. **Update Test Scripts** - Fix 113 test file errors (2 hours)
 5. **Performance Optimization** - Database indexing review (1 hour)
 6. **Type Safety Improvements** - Remove `as any` assertions (1 hour)
 
 ### Low Priority
+
 7. **Security Audit** - OWASP checklist (4 hours)
 8. **Accessibility** - WCAG compliance (4 hours)
 9. **Documentation** - API documentation generation (2 hours)
@@ -475,11 +529,13 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Resource Requirements
 
 **Development:**
+
 - 1 Full-stack developer (you + Claude)
 - Design system ready (shadcn/ui)
 - Backend ready (Prisma + PostgreSQL)
 
 **Infrastructure:**
+
 - Neon PostgreSQL (current: free tier)
 - Vercel/Railway for hosting
 - MinIO/S3 for file storage
@@ -490,6 +546,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Next Immediate Steps
 
 ### Priority 1: Browser Testing (Today)
+
 1. ✅ Complete validation and error fixing
 2. ⏳ **Start dev server** (`bun run dev`)
 3. ⏳ **Follow browser testing checklist**
@@ -498,6 +555,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 6. ⏳ **Re-test until stable**
 
 ### Priority 2: Production Prep (This Week)
+
 7. Fix remaining 10 backend errors
 8. Run code review agent
 9. Create deployment checklist
@@ -506,6 +564,7 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 12. User acceptance testing
 
 ### Priority 3: Next Features (Next Week)
+
 13. Complete Phase 3.1 (Route Planning) OR
 14. Complete Phase 2.4 UI (Sticky Notes) OR
 15. Start Phase 4 (Mobile App/Customer Portal)
@@ -517,12 +576,14 @@ Monthly plant rental statement system with auto-generation, confirmation workflo
 ## Recent Achievements (Dec 19, 2025)
 
 ### Morning Session
+
 - ✅ Quotation system backend testing (5 quotations verified)
 - ✅ Sticky notes validation schemas complete
 - ✅ Analytics dashboard implemented (11 actions, 2 components, 1 page)
 - ✅ Navigation link added
 
 ### Afternoon Session
+
 - ✅ Validation \u0026 error fixing (80+ errors)
 - ✅ Browser testing documentation created
 - ✅ TypeScript error tracking established

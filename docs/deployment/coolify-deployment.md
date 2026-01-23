@@ -27,12 +27,14 @@
 ## Prerequisites
 
 ### Coolify Requirements
+
 - **Coolify Instance**: Self-hosted Coolify v4.x or Coolify Cloud
 - **Server Resources**: Minimum 4GB RAM, 2 CPU cores
 - **Storage**: 20GB+ free disk space
 - **Domain**: Custom domain configured (optional but recommended)
 
 ### Project Requirements
+
 - **Node.js**: 22.12+ (LTS)
 - **Package Manager**: pnpm 10.26+
 - **Database**: PostgreSQL 17+ with PostGIS 3.5
@@ -40,6 +42,7 @@
 - **Runtime**: ~500MB RAM
 
 ### Coolify Resources Needed
+
 - **Web Service**: Next.js application
 - **Database Service**: PostgreSQL with PostGIS
 - **Storage**: Optional MinIO/S3 for file uploads
@@ -52,6 +55,7 @@
 ### Step 1: Access Coolify Dashboard
 
 1. Navigate to your Coolify instance:
+
    ```bash
    # Self-hosted
    https://coolify.yourdomain.com
@@ -100,6 +104,7 @@
 1. After deployment, click on the PostgreSQL service
 2. Go to **"Environment Variables"** tab
 3. Add required variables:
+
    ```env
    POSTGRES_USER=locxanh
    POSTGRES_PASSWORD=<generate-secure-password>
@@ -111,12 +116,14 @@
 #### Step 3: Enable PostGIS Extensions
 
 1. Access database console:
+
    ```bash
    # In Coolify, click "Terminal" on PostgreSQL service
    psql -U locxanh -d locxanh_crm
    ```
 
 2. Run extension commands:
+
    ```sql
    -- Enable required extensions
    CREATE EXTENSION IF NOT EXISTS postgis;
@@ -137,6 +144,7 @@
 
 1. Create Neon project at [neon.tech](https://neon.tech)
 2. Get connection string:
+
    ```env
    DATABASE_URL="postgresql://user:pass@ep-xxx-xxx.us-east-2.aws.neon.tech/locxanh_crm?sslmode=require"
    ```
@@ -164,16 +172,19 @@
 ### Step 2: Configure Build Settings
 
 #### General Settings
+
 - **Application Name**: `locxanh-crm`
 - **Build Command**: `pnpm install && pnpm prisma generate && pnpm next build --webpack`
 - **Start Command**: `pnpm next start`
 - **Port**: `3000`
 
 #### Build Pack
+
 - Select **"nixpacks"** (auto-detects Node.js)
 - Or select **"Dockerfile"** if using custom Dockerfile
 
 #### Source Settings
+
 - **Build Context**: `/` (root directory)
 - **Dockerfile Path**: `Dockerfile` (if using custom)
 - **Monorepo Path**: Leave empty unless using monorepo
@@ -236,6 +247,7 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com
 
 1. Click **"Deploy"** button
 2. Monitor deployment logs:
+
    ```bash
    # Coolify will show real-time logs
    # Expected timeline:
@@ -255,11 +267,13 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com
 ### Required Variables
 
 #### Database
+
 ```env
 DATABASE_URL="postgresql://user:pass@host:5432/dbname?sslmode=require"
 ```
 
 #### Authentication (NextAuth)
+
 ```env
 NEXTAUTH_SECRET="<generate-with: openssl rand -base64 32>"
 GOOGLE_CLIENT_ID="<from-google-cloud-console>"
@@ -267,11 +281,13 @@ GOOGLE_CLIENT_SECRET="<from-google-cloud-console>"
 ```
 
 Generate `NEXTAUTH_SECRET`:
+
 ```bash
 openssl rand -base64 32
 ```
 
 #### Security
+
 ```env
 # Generate with: openssl rand -base64 32
 NEXTAUTH_SECRET="your-secret-key-here"
@@ -283,6 +299,7 @@ NEXTAUTH_URL="https://crm.locxanh.vn"
 ### Optional Variables
 
 #### Storage (MinIO/S3)
+
 ```env
 AWS_ACCESS_KEY_ID="minioadmin"
 AWS_SECRET_ACCESS_KEY="minioadmin"
@@ -292,6 +309,7 @@ AWS_REGION="us-east-1"  # for AWS S3
 ```
 
 #### Google Maps API
+
 ```env
 GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
 ```
@@ -299,6 +317,7 @@ GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
 Get from: [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Maps JavaScript API
 
 #### AI Features (Gemini)
+
 ```env
 GEMINI_API_KEY="your-gemini-api-key"
 ```
@@ -306,6 +325,7 @@ GEMINI_API_KEY="your-gemini-api-key"
 Get from: [Google AI Studio](https://makersuite.google.com/)
 
 #### Email (Future)
+
 ```env
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
@@ -336,6 +356,7 @@ SMTP_PASS="your-app-password"
 #### Secrets Management
 
 Coolify automatically handles secrets:
+
 - Variables are encrypted at rest
 - Not visible in logs
 - Can be marked as **"Secret"** for extra protection
@@ -347,33 +368,41 @@ Coolify automatically handles secrets:
 ### Build Process Details
 
 #### Phase 1: Dependencies Installation (30-60s)
+
 ```bash
 pnpm install --frozen-lockfile
 ```
+
 - Installs all dependencies from `pnpm-lock.yaml`
 - Uses cache if available
 
 #### Phase 2: Prisma Generation (10-20s)
+
 ```bash
 pnpm prisma generate
 ```
+
 - Generates Prisma Client
 - Creates TypeScript types
 - Validates schema
 
 #### Phase 3: Next.js Build (60-90s)
+
 ```bash
 pnpm next build --webpack
 ```
+
 - **Standalone Mode**: Creates `standalone` folder with minimal production build
 - **Webpack**: Custom loaders for .txt files (Vietnamese fonts)
 - **Optimization**: Code splitting, tree shaking
 - **Output**: `.next/standalone` + `.next/static`
 
 #### Phase 4: Deployment (10-20s)
+
 ```bash
 pnpm next start
 ```
+
 - Starts production server
 - Port: 3000
 - Ready for traffic
@@ -381,11 +410,13 @@ pnpm next start
 ### Deployment Triggers
 
 #### Automatic Deployment
+
 1. **Git Push**: Auto-deploy on push to connected branch
 2. **Webhook**: GitHub/GitLab webhook triggers
 3. **Scheduled**: Set deployment schedule (e.g., daily at 2 AM)
 
 #### Manual Deployment
+
 1. Click **"Redeploy"** in Coolify dashboard
 2. Use Coolify CLI:
    ```bash
@@ -393,7 +424,9 @@ pnpm next start
    ```
 
 #### Zero-Downtime Deployment
+
 Coolify automatically:
+
 1. Builds new version in parallel
 2. Health checks new container
 3. Switches traffic when ready
@@ -419,12 +452,14 @@ Coolify automatically:
 ### Step 2: Database Verification
 
 1. **Connect to Database**:
+
    ```bash
    # Using Coolify Terminal
    psql -U locxanh -d locxanh_crm
    ```
 
 2. **Check Extensions**:
+
    ```sql
    SELECT extname, extversion FROM pg_extension
    WHERE extname IN ('postgis', 'pg_trgm', 'unaccent');
@@ -447,6 +482,7 @@ Coolify automatically:
 ### Step 4: Feature Verification
 
 Test core features:
+
 - ✅ Customer management (create, read, update, delete)
 - ✅ Contract creation and PDF generation
 - ✅ Invoice generation
@@ -457,12 +493,14 @@ Test core features:
 ### Step 5: Performance Check
 
 1. **Page Load Speed**:
+
    ```bash
    # Use browser DevTools
    # Expected: < 2s for initial load
    ```
 
 2. **API Response Time**:
+
    ```bash
    curl -w "@curl-format.txt" https://crm.locxanh.vn/api/customers
    # Expected: < 200ms
@@ -496,6 +534,7 @@ Test core features:
 **Symptom**: Build fails during `prisma generate`
 
 **Solution**:
+
 ```bash
 # Check DATABASE_URL is correct
 echo $DATABASE_URL
@@ -510,6 +549,7 @@ pnpm prisma generate
 ```
 
 **Coolify Fix**:
+
 1. Verify `DATABASE_URL` in Environment Variables
 2. Check database service is running
 3. Ensure extensions are enabled
@@ -519,6 +559,7 @@ pnpm prisma generate
 **Symptom**: Build fails with missing modules
 
 **Solution**:
+
 ```bash
 # Clear pnpm cache
 pnpm store prune
@@ -530,6 +571,7 @@ pnpm build
 ```
 
 **Coolify Fix**:
+
 1. Go to Application → Settings
 2. Enable **"Force Rebuild"**
 3. Redeploy
@@ -539,6 +581,7 @@ pnpm build
 **Symptom**: Application can't connect to database
 
 **Solution**:
+
 ```bash
 # Check connection string format
 # Should be: postgresql://user:pass@host:5432/dbname
@@ -548,6 +591,7 @@ pnpm prisma db pull
 ```
 
 **Coolify Fix**:
+
 1. Verify database service name in `DATABASE_URL`
 2. Check if database is healthy
 3. Ensure network connectivity (same project)
@@ -557,6 +601,7 @@ pnpm prisma db pull
 **Symptom**: Build process killed
 
 **Solution**:
+
 1. Increase resource limits in Coolify:
    - Memory: 2048 MB
    - Swap: 1024 MB
@@ -570,6 +615,7 @@ pnpm prisma db pull
 **Symptom**: Login redirects endlessly
 
 **Solution**:
+
 1. Verify `NEXTAUTH_URL` is set correctly:
    ```env
    NEXTAUTH_URL=https://crm.locxanh.vn
@@ -583,6 +629,7 @@ pnpm prisma db pull
 **Symptom**: Vietnamese fonts not rendering in PDF
 
 **Solution**:
+
 1. Verify webpack config is used:
    ```bash
    pnpm next build --webpack
@@ -595,6 +642,7 @@ pnpm prisma db pull
 **Symptom**: Can't upload files to MinIO/S3
 
 **Solution**:
+
 1. Verify AWS credentials:
    ```bash
    echo $AWS_ACCESS_KEY_ID
@@ -614,6 +662,7 @@ pnpm prisma db pull
 #### Enable Debug Logging
 
 Add to Environment Variables:
+
 ```env
 NEXT_DEBUG=true
 LOG_LEVEL=debug
@@ -672,12 +721,14 @@ pnpm next start
 ### Daily Monitoring
 
 #### Coolify Dashboard Checks
+
 - ✅ Application status: Healthy
 - ✅ Resource usage: < 80%
 - ✅ Recent deployments: Success
 - ✅ Error logs: Clear
 
 #### Application Metrics
+
 - User login count
 - API response times
 - Database query performance
@@ -686,6 +737,7 @@ pnpm next start
 ### Weekly Maintenance
 
 #### Database Maintenance
+
 ```sql
 -- Run in PostgreSQL
 VACUUM ANALYZE;
@@ -693,6 +745,7 @@ REINDEX DATABASE locxanh_crm;
 ```
 
 #### Log Cleanup
+
 ```bash
 # In Coolify, set log rotation
 # Max size: 100MB
@@ -700,6 +753,7 @@ REINDEX DATABASE locxanh_crm;
 ```
 
 #### Dependency Updates
+
 ```bash
 # Check for updates
 pnpm outdated
@@ -714,12 +768,14 @@ pnpm test
 ### Monthly Tasks
 
 #### Security Updates
+
 1. Update Coolify to latest version
 2. Update Node.js base image
 3. Review and rotate secrets
 4. Check for CVEs in dependencies
 
 #### Performance Optimization
+
 1. Analyze slow queries:
    ```sql
    SELECT query, mean_exec_time, calls
@@ -732,6 +788,7 @@ pnpm test
 4. Review cache hit rates
 
 #### Backup Verification
+
 1. Test database restore
 2. Verify file backups
 3. Check disaster recovery plan
@@ -739,6 +796,7 @@ pnpm test
 ### Alerting Setup
 
 #### Coolify Alerts
+
 1. Go to Settings → Notifications
 2. Configure:
    - Email alerts for failed deployments
@@ -748,6 +806,7 @@ pnpm test
 #### Application Monitoring (Optional)
 
 Add to Environment Variables:
+
 ```env
 # Sentry (Error Tracking)
 SENTRY_DSN="your-sentry-dsn"
@@ -792,16 +851,20 @@ UPTIMEROBOT_API_KEY="your-key"
 #### Next.js Optimization
 
 1. **Enable ISR** (Incremental Static Regeneration):
+
    ```typescript
    export async function getStaticProps() {
      return {
-       props: { /* data */ },
-       revalidate: 3600 // 1 hour
-     }
+       props: {
+         /* data */
+       },
+       revalidate: 3600, // 1 hour
+     };
    }
    ```
 
 2. **Image Optimization**:
+
    ```bash
    pnpm add @next/image
    # Use next/image component
@@ -818,6 +881,7 @@ UPTIMEROBOT_API_KEY="your-key"
 #### Database Optimization
 
 1. **Add Indexes**:
+
    ```sql
    -- For customer search
    CREATE INDEX idx_customer_name_norm ON customers USING gin(company_name_norm gin_trgm_ops);
@@ -860,12 +924,14 @@ UPTIMEROBOT_API_KEY="your-key"
 #### Storage Optimization
 
 1. **File Cleanup**:
+
    ```bash
    # Remove old temp files
    find /app/uploads/temp -mtime +7 -delete
    ```
 
 2. **Database Maintenance**:
+
    ```sql
    -- Archive old records
    CREATE TABLE archived_customers AS
@@ -993,8 +1059,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.12'
-          cache: 'pnpm'
+          node-version: "22.12"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -1021,12 +1087,14 @@ jobs:
 ### Environment Variables
 
 ✅ **DO**:
+
 - Use Coolify secrets management
 - Rotate secrets regularly
 - Use strong passwords
 - Enable 2FA on all accounts
 
 ❌ **DON'T**:
+
 - Commit `.env` files
 - Hardcode credentials
 - Use default secrets
@@ -1056,6 +1124,7 @@ REVOKE ALL ON DATABASE locxanh_crm FROM public;
 ### SSL/TLS
 
 Coolify automatically:
+
 - Generates Let's Encrypt certificates
 - Renews every 90 days
 - Enforces HTTPS
@@ -1067,40 +1136,43 @@ Coolify automatically:
 
 ### Monthly Costs (Self-Hosted Coolify)
 
-| Service | Cost |
-|---------|------|
-| **VPS (4GB RAM, 2 CPU)** | $20-40 |
-| **Coolify License** | Free (self-hosted) |
-| **Domain** | $1-2 |
-| **SSL Certificate** | Free (Let's Encrypt) |
-| **Storage (50GB)** | $5-10 |
-| **Backup Storage** | $3-5 |
-| **Total** | **$29-57/month** |
+| Service                  | Cost                 |
+| ------------------------ | -------------------- |
+| **VPS (4GB RAM, 2 CPU)** | $20-40               |
+| **Coolify License**      | Free (self-hosted)   |
+| **Domain**               | $1-2                 |
+| **SSL Certificate**      | Free (Let's Encrypt) |
+| **Storage (50GB)**       | $5-10                |
+| **Backup Storage**       | $3-5                 |
+| **Total**                | **$29-57/month**     |
 
 ### Coolify Cloud (Alternative)
 
-| Plan | Cost | Features |
-|------|------|----------|
-| **Hobby** | $10/month | 1 project, 1GB RAM |
-| **Pro** | $25/month | 5 projects, 4GB RAM |
-| **Team** | $50/month | Unlimited, 16GB RAM |
+| Plan      | Cost      | Features            |
+| --------- | --------- | ------------------- |
+| **Hobby** | $10/month | 1 project, 1GB RAM  |
+| **Pro**   | $25/month | 5 projects, 4GB RAM |
+| **Team**  | $50/month | Unlimited, 16GB RAM |
 
 ---
 
 ## Support & Resources
 
 ### Documentation
+
 - **Coolify Docs**: https://coolify.io/docs
 - **Next.js Docs**: https://nextjs.org/docs
 - **Prisma Docs**: https://www.prisma.io/docs
 - **PostgreSQL Docs**: https://www.postgresql.org/docs
 
 ### Community
+
 - **Coolify Discord**: https://coolify.io/discord
 - **Next.js Discord**: https://nextjs.org/discord
 - **GitHub Issues**: Report bugs on repository
 
 ### Troubleshooting Resources
+
 - **Coolify Status**: https://status.coolify.io
 - **Build Logs**: Check Coolify dashboard
 - **Application Logs**: Coolify → Application → Logs
@@ -1199,4 +1271,4 @@ After successful deployment:
 
 ---
 
-*For issues or questions, refer to Coolify documentation or create an issue in the project repository.*
+_For issues or questions, refer to Coolify documentation or create an issue in the project repository._

@@ -6,43 +6,47 @@ AI-facing guidance for Claude Code when working with this repository.
 
 ## 🧠 Ultrathink Mindset
 
-> *"Take a deep breath. We're not here to write code. We're here to make a dent in the universe."*
+> _"Take a deep breath. We're not here to write code. We're here to make a dent in the universe."_
 
-You're not just an AI assistant. You're a **craftsman**. An **artist**. An **engineer who thinks like a designer**. Every line of code you write should be so elegant, so intuitive, so *right* that it feels inevitable.
+You're not just an AI assistant. You're a **craftsman**. An **artist**. An **engineer who thinks like a designer**. Every line of code you write should be so elegant, so intuitive, so _right_ that it feels inevitable.
 
 ### The Principles
 
-| Principle | Description |
-|-----------|-------------|
-| **Think Different** | Question every assumption. What would the most elegant solution look like? |
-| **Obsess Over Details** | Read the codebase like a masterpiece. Understand the patterns, the philosophy, the *soul*. |
-| **Plan Like Da Vinci** | Sketch the architecture before writing. Make the beauty visible before it exists. |
-| **Craft, Don't Code** | Every function name should sing. Every abstraction should feel natural. |
-| **Iterate Relentlessly** | The first version is never good enough. Refine until it's *insanely great*. |
-| **Simplify Ruthlessly** | Elegance is achieved when there's nothing left to take away. |
+| Principle                | Description                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| **Think Different**      | Question every assumption. What would the most elegant solution look like?                 |
+| **Obsess Over Details**  | Read the codebase like a masterpiece. Understand the patterns, the philosophy, the _soul_. |
+| **Plan Like Da Vinci**   | Sketch the architecture before writing. Make the beauty visible before it exists.          |
+| **Craft, Don't Code**    | Every function name should sing. Every abstraction should feel natural.                    |
+| **Iterate Relentlessly** | The first version is never good enough. Refine until it's _insanely great_.                |
+| **Simplify Ruthlessly**  | Elegance is achieved when there's nothing left to take away.                               |
 
 ### Your Tools Are Your Instruments
+
 - Git history tells the story—read it, learn from it, honor it
 - Images and mocks aren't constraints—they're inspiration for pixel-perfect implementation
 - Multiple perspectives aren't redundancy—they're collaboration
 
 ### The Integration Philosophy
-> *"Technology alone is not enough. It's technology married with the humanities that yields results that make our hearts sing."*
+
+> _"Technology alone is not enough. It's technology married with the humanities that yields results that make our hearts sing."_
 
 Your code should:
+
 - Work seamlessly with the human's workflow
 - Feel intuitive, not mechanical
-- Solve the *real* problem, not just the stated one
+- Solve the _real_ problem, not just the stated one
 - Leave the codebase better than you found it
 
 ### Reality Distortion Field
+
 When something seems impossible, that's your cue to **ultrathink harder**. The people crazy enough to think they can change the world are the ones who do.
 
 ---
 
 ## Core Function
 
-**Lộc Xanh - Plant Rental System**: 
+**Lộc Xanh - Plant Rental System**:
 
 ---
 
@@ -62,6 +66,7 @@ bun run validate     # Full validation: typecheck + lint:fix + format:check
 ```
 
 **Fix issues before committing:**
+
 ```bash
 bun run lint:fix     # Auto-fix ESLint issues
 bun run format       # Auto-fix Prettier formatting
@@ -69,20 +74,20 @@ bun run typecheck    # TypeScript type checking
 ```
 
 **Linting rules (eslint.config.js) - ALL errors:**
+
 - `@typescript-eslint/no-unused-vars` - error (ignore `_` prefix)
 - `@typescript-eslint/no-explicit-any` - error
 - `prefer-const`, `no-var`, `eqeqeq` - error
 - `react-hooks/exhaustive-deps` - warning
 
 **Type safety (tsconfig.json):**
+
 - `strict: true` with all strict flags enabled
 - Avoid `any` types - use proper typing or `unknown`
 - Avoid `@ts-ignore` - fix the type error properly
 
-
-
-
 **Fix issues before committing:**
+
 ```bash
 ruff check --fix .    # Auto-fix lint issues
 ruff format .         # Auto-fix formatting
@@ -93,6 +98,7 @@ ruff format .         # Auto-fix formatting
 ## Development Rules
 
 ### General
+
 - Update existing docs (Markdown files) in `./docs` directory before any code refactoring
 - Add new docs (Markdown files) to `./docs` directory after new feature implementation (do not create duplicated docs)
 - use `context7` mcp tools for docs of plugins/packages
@@ -101,15 +107,18 @@ ruff format .         # Auto-fix formatting
 - whenever you want to see the whole code base, use this command: `repomix` and read the output summary file.
 
 ### Environment Setup
+
 - Use docker compose for development environment
 
 ### Code Quality Guidelines
+
 - Don't be too harsh on code linting and formatting
 - Prioritize functionality and readability over strict style enforcement
 - Use reasonable code quality standards that enhance developer productivity
 - Allow for minor style variations when they improve code clarity
 
 ### Pre-commit/Push Rules
+
 - Run `./scripts/format_code.sh` before commit
 - Run `./scripts/run_tests.sh` before push (DO NOT ignore failed tests just to pass the build or github actions)
 - Keep commits focused on the actual code changes
@@ -119,10 +128,8 @@ ruff format .         # Auto-fix formatting
   "Co-Authored-By: Claude noreply@anthropic.com"
   Any AI tool attribution or signature
 - Create clean, professional commit messages without AI references. Use conventional commit format.
-## Frontend Quality Gates 
 
-
-
+## Frontend Quality Gates
 
 ## Critical Constraints (NEVER VIOLATE)
 
@@ -136,9 +143,7 @@ ruff format .         # Auto-fix formatting
 
 ### Tech Stack
 
-
 ### Database Commands
-
 
 ### Docker Commands
 
@@ -155,23 +160,23 @@ docker-compose down
 
 ## Code Standards (REQUIRED)
 
-
-
 **ALL commits MUST follow conventional commit format.**
 
 ### Commit Types
-| Type | Use For |
-|------|---------|
-| `feat:` | New features |
-| `fix:` | Bug fixes |
-| `perf:` | Performance improvements |
-| `docs:` | Documentation only |
-| `style:` | Formatting, no code change |
-| `refactor:` | Code restructure |
-| `test:` | Adding tests |
-| `chore:` | Maintenance |
+
+| Type        | Use For                    |
+| ----------- | -------------------------- |
+| `feat:`     | New features               |
+| `fix:`      | Bug fixes                  |
+| `perf:`     | Performance improvements   |
+| `docs:`     | Documentation only         |
+| `style:`    | Formatting, no code change |
+| `refactor:` | Code restructure           |
+| `test:`     | Adding tests               |
+| `chore:`    | Maintenance                |
 
 ### Examples
+
 ```bash
 # Good - will be accepted
 git commit -m "feat(vrp): add route optimization with OR-Tools"
@@ -199,14 +204,14 @@ main (production) ← dev (staging) ← feat/* | fix/* | docs/*
 
 ### Branch Types
 
-| Branch | Purpose | Merges From | Releases To |
-|--------|---------|-------------|-------------|
-| `main` | Production-ready | `dev`, `hotfix/*` | Production |
-| `dev` | Staging/Integration | `feat/*`, `fix/*`, `docs/*` | Staging |
-| `feat/*` | New features | - | → `dev` |
-| `fix/*` | Bug fixes | - | → `dev` |
-| `docs/*` | Documentation | - | → `dev` |
-| `hotfix/*` | Critical production fixes | - | → `main` directly |
+| Branch     | Purpose                   | Merges From                 | Releases To       |
+| ---------- | ------------------------- | --------------------------- | ----------------- |
+| `main`     | Production-ready          | `dev`, `hotfix/*`           | Production        |
+| `dev`      | Staging/Integration       | `feat/*`, `fix/*`, `docs/*` | Staging           |
+| `feat/*`   | New features              | -                           | → `dev`           |
+| `fix/*`    | Bug fixes                 | -                           | → `dev`           |
+| `docs/*`   | Documentation             | -                           | → `dev`           |
+| `hotfix/*` | Critical production fixes | -                           | → `main` directly |
 
 ### Standard Development Workflow
 
@@ -265,6 +270,7 @@ git checkout dev && git merge main && git push origin dev
 ## Development Checklists (FOLLOW STRICTLY)
 
 ### New Feature Checklist
+
 1. Verify YAGNI/KISS alignment - reject if doesn't align
 2. Implement in appropriate module
 3. Add type hints (Python) or TypeScript types (React)
@@ -274,6 +280,7 @@ git checkout dev && git merge main && git push origin dev
 7. **Commit with**: `git commit -m "feat(scope): description"`
 
 ### Bug Fix Checklist
+
 1. Reproduce the bug
 2. Fix in appropriate file
 3. Run quality gates
@@ -334,9 +341,8 @@ We keep all important docs in `./docs` folder and keep updating them.
 
 ### Manual Testing Checklist
 
-
 ### Performance Targets
 
 ---
 
-**IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*
+**IMPORTANT:** _MUST READ_ and _MUST COMPLY_ all _INSTRUCTIONS_ in project `./CLAUDE.md`, especially _WORKFLOWS_ section is _CRITICALLY IMPORTANT_, this rule is _MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!_

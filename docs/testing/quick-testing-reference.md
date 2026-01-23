@@ -3,12 +3,14 @@
 ## 🚀 Start Testing in 30 Seconds
 
 ### 1. Server Running?
+
 ```bash
 # Check: http://localhost:3000
 # If not running: pnpm dev
 ```
 
 ### 2. Login
+
 ```
 Navigate to: http://localhost:3000
 Login with your credentials
@@ -17,12 +19,14 @@ Login with your credentials
 ### 3. Quick Tests
 
 #### View All Payments
+
 ```
 URL: http://localhost:3000/payments
 Expected: 5 payments displayed
 ```
 
 #### Record a Payment (Easy Win)
+
 ```
 1. Go to: http://localhost:3000/invoices
 2. Click on "INV-202512-0002" (Văn phòng XYZ)
@@ -40,15 +44,16 @@ Expected: 5 payments displayed
 
 ### Invoices Available
 
-| Invoice | Customer | Remaining | Test For |
-|---------|----------|-----------|----------|
-| INV-202512-0002 | KH-0003 | **300k** | Full payment → PAID |
-| INV-202512-0003 | KH-0001 | **160k** | Full payment → PAID |
-| INV-202512-0004 | KH-0002 | **5.9M** | Multiple partial payments |
-| INV-202512-0001 | KH-0002 | **3.6M** | Large partial payment |
-| INV-202512-0005 | KH-0003 | **6.9M** | Large partial payment |
+| Invoice         | Customer | Remaining | Test For                  |
+| --------------- | -------- | --------- | ------------------------- |
+| INV-202512-0002 | KH-0003  | **300k**  | Full payment → PAID       |
+| INV-202512-0003 | KH-0001  | **160k**  | Full payment → PAID       |
+| INV-202512-0004 | KH-0002  | **5.9M**  | Multiple partial payments |
+| INV-202512-0001 | KH-0002  | **3.6M**  | Large partial payment     |
+| INV-202512-0005 | KH-0003  | **6.9M**  | Large partial payment     |
 
 ### Payment Methods in Data
+
 - BANK_TRANSFER: 3 payments (test most common)
 - CASH: 1 payment (test cash flow)
 - MOMO: 1 payment (test e-wallet)
@@ -58,6 +63,7 @@ Expected: 5 payments displayed
 ## ✅ Essential Test Checklist
 
 ### Quick Wins (5 minutes)
+
 - [ ] Open `/payments` - page loads
 - [ ] Click payment card - detail page works
 - [ ] Filter by "Chuyển khoản" - shows 3 results
@@ -65,12 +71,14 @@ Expected: 5 payments displayed
 - [ ] Verify invoice status → PAID
 
 ### Validation Tests (5 minutes)
+
 - [ ] Try amount > remaining → Error
 - [ ] Try future date → Error
 - [ ] Bank transfer without ref → Error
 - [ ] Cash without receiver → Error
 
 ### Full Workflow (10 minutes)
+
 - [ ] List page stats correct
 - [ ] Filters work (method + status)
 - [ ] Detail page shows all info
@@ -84,6 +92,7 @@ Expected: 5 payments displayed
 ## 🐛 Common Issues & Fixes
 
 **Page won't load?**
+
 ```bash
 # Check server is running
 curl http://localhost:3000
@@ -91,12 +100,14 @@ curl http://localhost:3000
 ```
 
 **No invoices shown?**
+
 ```bash
 # Re-run seed
 pnpm db:seed
 ```
 
 **Can't record payment?**
+
 ```
 - Check you're logged in
 - Check invoice isn't fully paid
@@ -108,11 +119,13 @@ pnpm db:seed
 ## 📝 Quick Verification Commands
 
 **Check database counts:**
+
 ```bash
 bunx tsx scripts/verify-payment-data.ts
 ```
 
 **Expected output:**
+
 ```
 Customers: 3
 Contracts: 1
@@ -126,6 +139,7 @@ Payments: 5
 ## 🎯 Success Markers
 
 After testing, you should have:
+
 - ✅ At least 1 invoice with PAID status
 - ✅ At least 1 invoice with multiple payments
 - ✅ Tested all validation rules

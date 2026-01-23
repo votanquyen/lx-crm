@@ -22,6 +22,7 @@ Automated continuous integration and deployment pipeline for Lộc Xanh Plant Re
 The CI/CD pipeline automatically validates code quality, runs tests, and builds the application on every push and pull request. It ensures that only high-quality, tested code reaches production.
 
 **Key Features:**
+
 - ✅ **Parallel job execution** - Fast feedback (jobs run in parallel)
 - ✅ **Dependency caching** - Faster builds with Bun cache
 - ✅ **Test coverage reporting** - Automatic coverage comments on PRs
@@ -30,6 +31,7 @@ The CI/CD pipeline automatically validates code quality, runs tests, and builds 
 - ✅ **Zero-downtime** - Cancels outdated runs automatically
 
 **Trigger Events:**
+
 - Push to `main`, `dev`, `master` branches
 - Pull requests to `main`, `dev`, `master` branches
 
@@ -79,6 +81,7 @@ Trigger (Push/PR)
 **Purpose:** Install and cache dependencies for all subsequent jobs
 
 **Steps:**
+
 - Checkout code
 - Setup Bun runtime
 - Cache `node_modules` and Bun cache
@@ -95,11 +98,13 @@ Trigger (Push/PR)
 **Purpose:** Enforce code style and formatting standards
 
 **Steps:**
+
 - Run ESLint on `.ts` and `.tsx` files
 - Check Prettier formatting
 - Fail on any warnings (`--max-warnings 0`)
 
 **Commands:**
+
 ```bash
 bunx eslint . --ext .ts,.tsx --max-warnings 0
 bunx prettier --check .
@@ -108,6 +113,7 @@ bunx prettier --check .
 **Duration:** ~15-30s
 
 **Failure Conditions:**
+
 - ESLint errors or warnings
 - Prettier formatting violations
 
@@ -118,10 +124,12 @@ bunx prettier --check .
 **Purpose:** Validate TypeScript type safety
 
 **Steps:**
+
 - Generate Prisma client
 - Run TypeScript compiler in check mode
 
 **Commands:**
+
 ```bash
 bunx prisma generate
 bunx tsc --noEmit
@@ -130,6 +138,7 @@ bunx tsc --noEmit
 **Duration:** ~20-40s
 
 **Failure Conditions:**
+
 - TypeScript compilation errors
 - Missing type definitions
 
@@ -140,12 +149,14 @@ bunx tsc --noEmit
 **Purpose:** Run test suite with coverage reporting
 
 **Steps:**
+
 - Generate Prisma client
 - Run Vitest with coverage
 - Upload coverage to Codecov
 - Comment coverage report on PRs
 
 **Commands:**
+
 ```bash
 bunx prisma generate
 bun test --coverage
@@ -154,12 +165,14 @@ bun test --coverage
 **Duration:** ~30-60s
 
 **Coverage Targets:**
+
 - Functions: ≥40% (Phase 1), ≥60% (Phase 2), ≥80% (Phase 3)
 - Lines: ≥40% (Phase 1), ≥60% (Phase 2), ≥80% (Phase 3)
 
 **Current Coverage:** 94.55% functions, 97.50% lines ✅
 
 **Artifacts:**
+
 - Coverage reports uploaded to Codecov
 - PR comments with coverage diff
 
@@ -170,11 +183,13 @@ bun test --coverage
 **Purpose:** Validate production build succeeds
 
 **Steps:**
+
 - Create temporary `.env` file for build
 - Generate Prisma client
 - Build Next.js application
 
 **Commands:**
+
 ```bash
 bunx prisma generate
 bun run build
@@ -183,6 +198,7 @@ bun run build
 **Duration:** ~2-4 minutes
 
 **Environment Variables (CI Build):**
+
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/locxanh_ci"
 NEXTAUTH_URL="http://localhost:3000"
@@ -192,6 +208,7 @@ GOOGLE_CLIENT_SECRET="test"
 ```
 
 **Artifacts:**
+
 - Build output (`.next` directory)
 - Retained for 7 days
 
@@ -204,10 +221,12 @@ GOOGLE_CLIENT_SECRET="test"
 **Conditions:** Only runs if `playwright.config.ts` exists
 
 **Steps:**
+
 - Install Playwright browsers (Chromium)
 - Run E2E test suite
 
 **Commands:**
+
 ```bash
 bunx playwright install --with-deps chromium
 bun run test:e2e
@@ -216,6 +235,7 @@ bun run test:e2e
 **Duration:** ~1-3 minutes
 
 **Artifacts:**
+
 - Playwright HTML report
 - Screenshots/videos of failures
 
@@ -226,10 +246,12 @@ bun run test:e2e
 **Purpose:** Scan for security vulnerabilities
 
 **Steps:**
+
 - Run Bun dependency audit
 - Run Snyk vulnerability scan (if token configured)
 
 **Commands:**
+
 ```bash
 bun audit
 ```
@@ -245,6 +267,7 @@ bun audit
 **Dependencies:** lint, typecheck, test, build
 
 **Success Criteria:**
+
 - ✅ All linting checks passed
 - ✅ Type checking passed
 - ✅ All tests passed with coverage targets met
@@ -304,6 +327,7 @@ bun run build
 ### Required Secrets
 
 **CODECOV_TOKEN**
+
 - **Purpose:** Upload test coverage reports
 - **How to get:**
   1. Sign up at https://codecov.io
@@ -312,6 +336,7 @@ bun run build
   4. Add to GitHub Secrets
 
 **Example:**
+
 ```bash
 # In GitHub: Settings → Secrets → New repository secret
 Name: CODECOV_TOKEN
@@ -321,6 +346,7 @@ Value: paste-your-codecov-token-here
 ### Optional Secrets
 
 **SNYK_TOKEN**
+
 - **Purpose:** Security vulnerability scanning
 - **How to get:**
   1. Sign up at https://snyk.io
@@ -335,15 +361,18 @@ Value: paste-your-codecov-token-here
 ### Protected Branches
 
 **main** (production)
+
 - Requires PR approval
 - Requires all CI checks to pass
 - No direct pushes allowed
 
 **dev** (development/staging)
+
 - Requires all CI checks to pass
 - Direct pushes allowed for maintainers
 
 **Feature branches** (`feat/*`, `fix/*`, `docs/*`)
+
 - CI runs on all pushes
 - No protection rules
 
@@ -397,6 +426,7 @@ gh pr create --base main --title "Release: vX.X.X"
 **Cause:** New code without sufficient tests
 
 **Solution:**
+
 ```bash
 # Check coverage locally
 bun test --coverage
@@ -410,6 +440,7 @@ bun test --coverage
 **Cause:** Code doesn't meet style guidelines
 
 **Solution:**
+
 ```bash
 # Auto-fix linting issues locally
 bun run lint:fix
@@ -423,6 +454,7 @@ bunx eslint . --ext .ts,.tsx --max-warnings 0
 **Cause:** TypeScript compilation errors
 
 **Solution:**
+
 ```bash
 # Check types locally
 bunx tsc --noEmit
@@ -435,6 +467,7 @@ bunx tsc --noEmit
 **Cause:** Stale dependency cache
 
 **Solution:**
+
 - Delete cache from GitHub Actions UI:
   1. Actions → Caches
   2. Delete outdated caches
@@ -524,34 +557,38 @@ git push
 
 ### Current CI Performance
 
-| Job | Duration | Can Cache? |
-|-----|----------|------------|
-| Setup | 5-10s (cached) | ✅ Yes |
-| Lint | 15-30s | ✅ Uses cache |
-| Type Check | 20-40s | ✅ Uses cache |
-| Test | 30-60s | ✅ Uses cache |
-| Build | 2-4 min | ✅ Uses cache |
-| E2E | 1-3 min | ❌ No |
+| Job        | Duration       | Can Cache?    |
+| ---------- | -------------- | ------------- |
+| Setup      | 5-10s (cached) | ✅ Yes        |
+| Lint       | 15-30s         | ✅ Uses cache |
+| Type Check | 20-40s         | ✅ Uses cache |
+| Test       | 30-60s         | ✅ Uses cache |
+| Build      | 2-4 min        | ✅ Uses cache |
+| E2E        | 1-3 min        | ❌ No         |
 
 **Total Pipeline Time:** ~3-5 minutes (with cache)
 
 ### Optimization Tips
 
 **1. Leverage Caching**
+
 - Cache key uses `bun.lockb` hash
 - Cache invalidates on dependency changes
 - Parallel jobs share cache
 
 **2. Parallel Execution**
+
 - Lint, Type Check, Test run in parallel
 - Reduces total time by ~60%
 
 **3. Concurrency Control**
+
 - Cancels outdated runs automatically
 - Saves compute resources
 - Faster feedback on force pushes
 
 **4. Selective Job Execution**
+
 - E2E tests only run if Playwright configured
 - Security scans continue on error
 - Non-critical jobs don't block merges
@@ -563,11 +600,13 @@ git push
 ### Key Metrics to Track
 
 **Pipeline Health:**
+
 - ✅ Success rate: Target >95%
 - ⏱️ Average duration: Target <5 minutes
 - 🔄 Cache hit rate: Target >90%
 
 **Code Quality:**
+
 - 📊 Test coverage: Current 97.5% (Target >40%)
 - 🐛 Failing tests: Target 0
 - 🔒 Security vulnerabilities: Target 0 high/critical
@@ -608,17 +647,20 @@ git push
 ## Additional Resources
 
 **Documentation:**
+
 - [GitHub Actions Docs](https://docs.github.com/en/actions)
 - [Bun CI/CD Guide](https://bun.sh/docs/install/ci)
 - [Vitest Coverage](https://vitest.dev/guide/coverage.html)
 - [Playwright CI](https://playwright.dev/docs/ci)
 
 **Tools:**
+
 - [act](https://github.com/nektos/act) - Run GitHub Actions locally
 - [Codecov](https://codecov.io) - Coverage reporting
 - [Snyk](https://snyk.io) - Security scanning
 
 **Related Docs:**
+
 - `docs/database-migrations.md` - Database migration workflow
 - `docs/testing-guide.md` - Testing best practices (to be created)
 - `README.md` - Project setup and development
@@ -627,9 +669,9 @@ git push
 
 ## Changelog
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-18 | 1.0.0 | Initial CI/CD pipeline setup with 8 jobs |
+| Date       | Version | Changes                                  |
+| ---------- | ------- | ---------------------------------------- |
+| 2025-12-18 | 1.0.0   | Initial CI/CD pipeline setup with 8 jobs |
 
 ---
 

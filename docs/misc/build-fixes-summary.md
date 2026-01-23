@@ -13,6 +13,7 @@
 **Solution:** Added `--webpack` flag to build command
 
 **Files Modified:**
+
 - `package.json` - Build script: `prisma generate && next build --webpack`
 
 ---
@@ -23,9 +24,11 @@
 **Solution:** Separated utilities into client-safe and server-only files
 
 **Files Created:**
+
 - `src/lib/db-utils.ts` - Server-only Prisma Decimal utilities
 
 **Files Modified:**
+
 - `src/lib/utils.ts` - Removed Prisma imports, now client-safe
 - `src/actions/contracts.ts` - Import Decimal utils from `db-utils.ts`
 - `src/actions/invoices.ts` - Import Decimal utils from `db-utils.ts`
@@ -39,6 +42,7 @@
 **Solution:** Updated page props to use Promise and await searchParams
 
 **Files Modified:**
+
 - `src/app/(dashboard)/admin/users/page.tsx` - searchParams now Promise type
 
 ---
@@ -49,6 +53,7 @@
 **Solution:** Removed unused import
 
 **Files Modified:**
+
 - `src/components/layout/header.tsx` - Removed `import * as React`
 
 ---
@@ -59,6 +64,7 @@
 **Solution:** Renamed file to follow new convention
 
 **Files Modified:**
+
 - `src/middleware.ts` → `src/proxy.ts`
 
 ---
@@ -69,6 +75,7 @@
 **Solution:** Explicitly set `outputFileTracingRoot` in config
 
 **Files Modified:**
+
 - `next.config.ts` - Added `outputFileTracingRoot: __dirname`
 
 ---
@@ -79,6 +86,7 @@
 **Solution:** Updated preview feature name in schema
 
 **Files Modified:**
+
 - `prisma/schema.prisma` - Changed to `fullTextSearchPostgres`
 
 ---
@@ -89,6 +97,7 @@
 **Solution:** Updated to reflect actual versions
 
 **Files Modified:**
+
 - `README.md` - Updated Next.js (15 → 16), added TailwindCSS 3, NextAuth.js 5
 
 ---
@@ -96,9 +105,11 @@
 ## Build Results
 
 ### Production Build
+
 ```bash
 pnpm run build
 ```
+
 - ✅ Compiled successfully in 8.2s
 - ✅ 18 routes generated
 - ✅ 0 TypeScript errors
@@ -106,18 +117,22 @@ pnpm run build
 - ✅ Build artifacts created in `.next/` directory
 
 ### Development Server
+
 ```bash
 pnpm run dev
 ```
+
 - ✅ Server starts on port 3001
 - ✅ Ready in 2.3s
 - ✅ Frontend renders correctly
 - ✅ No client-side errors
 
 ### Type Checking
+
 ```bash
 pnpm run lint
 ```
+
 - ✅ 0 errors
 - ⚠️ 9 warnings (console statements in seed.ts - acceptable)
 
@@ -126,6 +141,7 @@ pnpm run lint
 ## Next Steps for User
 
 1. **Database Setup:**
+
    ```bash
    # Configure .env file with DATABASE_URL
    # Start PostgreSQL + PostGIS
@@ -144,6 +160,7 @@ pnpm run lint
    - Update `.env` with Google Client ID/Secret
 
 3. **Run Application:**
+
    ```bash
    # Development
    pnpm run dev
@@ -157,14 +174,14 @@ pnpm run lint
 
 ## Technical Improvements Summary
 
-| Category | Before | After |
-|----------|--------|-------|
-| Build Tool | Turbopack (incompatible) | Webpack (stable) |
-| TypeScript Errors | 131 | 0 |
-| Client/Server Separation | Mixed imports | Clean separation |
-| Next.js Conventions | Outdated | Next.js 16 compliant |
-| Prisma Config | Deprecated preview | Current preview features |
-| Documentation | Outdated versions | Accurate versions |
+| Category                 | Before                   | After                    |
+| ------------------------ | ------------------------ | ------------------------ |
+| Build Tool               | Turbopack (incompatible) | Webpack (stable)         |
+| TypeScript Errors        | 131                      | 0                        |
+| Client/Server Separation | Mixed imports            | Clean separation         |
+| Next.js Conventions      | Outdated                 | Next.js 16 compliant     |
+| Prisma Config            | Deprecated preview       | Current preview features |
+| Documentation            | Outdated versions        | Accurate versions        |
 
 ---
 
@@ -173,10 +190,12 @@ pnpm run lint
 **Total:** 11 files modified + 2 files created
 
 ### Created:
+
 - `src/lib/db-utils.ts`
 - `docs/build-fixes-summary.md`
 
 ### Modified:
+
 - `package.json`
 - `next.config.ts`
 - `prisma/schema.prisma`

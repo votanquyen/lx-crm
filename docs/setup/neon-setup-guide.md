@@ -45,6 +45,7 @@ postgresql://[user]:[password]@[host]/[database]?sslmode=require
 ```
 
 **Example:**
+
 ```
 postgresql://neondb_owner:npg_abc123xyz@ep-blue-tree-123456.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
 ```
@@ -130,6 +131,7 @@ bun run db:migrate
 ```
 
 This will:
+
 - Create migration files in `prisma/migrations/`
 - Apply migration to Neon database
 - Generate Prisma client
@@ -139,6 +141,7 @@ This will:
 Check Neon dashboard → **Tables** to see your database schema.
 
 You should see tables like:
+
 - User
 - Customer
 - Contract
@@ -158,6 +161,7 @@ bunx prisma db execute --sql "SELECT 1 as test"
 ```
 
 **Expected output:**
+
 ```
 Environment variables loaded from .env
 Prisma schema loaded from prisma\schema.prisma
@@ -177,6 +181,7 @@ bun run db:studio
 ```
 
 This opens Prisma Studio at http://localhost:5555 where you can:
+
 - View all tables
 - Add/edit/delete records
 - Test queries
@@ -192,6 +197,7 @@ bun run db:seed
 ```
 
 This will populate the database with:
+
 - Sample plant types
 - Test customers
 - Demo contracts
@@ -206,11 +212,13 @@ This will populate the database with:
 ### Issue 1: Connection Timeout
 
 **Error:**
+
 ```
 P1001: Can't reach database server at ep-xxx.neon.tech:5432
 ```
 
 **Solutions:**
+
 - Check your internet connection
 - Verify the connection string is correct
 - Ensure `?sslmode=require` is in the URL
@@ -219,12 +227,14 @@ P1001: Can't reach database server at ep-xxx.neon.tech:5432
 ### Issue 2: SSL Required
 
 **Error:**
+
 ```
 SSL connection is required
 ```
 
 **Solution:**
 Add `?sslmode=require` to your DATABASE_URL:
+
 ```
 postgresql://user:pass@host/db?sslmode=require
 ```
@@ -232,12 +242,14 @@ postgresql://user:pass@host/db?sslmode=require
 ### Issue 3: PostGIS Not Found
 
 **Error:**
+
 ```
 type "geometry" does not exist
 ```
 
 **Solution:**
 Enable PostGIS extension:
+
 ```sql
 CREATE EXTENSION IF NOT EXISTS postgis;
 ```
@@ -245,17 +257,21 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 ### Issue 4: Migration Failed
 
 **Error:**
+
 ```
 Migration failed
 ```
 
 **Solutions:**
+
 1. Check migration status:
+
    ```bash
    bunx prisma migrate status
    ```
 
 2. Reset migrations (development only):
+
    ```bash
    bunx prisma migrate reset --force
    ```
@@ -285,6 +301,7 @@ neonctl branches create --name dev --parent main
 ```
 
 **Use cases:**
+
 - Test migrations without affecting main database
 - Create preview environments
 - Run experiments safely
@@ -292,6 +309,7 @@ neonctl branches create --name dev --parent main
 ### Auto-Suspend
 
 Neon automatically suspends databases after 5 minutes of inactivity:
+
 - **Free tier:** Database wakes up in ~1-2 seconds on first query
 - **No data loss:** All data is preserved
 - **Save costs:** Only pay for active time
@@ -329,6 +347,7 @@ datasource db {
 ### Neon Point-in-Time Restore
 
 Neon provides automatic backups:
+
 - **Free tier:** 7 days of history
 - **Paid tier:** 30 days of history
 
@@ -370,6 +389,7 @@ pg_dump $DATABASE_URL > backup.sql
 ### Upgrade Path
 
 When you exceed free tier:
+
 - **Scale:** $19/month for 10GB storage
 - **Pro:** $69/month for 50GB + advanced features
 - **Enterprise:** Custom pricing
@@ -387,6 +407,7 @@ After Neon setup is complete:
 5. ✅ Connection tested
 
 **You can now:**
+
 - Run the development server: `bun dev`
 - Access Prisma Studio: `bun run db:studio`
 - Deploy to staging/production
@@ -453,11 +474,13 @@ ORDER BY n_live_tup DESC;
 ## Support
 
 **Neon Support:**
+
 - Community: https://community.neon.tech
 - Discord: https://discord.gg/neon
 - Email: support@neon.tech
 
 **Project Support:**
+
 - Check `docs/database-migrations.md` for migration help
 - Check `docs/troubleshooting.md` for common issues
 
@@ -465,6 +488,6 @@ ORDER BY n_live_tup DESC;
 
 ## Changelog
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2025-12-18 | 1.0.0 | Initial Neon setup guide |
+| Date       | Version | Changes                  |
+| ---------- | ------- | ------------------------ |
+| 2025-12-18 | 1.0.0   | Initial Neon setup guide |

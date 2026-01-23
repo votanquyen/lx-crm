@@ -8,16 +8,16 @@ Welcome to the Lộc Xanh CRM documentation. This folder contains all technical 
 
 ## 📚 Quick Navigation
 
-| Category | Description | Files |
-|----------|-------------|-------|
-| **[Setup](#setup)** | Database, storage, and infrastructure setup | 5 files |
-| **[Deployment](#deployment)** | Deployment guides and CI/CD pipelines | 3 files |
-| **[Planning](#planning)** | Architecture, standards, and roadmaps | 10 files |
-| **[Features](#features)** | Feature implementation guides | 3 files |
-| **[Testing](#testing)** | Testing guides and checklists | 5 files |
-| **[Quick Reference](#quick-reference)** | Command cheat sheets | 1 file |
-| **[Archive](#archive)** | Historical records and completion reports | 13 files |
-| **[Misc](#misc)** | Miscellaneous documentation | 5 files |
+| Category                                | Description                                 | Files    |
+| --------------------------------------- | ------------------------------------------- | -------- |
+| **[Setup](#setup)**                     | Database, storage, and infrastructure setup | 5 files  |
+| **[Deployment](#deployment)**           | Deployment guides and CI/CD pipelines       | 3 files  |
+| **[Planning](#planning)**               | Architecture, standards, and roadmaps       | 10 files |
+| **[Features](#features)**               | Feature implementation guides               | 3 files  |
+| **[Testing](#testing)**                 | Testing guides and checklists               | 5 files  |
+| **[Quick Reference](#quick-reference)** | Command cheat sheets                        | 1 file   |
+| **[Archive](#archive)**                 | Historical records and completion reports   | 13 files |
+| **[Misc](#misc)**                       | Miscellaneous documentation                 | 5 files  |
 
 ---
 
@@ -26,11 +26,13 @@ Welcome to the Lộc Xanh CRM documentation. This folder contains all technical 
 Database, storage, and infrastructure configuration guides.
 
 ### Database
+
 - **[Database Migrations](setup/database-migrations.md)** - Schema migrations and version control
 - **[Neon Setup Guide](setup/neon-setup-guide.md)** - Complete Neon PostgreSQL setup
 - **[Neon Quick Reference](setup/neon-quick-reference.md)** - Neon commands and tips
 
 ### Storage
+
 - **[MinIO S3 Storage](setup/storage/minio-s3-storage.md)** - Complete MinIO/S3 setup guide
 - **[MinIO Quick Reference](setup/storage/minio-quick-reference.md)** - MinIO commands and troubleshooting
 
@@ -51,6 +53,7 @@ Deployment guides for production and staging environments.
 Architecture, standards, and project planning documentation.
 
 ### Core Documentation
+
 - **[Project Overview (PDR)](planning/project-overview-pdr.md)** - Product Development Requirements
 - **[System Architecture](planning/system-architecture.md)** - System design and architecture
 - **[Code Standards](planning/code-standards.md)** - Coding conventions and best practices
@@ -58,6 +61,7 @@ Architecture, standards, and project planning documentation.
 - **[Feature Roadmap](planning/feature-roadmap.md)** - Product roadmap and milestones
 
 ### Technical Reference
+
 - **[Tech Stack Documentation](planning/tech-stack-documentation.md)** - Technology stack overview
 - **[Function Workflow](planning/function-workflow.md)** - Business logic and workflows
 - **[Codebase Summary](planning/codebase-summary.md)** - Codebase structure overview
@@ -103,11 +107,13 @@ Command cheat sheets and quick references.
 Historical documentation and completion reports.
 
 ### Session Notes
+
 - Browser Testing Session (Dec 19, 2025)
 - Session Summary (Dec 19, 2025)
 - Validation Session (Dec 19, 2025)
 
 ### Completion Reports
+
 - Analytics Dashboard Completion
 - Analytics Navigation Added
 - Payment Recording Completion
@@ -147,9 +153,11 @@ Miscellaneous documentation and one-off guides.
 5. **[Deployment Guide](deployment/deployment-guide.md)** - Deploy to production
 
 **Need to deploy quickly?**
+
 - **[Coolify Deployment](deployment/coolify-deployment.md)** - Complete step-by-step guide
 
 **Need commands fast?**
+
 - **[Quick Reference](#quick-reference)** - All command cheat sheets
 
 ---
