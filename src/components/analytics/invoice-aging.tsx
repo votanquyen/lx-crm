@@ -61,13 +61,11 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Chưa thanh toán</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(analytics.outstandingAmount)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold">{formatCurrency(analytics.outstandingAmount)}</div>
+            <p className="text-muted-foreground mt-1 text-xs">
               {analytics.outstandingCount} hóa đơn
             </p>
           </CardContent>
@@ -77,15 +75,13 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quá hạn</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
               {formatCurrency(analytics.overdueAmount)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {analytics.overdueCount} hóa đơn
-            </p>
+            <p className="text-muted-foreground mt-1 text-xs">{analytics.overdueCount} hóa đơn</p>
           </CardContent>
         </Card>
 
@@ -93,15 +89,11 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tỷ lệ thu hồi</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.collectionRate.toFixed(1)}%
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Đã thu / Tổng phát hành
-            </p>
+            <div className="text-2xl font-bold">{analytics.collectionRate.toFixed(1)}%</div>
+            <p className="text-muted-foreground mt-1 text-xs">Đã thu / Tổng phát hành</p>
           </CardContent>
         </Card>
 
@@ -109,13 +101,11 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Thời gian thanh toán TB</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.avgDaysToPayment} ngày
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-2xl font-bold">{analytics.avgDaysToPayment} ngày</div>
+            <p className="text-muted-foreground mt-1 text-xs">
               Trung bình từ phát hành đến thanh toán
             </p>
           </CardContent>
@@ -126,7 +116,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             Báo cáo phân loại công nợ theo thời gian
           </CardTitle>
         </CardHeader>
@@ -143,7 +133,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
             <TableBody>
               {aging.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-muted-foreground text-center">
                     Không có công nợ chưa thanh toán
                   </TableCell>
                 </TableRow>

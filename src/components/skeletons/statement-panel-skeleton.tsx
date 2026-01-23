@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function StatementPanelSkeleton() {
   return (
-    <div className="flex-1 p-6 space-y-6">
+    <div className="flex-1 space-y-6 p-6">
       {/* Header */}
       <div className="space-y-2">
         <Skeleton className="h-8 w-64" />
@@ -32,15 +32,15 @@ export function StatementPanelSkeleton() {
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-4 w-24" />
             </div>
-            <div className="text-right space-y-2">
+            <div className="space-y-2 text-right">
               <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-3 w-16 ml-auto" />
+              <Skeleton className="ml-auto h-3 w-16" />
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Table header */}
-          <div className="flex border-b pb-2 gap-4">
+          <div className="flex gap-4 border-b pb-2">
             <Skeleton className="h-4 w-12" />
             <Skeleton className="h-4 flex-1" />
             <Skeleton className="h-4 w-24" />
@@ -62,7 +62,7 @@ export function StatementPanelSkeleton() {
           ))}
 
           {/* Summary */}
-          <div className="border-t pt-4 space-y-2">
+          <div className="space-y-2 border-t pt-4">
             <div className="flex justify-between">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-4 w-32" />

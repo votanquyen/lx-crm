@@ -31,7 +31,10 @@ import type { PlantType, Prisma } from "@prisma/client";
 type FormValues = z.infer<typeof createPlantTypeSchema>;
 
 // Accept both Decimal (from Prisma) and number (from server actions with toNumber() conversion)
-type PlantTypeInput = Omit<PlantType, "rentalPrice" | "depositPrice" | "salePrice" | "replacementPrice"> & {
+type PlantTypeInput = Omit<
+  PlantType,
+  "rentalPrice" | "depositPrice" | "salePrice" | "replacementPrice"
+> & {
   rentalPrice: Prisma.Decimal | number;
   depositPrice: Prisma.Decimal | number | null;
   salePrice: Prisma.Decimal | number | null;
@@ -125,7 +128,7 @@ export function PlantTypeForm({ plantType }: PlantTypeFormProps) {
             {form.formState.errors.code && (
               <p className="text-sm text-red-500">{form.formState.errors.code.message}</p>
             )}
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Mã viết tắt (chỉ chữ in hoa và số). VD: KT, PT01
             </p>
           </div>
@@ -173,11 +176,7 @@ export function PlantTypeForm({ plantType }: PlantTypeFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="sizeSpec">Kích thước</Label>
-          <Input
-            id="sizeSpec"
-            {...form.register("sizeSpec")}
-            placeholder="Cao 1.2m, Chậu 30cm"
-          />
+          <Input id="sizeSpec" {...form.register("sizeSpec")} placeholder="Cao 1.2m, Chậu 30cm" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -337,7 +336,7 @@ export function PlantTypeForm({ plantType }: PlantTypeFormProps) {
       {/* Actions */}
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {plantType ? "Cập nhật" : "Tạo loại cây"}
         </Button>
         <Button

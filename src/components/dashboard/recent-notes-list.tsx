@@ -11,9 +11,11 @@ import { vi } from "date-fns/locale";
 import type { StickyNote } from "@prisma/client";
 
 interface RecentNotesListProps {
-  notes: Array<StickyNote & {
-    customer: { id: string; code: string; companyName: string } | null;
-  }>;
+  notes: Array<
+    StickyNote & {
+      customer: { id: string; code: string; companyName: string } | null;
+    }
+  >;
 }
 
 const categoryColors: Record<string, string> = {
@@ -30,36 +32,35 @@ const categoryColors: Record<string, string> = {
 export function RecentNotesList({ notes }: RecentNotesListProps) {
   if (notes.length === 0) {
     return (
-      <div className="text-center py-4 text-sm text-muted-foreground">
-        Chưa có ghi chú nào
-      </div>
+      <div className="text-muted-foreground py-4 text-center text-sm">Chưa có ghi chú nào</div>
     );
   }
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground border-t pt-3">
-        Ghi chú gần đây
-      </p>
+      <p className="text-muted-foreground border-t pt-3 text-xs font-medium">Ghi chú gần đây</p>
       <ul className="space-y-2">
         {notes.map((note) => (
           <li key={note.id} className="flex items-start gap-2 text-sm">
             <span className="text-muted-foreground">•</span>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate">{note.content}</p>
-              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                <Badge variant="outline" className={`text-xs ${categoryColors[note.category] || ""}`}>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={`text-xs ${categoryColors[note.category] || ""}`}
+                >
                   {note.category}
                 </Badge>
                 {note.customer && (
                   <Link
                     href={`/customers/${note.customer.id}`}
-                    className="text-xs text-muted-foreground hover:underline"
+                    className="text-muted-foreground text-xs hover:underline"
                   >
                     {note.customer.companyName}
                   </Link>
                 )}
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: vi })}
                 </span>
               </div>
@@ -69,8 +70,8 @@ export function RecentNotesList({ notes }: RecentNotesListProps) {
       </ul>
 
       {notes.length >= 10 && (
-        <div className="text-center pt-2">
-          <Link href="/notes" className="text-xs text-primary hover:underline">
+        <div className="pt-2 text-center">
+          <Link href="/notes" className="text-primary text-xs hover:underline">
             Xem tất cả →
           </Link>
         </div>

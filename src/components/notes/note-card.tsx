@@ -7,8 +7,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  MoreHorizontal, Check, X, Pencil, Trash2, Sparkles,
-  ChevronDown, ChevronUp
+  MoreHorizontal,
+  Check,
+  X,
+  Pencil,
+  Trash2,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -36,7 +42,10 @@ interface NoteCardProps {
   onDelete: (id: string) => void;
 }
 
-const statusConfig: Record<NoteStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  NoteStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   OPEN: { label: "Mở", variant: "default" },
   IN_PROGRESS: { label: "Đang xử lý", variant: "secondary" },
   RESOLVED: { label: "Đã xử lý", variant: "outline" },
@@ -59,7 +68,9 @@ function parseSuggestions(value: unknown): Array<{ action: string }> | null {
   if (!Array.isArray(value)) return null;
   const validSuggestions = value.filter(
     (item): item is { action: string } =>
-      typeof item === "object" && item !== null && typeof (item as { action?: unknown }).action === "string"
+      typeof item === "object" &&
+      item !== null &&
+      typeof (item as { action?: unknown }).action === "string"
   );
   return validSuggestions.length > 0 ? validSuggestions : null;
 }
@@ -72,50 +83,45 @@ export function NoteCard({ note, onResolve, onReopen, onEdit, onDelete }: NoteCa
 
   return (
     <Card className={note.priority >= 8 ? "border-amber-500" : undefined}>
-      <CardHeader className="pb-2 flex-row items-start justify-between space-y-0">
-        <div className="flex items-center gap-2 flex-wrap">
+      <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant={status.variant}>{status.label}</Badge>
           <Badge variant="outline" className={category.color}>
             {category.label}
           </Badge>
-          {note.priority >= 8 && (
-            <Badge variant="destructive">P{note.priority}</Badge>
-          )}
+          {note.priority >= 8 && <Badge variant="destructive">P{note.priority}</Badge>}
           {!!note.aiAnalysis && (
             <Badge variant="secondary" className="gap-1">
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
               AI
             </Badge>
           )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Tùy chọn">
+              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {note.status !== "RESOLVED" && (
               <DropdownMenuItem onClick={() => onResolve(note.id)}>
-                <Check className="mr-2 h-4 w-4" />
+                <Check className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đánh dấu đã xử lý
               </DropdownMenuItem>
             )}
             {note.status === "RESOLVED" && (
               <DropdownMenuItem onClick={() => onReopen(note.id)}>
-                <X className="mr-2 h-4 w-4" />
+                <X className="mr-2 h-4 w-4" aria-hidden="true" />
                 Mở lại
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => onEdit(note)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
               Chỉnh sửa
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onDelete(note.id)}
-              className="text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onClick={() => onDelete(note.id)} className="text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
               Xóa
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -130,14 +136,18 @@ export function NoteCard({ note, onResolve, onReopen, onEdit, onDelete }: NoteCa
               variant="ghost"
               size="sm"
               onClick={() => setShowSuggestions(!showSuggestions)}
-              className="gap-1 text-xs text-muted-foreground"
+              className="text-muted-foreground gap-1 text-xs"
             >
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3 w-3" aria-hidden="true" />
               {suggestions.length} đề xuất AI
-              {showSuggestions ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {showSuggestions ? (
+                <ChevronUp className="h-3 w-3" aria-hidden="true" />
+              ) : (
+                <ChevronDown className="h-3 w-3" aria-hidden="true" />
+              )}
             </Button>
             {showSuggestions && (
-              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+              <ul className="text-muted-foreground mt-2 space-y-1 text-sm">
                 {suggestions.map((s, i) => (
                   <li key={i} className="flex gap-2">
                     <span className="text-amber-500">-</span>
@@ -149,7 +159,7 @@ export function NoteCard({ note, onResolve, onReopen, onEdit, onDelete }: NoteCa
           </div>
         )}
 
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-xs">
           {note.createdBy?.name ?? "Hệ thống"} -{" "}
           {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true, locale: vi })}
         </p>

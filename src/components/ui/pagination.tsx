@@ -50,7 +50,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
 
   return (
     <div className="flex items-center justify-between px-2 py-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-sm">
         <span>
           Hiển thị {start}-{end} / {total} kết quả
         </span>
@@ -69,7 +69,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-muted-foreground text-sm">
           Trang {page} / {totalPages}
         </div>
         <div className="flex items-center gap-1">
@@ -80,7 +80,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
             onClick={() => goToPage(1)}
             disabled={page <= 1 || isPending}
           >
-            <ChevronsLeft className="h-4 w-4" />
+            <ChevronsLeft className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Trang đầu</span>
           </Button>
           <Button
@@ -90,7 +90,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
             onClick={() => goToPage(page - 1)}
             disabled={page <= 1 || isPending}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Trang trước</span>
           </Button>
           <Button
@@ -100,7 +100,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
             onClick={() => goToPage(page + 1)}
             disabled={page >= totalPages || isPending}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Trang sau</span>
           </Button>
           <Button
@@ -110,7 +110,7 @@ export function Pagination({ page, limit, total, totalPages }: PaginationProps) 
             onClick={() => goToPage(totalPages)}
             disabled={page >= totalPages || isPending}
           >
-            <ChevronsRight className="h-4 w-4" />
+            <ChevronsRight className="h-4 w-4" aria-hidden="true" />
             <span className="sr-only">Trang cuối</span>
           </Button>
         </div>

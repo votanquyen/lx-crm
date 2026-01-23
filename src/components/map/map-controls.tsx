@@ -37,8 +37,7 @@ export function MapControls({
 }: MapControlsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const hasActiveFilters =
-    filters.district || filters.status;
+  const hasActiveFilters = filters.district || filters.status;
 
   const clearFilters = () => {
     onFiltersChange({
@@ -49,16 +48,16 @@ export function MapControls({
   };
 
   return (
-    <div className="bg-card border rounded-lg shadow-sm">
+    <div className="bg-card rounded-lg border shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b">
+      <div className="flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-2">
           <Button
             variant={isOpen ? "secondary" : "outline"}
             size="sm"
             onClick={() => setIsOpen(!isOpen)}
           >
-            <Filter className="h-4 w-4 mr-1" />
+            <Filter className="mr-1 h-4 w-4" aria-hidden="true" />
             Bộ lọc
             {hasActiveFilters && (
               <Badge variant="secondary" className="ml-1 px-1.5">
@@ -68,7 +67,7 @@ export function MapControls({
           </Button>
           {hasActiveFilters && (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X className="h-4 w-4 mr-1" />
+              <X className="mr-1 h-4 w-4" aria-hidden="true" />
               Xóa
             </Button>
           )}
@@ -76,15 +75,13 @@ export function MapControls({
 
         <div className="flex items-center gap-3 text-sm">
           <Badge variant="outline">{customerCount} khách hàng</Badge>
-          {filters.showExchanges && (
-            <Badge variant="secondary">{exchangeCount} yêu cầu đổi</Badge>
-          )}
+          {filters.showExchanges && <Badge variant="secondary">{exchangeCount} yêu cầu đổi</Badge>}
         </div>
       </div>
 
       {/* Filter Panel */}
       {isOpen && (
-        <div className="p-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 p-3 md:grid-cols-4">
           {/* District */}
           <div className="space-y-1.5">
             <Label className="text-xs">Quận/Huyện</Label>
@@ -137,8 +134,8 @@ export function MapControls({
                 onFiltersChange({ ...filters, showExchanges: checked })
               }
             />
-            <Label htmlFor="show-exchanges" className="text-xs flex items-center gap-1">
-              <Layers className="h-3 w-3" />
+            <Label htmlFor="show-exchanges" className="flex items-center gap-1 text-xs">
+              <Layers className="h-3 w-3" aria-hidden="true" />
               Yêu cầu đổi cây
             </Label>
           </div>
@@ -146,13 +143,13 @@ export function MapControls({
       )}
 
       {/* Legend */}
-      <div className="px-3 pb-3 flex flex-wrap gap-3 text-xs">
+      <div className="flex flex-wrap gap-3 px-3 pb-3 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-600" />
+          <div className="h-3 w-3 rounded-full bg-green-600" />
           <span>Khach hang</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+          <div className="h-3 w-3 rounded-full border-2 border-amber-500" />
           <span>Co yeu cau doi</span>
         </div>
       </div>

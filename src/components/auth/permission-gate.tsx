@@ -19,8 +19,7 @@ export function PermissionGate({
   const { hasAnyPermission, hasAllPermissions } = usePermission();
 
   const permissions = Array.isArray(permission) ? permission : [permission];
-  const hasAccess =
-    mode === "all" ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
+  const hasAccess = mode === "all" ? hasAllPermissions(permissions) : hasAnyPermission(permissions);
 
   if (!hasAccess) {
     return <>{fallback}</>;

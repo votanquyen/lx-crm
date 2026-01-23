@@ -42,7 +42,10 @@ import type { Customer, PlantType } from "@prisma/client";
 type FormValues = z.infer<typeof createQuotationSchema>;
 
 // Serialized PlantType with Decimal fields converted to numbers
-type SerializedPlantType = Omit<PlantType, "rentalPrice" | "depositPrice" | "salePrice" | "replacementPrice"> & {
+type SerializedPlantType = Omit<
+  PlantType,
+  "rentalPrice" | "depositPrice" | "salePrice" | "replacementPrice"
+> & {
   rentalPrice: number;
   depositPrice: number | null;
   salePrice: number | null;
@@ -59,7 +62,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createQuotationSchema) as  any,
+    resolver: zodResolver(createQuotationSchema) as any,
     defaultValues: {
       validFrom: new Date(),
       validUntil: addDays(new Date(), 30),
@@ -163,9 +166,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           </SelectContent>
         </Select>
         {form.formState.errors.customerId && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.customerId.message}
-          </p>
+          <p className="text-destructive text-sm">{form.formState.errors.customerId.message}</p>
         )}
       </div>
 
@@ -192,9 +193,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
             })}
           />
           {form.formState.errors.validUntil && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.validUntil.message}
-            </p>
+            <p className="text-destructive text-sm">{form.formState.errors.validUntil.message}</p>
           )}
         </div>
       </div>
@@ -215,14 +214,14 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           <div className="flex items-center justify-between">
             <CardTitle>Danh sách sản phẩm</CardTitle>
             <Button type="button" onClick={addItem} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
               Thêm sản phẩm
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {fields.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground py-8 text-center text-sm">
               Chưa có sản phẩm nào. Nhấn &quot;Thêm sản phẩm&quot; để bắt đầu.
             </div>
           ) : (
@@ -245,8 +244,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                     const quantity = item?.quantity || 0;
                     const unitPrice = item?.unitPrice || 0;
                     const itemDiscount = item?.discountRate || 0;
-                    const total =
-                      quantity * unitPrice * (1 - itemDiscount / 100);
+                    const total = quantity * unitPrice * (1 - itemDiscount / 100);
 
                     return (
                       <TableRow key={field.id}>
@@ -305,9 +303,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                             })}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(total)}
-                        </TableCell>
+                        <TableCell className="font-medium">{formatCurrency(total)}</TableCell>
                         <TableCell>
                           <Button
                             type="button"
@@ -315,7 +311,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                             size="sm"
                             onClick={() => remove(index)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -362,29 +358,21 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           <div className="space-y-2 border-t pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tạm tính:</span>
-              <span className="font-medium">
-                {formatCurrency(calculatedTotals.subtotal)}
-              </span>
+              <span className="font-medium">{formatCurrency(calculatedTotals.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                Chiết khấu ({discountRate}%):
-              </span>
+              <span className="text-muted-foreground">Chiết khấu ({discountRate}%):</span>
               <span className="font-medium text-green-600">
                 -{formatCurrency(calculatedTotals.discountAmount)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">VAT ({vatRate}%):</span>
-              <span className="font-medium">
-                {formatCurrency(calculatedTotals.vatAmount)}
-              </span>
+              <span className="font-medium">{formatCurrency(calculatedTotals.vatAmount)}</span>
             </div>
             <div className="flex justify-between border-t pt-2 text-lg font-bold">
               <span>Tổng cộng:</span>
-              <span className="text-primary">
-                {formatCurrency(calculatedTotals.totalAmount)}
-              </span>
+              <span className="text-primary">{formatCurrency(calculatedTotals.totalAmount)}</span>
             </div>
           </div>
         </CardContent>
@@ -423,7 +411,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           Hủy
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           Tạo báo giá
         </Button>
       </div>

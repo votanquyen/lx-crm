@@ -10,7 +10,11 @@ export { CustomerDetail } from "./customer-detail";
 export { CustomerBusinessCard } from "./customer-business-card";
 export { ActionItemsWidget } from "./action-items-widget";
 export { OpsSnapshotWidget } from "./ops-snapshot-widget";
-export { RecentActivityFeed, createActivityFromInvoice, createActivityFromNote } from "./recent-activity-feed";
+export {
+  RecentActivityFeed,
+  createActivityFromInvoice,
+  createActivityFromNote,
+} from "./recent-activity-feed";
 export { CustomerStatementsTable } from "./customer-statements-table";
 export { FinanceTab } from "./finance-tab";
 export { OperationsTab } from "./operations-tab";

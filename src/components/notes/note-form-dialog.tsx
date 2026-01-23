@@ -26,7 +26,16 @@ import { Loader2 } from "lucide-react";
 const noteSchema = z.object({
   content: z.string().min(1, "Nội dung không được để trống").max(2000),
   priority: z.number().int().min(1).max(10),
-  category: z.enum(["GENERAL", "URGENT", "COMPLAINT", "REQUEST", "FEEDBACK", "EXCHANGE", "CARE", "PAYMENT"]),
+  category: z.enum([
+    "GENERAL",
+    "URGENT",
+    "COMPLAINT",
+    "REQUEST",
+    "FEEDBACK",
+    "EXCHANGE",
+    "CARE",
+    "PAYMENT",
+  ]),
 });
 
 type NoteFormData = z.infer<typeof noteSchema>;
@@ -55,12 +64,7 @@ const CATEGORIES = [
   { value: "PAYMENT", label: "Thanh toán" },
 ];
 
-export function NoteFormDialog({
-  open,
-  onOpenChange,
-  editNote,
-  onSubmit,
-}: NoteFormDialogProps) {
+export function NoteFormDialog({ open, onOpenChange, editNote, onSubmit }: NoteFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NoteFormData>({
@@ -98,9 +102,7 @@ export function NoteFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {editNote ? "Chỉnh sửa ghi chú" : "Thêm ghi chú mới"}
-          </DialogTitle>
+          <DialogTitle>{editNote ? "Chỉnh sửa ghi chú" : "Thêm ghi chú mới"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -112,9 +114,7 @@ export function NoteFormDialog({
               rows={4}
             />
             {form.formState.errors.content && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.content.message}
-              </p>
+              <p className="text-destructive text-sm">{form.formState.errors.content.message}</p>
             )}
           </div>
 
@@ -163,7 +163,7 @@ export function NoteFormDialog({
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               {editNote ? "Cập nhật" : "Thêm mới"}
             </Button>
           </DialogFooter>

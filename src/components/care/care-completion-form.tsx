@@ -9,14 +9,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import {
-  CheckCircle,
-  Upload,
-  Camera,
-  AlertTriangle,
-  FileText,
-  Clock,
-} from "lucide-react";
+import { CheckCircle, Upload, Camera, AlertTriangle, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -201,7 +194,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           {schedule.status === "SCHEDULED" && (
             <div className="mt-4">
               <Button onClick={handleCheckIn} className="w-full">
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="mr-2 h-4 w-4" aria-hidden="true" />
                 Bắt đầu ca làm việc
               </Button>
             </div>
@@ -213,7 +206,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5" aria-hidden="true" />
             Chi tiết công việc
           </CardTitle>
         </CardHeader>
@@ -264,16 +257,14 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
               rows={3}
               placeholder="Mô tả công việc đã thực hiện..."
               value={formData.workNotes}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, workNotes: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, workNotes: e.target.value }))}
             />
           </div>
 
           {/* Issues Found */}
           <div className="space-y-2">
             <Label htmlFor="issuesFound" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
               Vấn đề phát hiện
             </Label>
             <Textarea
@@ -281,9 +272,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
               rows={2}
               placeholder="Các vấn đề, sâu bệnh, cây héo..."
               value={formData.issuesFound}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, issuesFound: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, issuesFound: e.target.value }))}
             />
           </div>
 
@@ -295,9 +284,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
               rows={2}
               placeholder="Xử lý sâu bệnh, thay cây, tư vấn khách hàng..."
               value={formData.actionsTaken}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, actionsTaken: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, actionsTaken: e.target.value }))}
             />
           </div>
         </CardContent>
@@ -307,15 +294,13 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
+            <Camera className="h-5 w-5" aria-hidden="true" />
             Hình ảnh chăm sóc
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="photos">
-              Tải ảnh lên (trước/sau chăm sóc)
-            </Label>
+            <Label htmlFor="photos">Tải ảnh lên (trước/sau chăm sóc)</Label>
             <Input
               id="photos"
               type="file"
@@ -324,27 +309,26 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
               onChange={handlePhotoUpload}
               disabled={isUploading}
             />
-            <p className="text-xs text-gray-500">
-              Có thể tải nhiều ảnh cùng lúc. Hỗ trợ JPG, PNG.
-            </p>
+            <p className="text-xs text-gray-500">Có thể tải nhiều ảnh cùng lúc. Hỗ trợ JPG, PNG.</p>
           </div>
 
           {/* Photo Preview */}
           {formData.photoUrls.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {formData.photoUrls.map((url, index) => (
-                <div key={index} className="relative group">
+                <div key={index} className="group relative">
                   <img
                     src={url}
                     alt={`Ảnh ${index + 1}`}
-                    className="w-full h-24 object-cover rounded border"
+                    className="h-24 w-full rounded border object-cover"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Xóa ảnh"
                   >
-                    ✕
+                    <span aria-hidden="true">✕</span>
                   </button>
                 </div>
               ))}
@@ -352,8 +336,8 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           )}
 
           {isUploading && (
-            <div className="text-sm text-gray-600 flex items-center gap-2">
-              <Upload className="h-4 w-4 animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Upload className="h-4 w-4 animate-spin" aria-hidden="true" />
               Đang tải ảnh lên...
             </div>
           )}
@@ -365,19 +349,14 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Đánh giá tình trạng cây</CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddPlantCondition}
-            >
+            <Button type="button" variant="outline" size="sm" onClick={handleAddPlantCondition}>
               Thêm đánh giá
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {formData.plantConditions.map((pc, index) => (
-            <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded">
+            <div key={index} className="grid grid-cols-4 gap-2 rounded border p-3">
               <div>
                 <Label className="text-xs">Loại cây</Label>
                 <Input
@@ -403,9 +382,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
                 <Label className="text-xs">Tình trạng</Label>
                 <Select
                   value={pc.condition}
-                  onValueChange={(value) =>
-                    handleUpdatePlantCondition(index, "condition", value)
-                  }
+                  onValueChange={(value) => handleUpdatePlantCondition(index, "condition", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -423,16 +400,14 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
                 <Input
                   placeholder="Ghi chú"
                   value={pc.notes || ""}
-                  onChange={(e) =>
-                    handleUpdatePlantCondition(index, "notes", e.target.value)
-                  }
+                  onChange={(e) => handleUpdatePlantCondition(index, "notes", e.target.value)}
                 />
               </div>
             </div>
           ))}
 
           {formData.plantConditions.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">
+            <p className="py-4 text-center text-sm text-gray-500">
               Chưa có đánh giá nào. Nhấn "Thêm đánh giá" để bắt đầu.
             </p>
           )}
@@ -440,13 +415,8 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
       </Card>
 
       {/* Complete Button */}
-      <div className="flex gap-2 justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isPending}
-        >
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>
           Hủy
         </Button>
         <Button
@@ -454,7 +424,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           disabled={isPending || isUploading}
           className="bg-green-600 hover:bg-green-700"
         >
-          <CheckCircle className="h-4 w-4 mr-2" />
+          <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
           {isPending ? "Đang lưu..." : "Hoàn thành công việc"}
         </Button>
       </div>

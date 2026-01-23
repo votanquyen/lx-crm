@@ -71,53 +71,75 @@ export function CareScheduleList({
   return (
     <div className="w-full">
       {/* Table Header */}
-      <div className="sticky top-0 z-10 bg-slate-50/80 backdrop-blur-sm border-b">
-        <div className="flex items-center h-10">
-          <div className="w-[180px] px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Thời gian</div>
-          <div className="flex-1 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Đối tác / Địa chỉ</div>
-          <div className="w-40 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Nhân sự / Trạng thái</div>
-          <div className="w-48 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Ghi chú / Check-in</div>
-          <div className="w-12 px-4 shrink-0"></div>
+      <div className="sticky top-0 z-10 border-b bg-slate-50/80 backdrop-blur-sm">
+        <div className="flex h-10 items-center">
+          <div className="text-muted-foreground w-[180px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Thời gian
+          </div>
+          <div className="text-muted-foreground flex-1 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Đối tác / Địa chỉ
+          </div>
+          <div className="text-muted-foreground w-40 shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Nhân sự / Trạng thái
+          </div>
+          <div className="text-muted-foreground w-48 shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Ghi chú / Check-in
+          </div>
+          <div className="w-12 shrink-0 px-4"></div>
         </div>
       </div>
 
-      <div className="divide-y divide-border/50">
+      <div className="divide-border/50 divide-y">
         {schedules.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-200 mx-auto mb-4 border shadow-sm">
-              <Calendar className="h-8 w-8" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border bg-slate-50 text-slate-200 shadow-sm">
+              <Calendar className="h-8 w-8" aria-hidden="true" />
             </div>
             <h4 className="text-base font-bold text-slate-900">Không có lịch chăm sóc</h4>
-            <p className="text-sm font-medium text-slate-400 mt-1">Hệ thống chưa ghi nhận lịch trình trong kỳ này.</p>
+            <p className="mt-1 text-sm font-medium text-slate-400">
+              Hệ thống chưa ghi nhận lịch trình trong kỳ này.
+            </p>
           </div>
         ) : (
           schedules.map((schedule) => {
             // Ensure scheduledTime is a renderable string
-            const displayTime = schedule.scheduledTime instanceof Date
-              ? format(schedule.scheduledTime, "HH:mm")
-              : typeof schedule.scheduledTime === 'string'
-                ? schedule.scheduledTime
-                : "Chưa định giờ";
+            const displayTime =
+              schedule.scheduledTime instanceof Date
+                ? format(schedule.scheduledTime, "HH:mm")
+                : typeof schedule.scheduledTime === "string"
+                  ? schedule.scheduledTime
+                  : "Chưa định giờ";
 
             return (
-              <div key={schedule.id} className="flex items-center data-table-row group py-3 min-h-[72px]">
+              <div
+                key={schedule.id}
+                className="data-table-row group flex min-h-[72px] items-center py-3"
+              >
                 {/* Time & Date */}
-                <div className="w-[180px] px-4 shrink-0">
+                <div className="w-[180px] shrink-0 px-4">
                   <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-10 w-10 rounded flex flex-col items-center justify-center border shrink-0",
-                      schedule.status === "COMPLETED" ? "bg-emerald-50 border-emerald-100 text-emerald-600" :
-                        schedule.status === "IN_PROGRESS" ? "bg-blue-50 border-blue-100 text-blue-600" :
-                          "bg-white border-slate-200 text-slate-400 group-hover:border-primary/20 group-hover:bg-primary/5 transition-colors"
-                    )}>
-                      <span className="text-[10px] font-black uppercase leading-none">{format(new Date(schedule.scheduledDate), "MMM", { locale: vi })}</span>
-                      <span className="text-lg font-black leading-none mt-0.5">{format(new Date(schedule.scheduledDate), "dd")}</span>
+                    <div
+                      className={cn(
+                        "flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded border",
+                        schedule.status === "COMPLETED"
+                          ? "border-emerald-100 bg-emerald-50 text-emerald-600"
+                          : schedule.status === "IN_PROGRESS"
+                            ? "border-blue-100 bg-blue-50 text-blue-600"
+                            : "group-hover:border-primary/20 group-hover:bg-primary/5 border-slate-200 bg-white text-slate-400 transition-colors"
+                      )}
+                    >
+                      <span className="text-[10px] leading-none font-black uppercase">
+                        {format(new Date(schedule.scheduledDate), "MMM", { locale: vi })}
+                      </span>
+                      <span className="mt-0.5 text-lg leading-none font-black">
+                        {format(new Date(schedule.scheduledDate), "dd")}
+                      </span>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-bold text-slate-900 truncate">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-xs font-bold text-slate-900">
                         {format(new Date(schedule.scheduledDate), "EEEE", { locale: vi })}
                       </span>
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                      <span className="text-muted-foreground text-[10px] font-bold tracking-tight uppercase">
                         {displayTime}
                       </span>
                     </div>
@@ -125,16 +147,16 @@ export function CareScheduleList({
                 </div>
 
                 {/* Customer & Address */}
-                <div className="flex-1 px-4 min-w-0">
+                <div className="min-w-0 flex-1 px-4">
                   <Link
                     href={`/customers/${schedule.customer.id}`}
-                    className="text-xs font-bold text-slate-900 hover:text-primary transition-colors block truncate"
+                    className="hover:text-primary block truncate text-xs font-bold text-slate-900 transition-colors"
                   >
                     {schedule.customer.companyName}
                   </Link>
-                  <div className="flex items-start gap-1.5 mt-0.5">
-                    <MapPin className="h-2.5 w-2.5 text-slate-400 mt-0.5 shrink-0" />
-                    <span className="text-[10px] font-bold text-muted-foreground tracking-tight line-clamp-1">
+                  <div className="mt-0.5 flex items-start gap-1.5">
+                    <MapPin className="mt-0.5 h-2.5 w-2.5 shrink-0 text-slate-400" aria-hidden="true" />
+                    <span className="text-muted-foreground line-clamp-1 text-[10px] font-bold tracking-tight">
                       {schedule.customer.address}
                       {schedule.customer.district && `, ${schedule.customer.district}`}
                     </span>
@@ -142,24 +164,34 @@ export function CareScheduleList({
                 </div>
 
                 {/* Staff & Status */}
-                <div className="w-40 px-4 shrink-0">
+                <div className="w-40 shrink-0 px-4">
                   <div className="flex flex-col gap-1.5">
-                    <div className={cn(
-                      "status-badge scale-90 origin-left",
-                      schedule.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                        schedule.status === "IN_PROGRESS" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          schedule.status === "SCHEDULED" ? "bg-slate-50 text-slate-600 border-slate-200" :
-                            "bg-rose-50 text-rose-700 border-rose-200"
-                    )}>
-                      {schedule.status === "COMPLETED" ? "Hoàn thành" :
-                        schedule.status === "IN_PROGRESS" ? "Đang thực hiện" :
-                          schedule.status === "SCHEDULED" ? "Đã lên lịch" : "Đã hủy"}
+                    <div
+                      className={cn(
+                        "status-badge origin-left scale-90",
+                        schedule.status === "COMPLETED"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : schedule.status === "IN_PROGRESS"
+                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            : schedule.status === "SCHEDULED"
+                              ? "border-slate-200 bg-slate-50 text-slate-600"
+                              : "border-rose-200 bg-rose-50 text-rose-700"
+                      )}
+                    >
+                      {schedule.status === "COMPLETED"
+                        ? "Hoàn thành"
+                        : schedule.status === "IN_PROGRESS"
+                          ? "Đang thực hiện"
+                          : schedule.status === "SCHEDULED"
+                            ? "Đã lên lịch"
+                            : "Đã hủy"}
                     </div>
                     {schedule.staff && (
                       <div className="flex items-center gap-1.5">
-                        <User className="h-2.5 w-2.5 text-slate-400" />
-                        <span className="text-[10px] font-bold text-slate-600 truncate">
-                          {schedule.staff.name || (schedule.staff.email ? schedule.staff.email.split('@')[0] : "N/A")}
+                        <User className="h-2.5 w-2.5 text-slate-400" aria-hidden="true" />
+                        <span className="truncate text-[10px] font-bold text-slate-600">
+                          {schedule.staff.name ||
+                            (schedule.staff.email ? schedule.staff.email.split("@")[0] : "N/A")}
                         </span>
                       </div>
                     )}
@@ -167,27 +199,29 @@ export function CareScheduleList({
                 </div>
 
                 {/* Notes & Check-in Info */}
-                <div className="w-48 px-4 shrink-0">
+                <div className="w-48 shrink-0 px-4">
                   <div className="flex flex-col">
                     {schedule.notes ? (
-                      <p className="text-[10px] font-medium text-slate-500 italic line-clamp-1 mb-1">
+                      <p className="mb-1 line-clamp-1 text-[10px] font-medium text-slate-500 italic">
                         "{schedule.notes}"
                       </p>
                     ) : (
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter mb-1">Không có ghi chú</span>
+                      <span className="mb-1 text-[10px] font-bold tracking-tighter text-slate-300 uppercase">
+                        Không có ghi chú
+                      </span>
                     )}
                     <div className="flex items-center gap-3">
                       {schedule.checkInTime && (
                         <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                          <Clock className="h-2.5 w-2.5" />
+                          <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                           <span>{format(new Date(schedule.checkInTime), "HH:mm")}</span>
                         </div>
                       )}
                       {schedule.checkOutTime && (
                         <>
-                          <ChevronRight className="h-2.5 w-2.5 text-slate-300" />
+                          <ChevronRight className="h-2.5 w-2.5 text-slate-300" aria-hidden="true" />
                           <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                            <Clock className="h-2.5 w-2.5" />
+                            <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                             <span>{format(new Date(schedule.checkOutTime), "HH:mm")}</span>
                           </div>
                         </>
@@ -197,44 +231,61 @@ export function CareScheduleList({
                 </div>
 
                 {/* Actions */}
-                <div className="w-12 px-4 shrink-0 flex justify-end">
+                <div className="flex w-12 shrink-0 justify-end px-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary transition-colors">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:text-primary h-8 w-8 text-slate-400 transition-colors"
+                        aria-label="Tùy chọn"
+                      >
+                        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem asChild className="text-xs font-bold font-sans uppercase tracking-tight py-2.5">
+                      <DropdownMenuItem
+                        asChild
+                        className="py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+                      >
                         <Link href={`/care/${schedule.id}`}>
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
                           Chi tiết lịch trình
                         </Link>
                       </DropdownMenuItem>
                       {schedule.status === "SCHEDULED" && onCheckIn && (
-                        <DropdownMenuItem onClick={() => onCheckIn(schedule.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-primary">
-                          <Play className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem
+                          onClick={() => onCheckIn(schedule.id)}
+                          className="text-primary py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+                        >
+                          <Play className="mr-2 h-4 w-4" aria-hidden="true" />
                           Bắt đầu làm việc
                         </DropdownMenuItem>
                       )}
                       {schedule.status === "IN_PROGRESS" && onComplete && (
-                        <DropdownMenuItem onClick={() => onComplete(schedule.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-emerald-600">
-                          <CheckCircle className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem
+                          onClick={() => onComplete(schedule.id)}
+                          className="py-2.5 font-sans text-xs font-bold tracking-tight text-emerald-600 uppercase"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Hoàn tất dịch vụ
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem asChild className="text-xs font-bold font-sans uppercase tracking-tight py-2.5">
+                      <DropdownMenuItem
+                        asChild
+                        className="py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+                      >
                         <Link href={`/care/${schedule.id}/complete`}>
-                          <CheckCircle className="mr-2 h-4 w-4" />
+                          <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Nhập báo cáo
                         </Link>
                       </DropdownMenuItem>
                       {schedule.status === "SCHEDULED" && onSkip && (
                         <DropdownMenuItem
                           onClick={() => onSkip(schedule.id)}
-                          className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-rose-600 focus:text-rose-600"
+                          className="py-2.5 font-sans text-xs font-bold tracking-tight text-rose-600 uppercase focus:text-rose-600"
                         >
-                          <XCircle className="mr-2 h-4 w-4" />
+                          <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Hủy lịch trình
                         </DropdownMenuItem>
                       )}

@@ -74,25 +74,23 @@ export function FileUpload({ onFileSelect, isLoading, error }: FileUploadProps) 
     >
       {selectedFile ? (
         <div className="flex items-center justify-center gap-4">
-          <FileSpreadsheet className="h-10 w-10 text-green-600" />
+          <FileSpreadsheet className="h-10 w-10 text-green-600" aria-hidden="true" />
           <div className="text-left">
             <p className="font-medium">{selectedFile.name}</p>
             <p className="text-muted-foreground text-sm">
               {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </p>
           </div>
-          <Button variant="ghost" size="icon" onClick={clearFile}>
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={clearFile} aria-label="Xóa file">
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ) : (
         <>
-          <Upload className="text-muted-foreground mx-auto h-12 w-12" />
+          <Upload className="text-muted-foreground mx-auto h-12 w-12" aria-hidden="true" />
           <p className="mt-4 text-lg font-medium">Kéo thả file Excel vào đây</p>
           <p className="text-muted-foreground text-sm">hoặc click để chọn file</p>
-          <p className="text-muted-foreground mt-2 text-xs">
-            Hỗ trợ: .xlsx, .xls (tối đa 10MB)
-          </p>
+          <p className="text-muted-foreground mt-2 text-xs">Hỗ trợ: .xlsx, .xls (tối đa 10MB)</p>
           <input
             type="file"
             accept=".xlsx,.xls"
@@ -105,7 +103,7 @@ export function FileUpload({ onFileSelect, isLoading, error }: FileUploadProps) 
 
       {error && (
         <div className="text-destructive mt-4 flex items-center justify-center gap-2">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4" aria-hidden="true" />
           <span className="text-sm">{error}</span>
         </div>
       )}

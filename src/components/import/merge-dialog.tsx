@@ -42,9 +42,7 @@ export function MergeDialog({ row, onMerge, onSkip, onClose }: MergeDialogProps)
           {/* New Record */}
           <Card className="flex-1 border-blue-200 bg-blue-50">
             <CardContent className="p-4">
-              <p className="mb-2 text-xs font-medium text-blue-600">
-                RECORD MỚI (Excel)
-              </p>
+              <p className="mb-2 text-xs font-medium text-blue-600">RECORD MỚI (Excel)</p>
               <p className="font-medium">{String(row.normalizedData.companyName)}</p>
               <p className="text-muted-foreground text-sm">
                 {String(row.normalizedData.address || "-")}
@@ -55,14 +53,12 @@ export function MergeDialog({ row, onMerge, onSkip, onClose }: MergeDialogProps)
             </CardContent>
           </Card>
 
-          <ArrowRight className="text-muted-foreground h-6 w-6" />
+          <ArrowRight className="text-muted-foreground h-6 w-6" aria-hidden="true" />
 
           {/* Existing Record */}
           <Card className="flex-1 border-green-200 bg-green-50">
             <CardContent className="p-4">
-              <p className="mb-2 text-xs font-medium text-green-600">
-                RECORD CŨ (Database)
-              </p>
+              <p className="mb-2 text-xs font-medium text-green-600">RECORD CŨ (Database)</p>
               <p className="font-medium">{duplicate.matchName}</p>
               <p className="text-muted-foreground text-sm">ID: {duplicate.matchId}</p>
               <p className="text-sm text-green-600">
@@ -89,11 +85,11 @@ export function MergeDialog({ row, onMerge, onSkip, onClose }: MergeDialogProps)
             Đóng
           </Button>
           <Button variant="destructive" onClick={onSkip}>
-            <X className="mr-1 h-4 w-4" />
+            <X className="mr-1 h-4 w-4" aria-hidden="true" />
             Bỏ qua record mới
           </Button>
           <Button onClick={onMerge}>
-            <GitMerge className="mr-1 h-4 w-4" />
+            <GitMerge className="mr-1 h-4 w-4" aria-hidden="true" />
             Merge vào record cũ
           </Button>
         </DialogFooter>

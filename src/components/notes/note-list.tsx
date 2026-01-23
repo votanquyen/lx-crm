@@ -63,13 +63,13 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editNote, setEditNote] = useState<typeof notes[0] | null>(null);
+  const [editNote, setEditNote] = useState<(typeof notes)[0] | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if any notes are pending AI analysis
-  const hasPendingAI = notes.some(n => !n.aiAnalysis && n.status === "OPEN");
+  const hasPendingAI = notes.some((n) => !n.aiAnalysis && n.status === "OPEN");
 
   const refreshNotes = useCallback(() => {
     startTransition(async () => {
@@ -103,7 +103,12 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
     };
   }, [hasPendingAI, refreshNotes]);
 
-  const handleSubmit = async (data: { id?: string; content: string; priority: number; category: string }) => {
+  const handleSubmit = async (data: {
+    id?: string;
+    content: string;
+    priority: number;
+    category: string;
+  }) => {
     try {
       if (data.id) {
         await updateStickyNote({
@@ -194,7 +199,9 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -205,15 +212,22 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
           </SelectTrigger>
           <SelectContent>
             {CATEGORY_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <div className="flex-1" />
 
-        <Button onClick={() => { setEditNote(null); setDialogOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button
+          onClick={() => {
+            setEditNote(null);
+            setDialogOpen(true);
+          }}
+        >
+          <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           Thêm ghi chú
         </Button>
       </div>
@@ -221,15 +235,13 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
       {/* Loading indicator */}
       {isPending && (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" aria-hidden="true" />
         </div>
       )}
 
       {/* Notes list */}
       {!isPending && notes.length === 0 && (
-        <div className="py-8 text-center text-muted-foreground">
-          Chưa có ghi chú nào
-        </div>
+        <div className="text-muted-foreground py-8 text-center">Chưa có ghi chú nào</div>
       )}
 
       {!isPending && notes.length > 0 && (
@@ -240,7 +252,10 @@ export function NoteList({ customerId, initialNotes }: NoteListProps) {
               note={note}
               onResolve={handleResolve}
               onReopen={handleReopen}
-              onEdit={(n) => { setEditNote(n as typeof notes[0]); setDialogOpen(true); }}
+              onEdit={(n) => {
+                setEditNote(n as (typeof notes)[0]);
+                setDialogOpen(true);
+              }}
               onDelete={(id) => setDeleteId(id)}
             />
           ))}

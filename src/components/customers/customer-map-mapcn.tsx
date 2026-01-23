@@ -33,11 +33,8 @@ export function CustomerMapMapcn({ geojsonUrl, className }: CustomerMapMapcnProp
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(null);
 
   return (
-    <div className={`relative h-[600px] w-full rounded-lg overflow-hidden ${className ?? ""}`}>
-      <Map
-        center={DEFAULT_CENTER}
-        zoom={11}
-      >
+    <div className={`relative h-[600px] w-full overflow-hidden rounded-lg ${className ?? ""}`}>
+      <Map center={DEFAULT_CENTER} zoom={11}>
         <MapClusterLayer
           data={geojsonUrl}
           clusterRadius={50}
@@ -61,18 +58,11 @@ export function CustomerMapMapcn({ geojsonUrl, className }: CustomerMapMapcnProp
             closeOnClick={false}
             className="p-0"
           >
-            <CustomerPopupContent
-              {...selectedPoint.properties}
-            />
+            <CustomerPopupContent {...selectedPoint.properties} />
           </MapPopup>
         )}
 
-        <MapControls
-          position="bottom-right"
-          showZoom
-          showLocate
-          showFullscreen
-        />
+        <MapControls position="bottom-right" showZoom showLocate showFullscreen />
       </Map>
     </div>
   );

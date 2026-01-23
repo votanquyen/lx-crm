@@ -1,15 +1,8 @@
+import { useMemo } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteList } from "@/components/notes";
 import { CustomerBusinessCard } from "./customer-business-card";
@@ -70,47 +63,59 @@ interface CustomerDetailProps {
 }
 
 export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDetailProps) {
+  // Compute financial summary from invoices (memoized for performance)
+  const financials = useMemo(
+    () => ({
+      totalDebt: customer.invoices
+        .filter((i) => ["SENT", "PARTIAL", "OVERDUE"].includes(i.status))
+        .reduce((sum, i) => sum + Number(i.outstandingAmount), 0),
+      monthlyValue: 0, // Would come from contracts if available
+      activeContracts: customer._count.contracts,
+      overdueInvoices: customer.invoices.filter(
+        (i) =>
+          i.status === "OVERDUE" ||
+          (i.status !== "PAID" && i.status !== "CANCELLED" && new Date(i.dueDate) < new Date())
+      ).length,
+    }),
+    [customer.invoices, customer._count.contracts]
+  );
 
-  // Compute financial summary from invoices
-  const financials = {
-    totalDebt: customer.invoices
-      .filter((i) => ["SENT", "PARTIAL", "OVERDUE"].includes(i.status))
-      .reduce((sum, i) => sum + Number(i.outstandingAmount), 0),
-    monthlyValue: 0, // Would come from contracts if available
-    activeContracts: customer._count.contracts,
-    overdueInvoices: customer.invoices.filter(
-      (i) => i.status === "OVERDUE" || (i.status !== "PAID" && i.status !== "CANCELLED" && new Date(i.dueDate) < new Date())
-    ).length,
-  };
-
-  // Merge events for Timeline
-  const timelineEvents = [
-    ...customer.invoices.map((inv) => ({
-      id: `inv-${inv.id}`,
-      type: "INVOICE" as const,
-      date: new Date(inv.issueDate),
-      title: `Hóa đơn #${inv.invoiceNumber}`,
-      description: "Hóa đơn đã được tạo",
-      amount: Number(inv.totalAmount),
-      status: inv.status,
-    })),
-    ...notes.map((note) => ({
-      id: `note-${note.id}`,
-      type: "NOTE" as const,
-      date: new Date(note.createdAt),
-      title: "Ghi chú mới",
-      description: note.content,
-      user: { name: note.createdBy?.name || "Hệ thống", image: note.createdBy?.image },
-    })),
-  ];
+  // Merge events for Timeline (memoized for performance)
+  const timelineEvents = useMemo(
+    () => [
+      ...customer.invoices.map((inv) => ({
+        id: `inv-${inv.id}`,
+        type: "INVOICE" as const,
+        date: new Date(inv.issueDate),
+        title: `Hóa đơn #${inv.invoiceNumber}`,
+        description: "Hóa đơn đã được tạo",
+        amount: Number(inv.totalAmount),
+        status: inv.status,
+      })),
+      ...notes.map((note) => ({
+        id: `note-${note.id}`,
+        type: "NOTE" as const,
+        date: new Date(note.createdAt),
+        title: "Ghi chú mới",
+        description: note.content,
+        user: { name: note.createdBy?.name || "Hệ thống", image: note.createdBy?.image },
+      })),
+    ],
+    [customer.invoices, notes]
+  );
 
   return (
     <div className="space-y-6">
       {/* Back Navigation */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild className="h-8 px-2 text-muted-foreground hover:text-slate-900">
+        <Button
+          variant="ghost"
+          size="sm"
+          asChild
+          className="text-muted-foreground h-8 px-2 hover:text-slate-900"
+        >
           <Link href="/customers">
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
             Quay lại danh sách
           </Link>
         </Button>
@@ -133,29 +138,25 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
       <Tabs defaultValue={defaultTab || "overview"} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-          <TabsTrigger value="finance">
-            Tài chính
-          </TabsTrigger>
-          <TabsTrigger value="operations">
-            Vận hành ({customer._count.customerPlants})
-          </TabsTrigger>
-          <TabsTrigger value="notes">
-            Ghi chú ({customer._count.stickyNotes})
-          </TabsTrigger>
+          <TabsTrigger value="finance">Tài chính</TabsTrigger>
+          <TabsTrigger value="operations">Vận hành ({customer._count.customerPlants})</TabsTrigger>
+          <TabsTrigger value="notes">Ghi chú ({customer._count.stickyNotes})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Main Column: Timeline */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6 lg:col-span-2">
               {/* AI Summary Card */}
               {customer.aiNotes && (
-                <Card className="bg-slate-50 border-blue-100">
+                <Card className="border-blue-100 bg-slate-50">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-bold text-slate-700">AI Phân tích</CardTitle>
+                    <CardTitle className="text-base font-bold text-slate-700">
+                      AI Phân tích
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-slate-600 leading-relaxed">{customer.aiNotes}</p>
+                    <p className="text-sm leading-relaxed text-slate-600">{customer.aiNotes}</p>
                   </CardContent>
                 </Card>
               )}
@@ -195,9 +196,7 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
           <Card>
             <CardHeader>
               <CardTitle>Ghi chú</CardTitle>
-              <CardDescription>
-                Các ghi chú về khách hàng (có phân tích AI)
-              </CardDescription>
+              <CardDescription>Các ghi chú về khách hàng (có phân tích AI)</CardDescription>
             </CardHeader>
             <CardContent>
               <NoteList customerId={customer.id} initialNotes={notes} />
@@ -208,5 +207,3 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
     </div>
   );
 }
-
-

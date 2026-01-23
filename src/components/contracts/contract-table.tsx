@@ -12,7 +12,7 @@ import {
   Building2,
   Calendar,
   ArrowRight,
-  Package
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,51 +73,65 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
   return (
     <div className="w-full">
       {/* Table Header */}
-      <div className="sticky top-0 z-10 bg-slate-50/80 backdrop-blur-sm border-b">
-        <div className="flex items-center h-10">
-          <div className="flex-1 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Hợp đồng / Khách hàng</div>
-          <div className="w-40 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Trạng thái</div>
-          <div className="w-56 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0">Thời hạn hiệu lực</div>
-          <div className="w-40 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-right">Giá trị/tháng</div>
-          <div className="w-24 px-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 text-center">Số cây</div>
-          <div className="w-12 px-4 shrink-0"></div>
+      <div className="sticky top-0 z-10 border-b bg-slate-50/80 backdrop-blur-sm">
+        <div className="flex h-10 items-center">
+          <div className="text-muted-foreground flex-1 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Hợp đồng / Khách hàng
+          </div>
+          <div className="text-muted-foreground w-40 shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Trạng thái
+          </div>
+          <div className="text-muted-foreground w-56 shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Thời hạn hiệu lực
+          </div>
+          <div className="text-muted-foreground w-40 shrink-0 px-4 text-right text-[10px] font-bold tracking-widest uppercase">
+            Giá trị/tháng
+          </div>
+          <div className="text-muted-foreground w-24 shrink-0 px-4 text-center text-[10px] font-bold tracking-widest uppercase">
+            Số cây
+          </div>
+          <div className="w-12 shrink-0 px-4"></div>
         </div>
       </div>
 
-      <div className="divide-y divide-border/50">
+      <div className="divide-border/50 divide-y">
         {contracts.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">
-            <FileText className="mx-auto h-8 w-8 mb-2 opacity-50" />
+          <div className="text-muted-foreground p-12 text-center">
+            <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" aria-hidden="true" />
             <p className="font-medium">Chưa có hợp đồng nào</p>
           </div>
         ) : (
           contracts.map((contract) => {
             const daysRemaining = getDaysRemaining(contract.endDate);
-            const isExpiringSoon = contract.status === "ACTIVE" && daysRemaining <= 30 && daysRemaining > 0;
+            const isExpiringSoon =
+              contract.status === "ACTIVE" && daysRemaining <= 30 && daysRemaining > 0;
             const isExpired = contract.status === "EXPIRED" || daysRemaining <= 0;
 
             return (
-              <div key={contract.id} className="flex items-center data-table-row group py-3 min-h-[64px]">
+              <div
+                key={contract.id}
+                className="data-table-row group flex min-h-[64px] items-center py-3"
+              >
                 {/* ID & Customer */}
-                <div className="flex-1 px-4 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                <div className="min-w-0 flex-1 px-4">
+                  <div className="mb-1 flex items-center gap-2">
                     <Link
                       href={`/contracts/${contract.id}`}
-                      className="text-xs font-bold text-slate-900 hover:text-primary transition-colors truncate"
+                      className="hover:text-primary truncate text-xs font-bold text-slate-900 transition-colors"
                     >
                       {contract.contractNumber}
                     </Link>
                     {isExpiringSoon && (
-                      <span className="flex items-center bg-amber-50 text-[9px] font-black text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 animate-pulse">
+                      <span className="flex animate-pulse items-center rounded border border-amber-100 bg-amber-50 px-1.5 py-0.5 text-[9px] font-black text-amber-600">
                         SẮP HẾT HẠN
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Building2 className="h-2.5 w-2.5 text-slate-400" />
+                    <Building2 className="h-2.5 w-2.5 text-slate-400" aria-hidden="true" />
                     <Link
                       href={`/customers/${contract.customer.id}`}
-                      className="text-[10px] font-bold text-muted-foreground hover:text-slate-900 truncate"
+                      className="text-muted-foreground truncate text-[10px] font-bold hover:text-slate-900"
                     >
                       {contract.customer.companyName} • {contract.customer.code}
                     </Link>
@@ -125,81 +139,115 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
                 </div>
 
                 {/* Status */}
-                <div className="w-40 px-4 shrink-0">
-                  <div className={cn(
-                    "status-badge scale-90 origin-left",
-                    contract.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                      contract.status === "DRAFT" ? "bg-slate-50 text-slate-600 border-slate-200" :
-                        isExpired ? "bg-rose-50 text-rose-700 border-rose-200" :
-                          "bg-blue-50 text-blue-700 border-blue-200"
-                  )}>
-                    {contract.status === "ACTIVE" ? "Hoạt động" :
-                      contract.status === "DRAFT" ? "Bản nháp" :
-                        contract.status === "EXPIRED" ? "Hết hạn" :
-                          contract.status === "SIGNED" ? "Đã ký" : "Đang xử lý"}
+                <div className="w-40 shrink-0 px-4">
+                  <div
+                    className={cn(
+                      "status-badge origin-left scale-90",
+                      contract.status === "ACTIVE"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : contract.status === "DRAFT"
+                          ? "border-slate-200 bg-slate-50 text-slate-600"
+                          : isExpired
+                            ? "border-rose-200 bg-rose-50 text-rose-700"
+                            : "border-blue-200 bg-blue-50 text-blue-700"
+                    )}
+                  >
+                    {contract.status === "ACTIVE"
+                      ? "Hoạt động"
+                      : contract.status === "DRAFT"
+                        ? "Bản nháp"
+                        : contract.status === "EXPIRED"
+                          ? "Hết hạn"
+                          : contract.status === "SIGNED"
+                            ? "Đã ký"
+                            : "Đang xử lý"}
                   </div>
                 </div>
 
                 {/* Validity */}
-                <div className="w-56 px-4 shrink-0">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500 mb-1">
-                    <Calendar className="h-2.5 w-2.5" />
+                <div className="w-56 shrink-0 px-4">
+                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                    <Calendar className="h-2.5 w-2.5" aria-hidden="true" />
                     {format(new Date(contract.startDate), "dd/MM/yyyy")}
-                    <ArrowRight className="h-2.5 w-2.5 text-slate-300" />
-                    <span className={cn(isExpiringSoon ? "text-amber-600 font-black" : "")}>
+                    <ArrowRight className="h-2.5 w-2.5 text-slate-300" aria-hidden="true" />
+                    <span className={cn(isExpiringSoon ? "font-black text-amber-600" : "")}>
                       {format(new Date(contract.endDate), "dd/MM/yyyy")}
                     </span>
                   </div>
-                  <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
                     <div
                       className={cn(
-                        "h-full bg-primary/20 transition-all",
+                        "bg-primary/20 h-full transition-all",
                         isExpiringSoon ? "bg-amber-400" : isExpired ? "bg-rose-400" : "bg-primary"
                       )}
-                      style={{ width: `${Math.max(0, Math.min(100, (365 - daysRemaining) / 3.65))}%` }}
+                      style={{
+                        width: `${Math.max(0, Math.min(100, (365 - daysRemaining) / 3.65))}%`,
+                      }}
                     />
                   </div>
                 </div>
 
                 {/* Amount */}
-                <div className="w-40 px-4 shrink-0 text-right">
-                  <p className="text-sm font-black text-slate-900">{formatCurrency(contract.monthlyAmount)}</p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">/ Tháng</p>
+                <div className="w-40 shrink-0 px-4 text-right">
+                  <p className="text-sm font-black text-slate-900">
+                    {formatCurrency(contract.monthlyAmount)}
+                  </p>
+                  <p className="text-[9px] font-bold tracking-tighter text-slate-400 uppercase">
+                    / Tháng
+                  </p>
                 </div>
 
                 {/* Plants */}
-                <div className="w-24 px-4 shrink-0 flex flex-col items-center">
+                <div className="flex w-24 shrink-0 flex-col items-center px-4">
                   <div className="flex items-center gap-1">
-                    <Package className="h-3 w-3 text-slate-400" />
-                    <span className="text-sm font-black text-slate-700">{getTotalPlants(contract.items)}</span>
+                    <Package className="h-3 w-3 text-slate-400" aria-hidden="true" />
+                    <span className="text-sm font-black text-slate-700">
+                      {getTotalPlants(contract.items)}
+                    </span>
                   </div>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Cây xanh</span>
+                  <span className="text-[9px] font-bold tracking-tighter text-slate-400 uppercase">
+                    Cây xanh
+                  </span>
                 </div>
 
                 {/* Actions */}
-                <div className="w-12 px-4 shrink-0 flex justify-end">
+                <div className="flex w-12 shrink-0 justify-end px-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary transition-colors">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:text-primary h-8 w-8 text-slate-400 transition-colors"
+                        aria-label="Tùy chọn"
+                      >
+                        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
-                      <DropdownMenuItem asChild className="text-xs font-bold font-sans uppercase tracking-tight py-2.5">
+                      <DropdownMenuItem
+                        asChild
+                        className="py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+                      >
                         <Link href={`/contracts/${contract.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
+                          <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
                           Xem chi tiết
                         </Link>
                       </DropdownMenuItem>
                       {["DRAFT", "PENDING"].includes(contract.status) && onActivate && (
-                        <DropdownMenuItem onClick={() => onActivate(contract.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-primary">
-                          <CheckCircle className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem
+                          onClick={() => onActivate(contract.id)}
+                          className="text-primary py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+                        >
+                          <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Kích hoạt hợp đồng
                         </DropdownMenuItem>
                       )}
                       {["ACTIVE", "EXPIRED"].includes(contract.status) && onRenew && (
-                        <DropdownMenuItem onClick={() => onRenew(contract.id)} className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-blue-600">
-                          <RefreshCw className="mr-2 h-4 w-4" />
+                        <DropdownMenuItem
+                          onClick={() => onRenew(contract.id)}
+                          className="py-2.5 font-sans text-xs font-bold tracking-tight text-blue-600 uppercase"
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
                           Gia hạn hiệu lực
                         </DropdownMenuItem>
                       )}
@@ -207,9 +255,9 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
                       {contract.status !== "CANCELLED" && onCancel && (
                         <DropdownMenuItem
                           onClick={() => onCancel(contract.id)}
-                          className="text-xs font-bold font-sans uppercase tracking-tight py-2.5 text-rose-600 focus:text-rose-600"
+                          className="py-2.5 font-sans text-xs font-bold tracking-tight text-rose-600 uppercase focus:text-rose-600"
                         >
-                          <XCircle className="mr-2 h-4 w-4" />
+                          <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Hủy hợp đồng
                         </DropdownMenuItem>
                       )}

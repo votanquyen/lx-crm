@@ -21,26 +21,27 @@ export function AIResponsePanel({ response, onDismiss }: AIResponsePanelProps) {
   const { matchedCustomer, customerContext, suggestions, entities, noMatchCompanies } = response;
 
   return (
-    <Card className="border-blue-200 bg-blue-50/50 p-4 relative">
+    <Card className="relative border-blue-200 bg-blue-50/50 p-4">
       <Button
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 h-6 w-6"
         onClick={onDismiss}
+        aria-label="Đóng"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </Button>
 
       <div className="space-y-3">
         {/* Matched Customer */}
         {matchedCustomer && (
           <div className="flex items-start gap-2">
-            <Building2 className="h-4 w-4 text-blue-600 mt-0.5" />
+            <Building2 className="mt-0.5 h-4 w-4 text-blue-600" aria-hidden="true" />
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <Link
                   href={`/customers/${matchedCustomer.id}`}
-                  className="font-medium text-sm hover:underline"
+                  className="text-sm font-medium hover:underline"
                 >
                   {matchedCustomer.companyName}
                 </Link>
@@ -50,11 +51,12 @@ export function AIResponsePanel({ response, onDismiss }: AIResponsePanelProps) {
               </div>
 
               {customerContext && (
-                <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                <ul className="text-muted-foreground mt-1 space-y-0.5 text-xs">
                   <li>• Hợp đồng đang hoạt động: {customerContext.activeContracts}</li>
                   {customerContext.overdueInvoices > 0 && (
                     <li className="text-red-600">
-                      • Hóa đơn quá hạn: {customerContext.overdueInvoices} ({formatCurrencyDecimal(customerContext.totalDebt)})
+                      • Hóa đơn quá hạn: {customerContext.overdueInvoices} (
+                      {formatCurrencyDecimal(customerContext.totalDebt)})
                     </li>
                   )}
                   {customerContext.recentNotes > 0 && (
@@ -75,8 +77,8 @@ export function AIResponsePanel({ response, onDismiss }: AIResponsePanelProps) {
 
         {/* Extracted dates */}
         {entities.dates.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
+          <div className="text-muted-foreground flex items-center gap-2 text-xs">
+            <Calendar className="h-3 w-3" aria-hidden="true" />
             Thời gian: {entities.dates.join(", ")}
           </div>
         )}
@@ -84,15 +86,15 @@ export function AIResponsePanel({ response, onDismiss }: AIResponsePanelProps) {
         {/* Suggestions */}
         {suggestions.length > 0 && (
           <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">Đề xuất:</p>
+            <p className="text-muted-foreground text-xs font-medium">Đề xuất:</p>
             <ul className="space-y-1">
               {suggestions.map((s, i) => (
                 <li key={i} className="flex items-center gap-2 text-sm">
                   <span className="text-amber-500">•</span>
                   {s.link ? (
-                    <Link href={s.link} className="hover:underline flex items-center gap-1">
+                    <Link href={s.link} className="flex items-center gap-1 hover:underline">
                       {s.action}
-                      <ChevronRight className="h-3 w-3" />
+                      <ChevronRight className="h-3 w-3" aria-hidden="true" />
                     </Link>
                   ) : (
                     <span>{s.action}</span>
