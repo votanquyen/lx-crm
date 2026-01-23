@@ -113,3 +113,26 @@ export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;
 export type InvoiceSearchParams = z.input<typeof invoiceSearchSchema>;
 
 export type PaymentInput = z.infer<typeof paymentSchema>;
+
+/**
+ * Link SmartVAS schema - for manually linking external invoice data
+ */
+export const linkSmartvasSchema = z.object({
+  invoiceId: z.string().cuid("ID hóa đơn không hợp lệ"),
+  smartvasInvoiceNumber: z.string().min(1, "Số hóa đơn bắt buộc").max(50),
+  smartvasSerialNumber: z.string().min(1, "Ký hiệu hóa đơn bắt buộc").max(50),
+  smartvasIssueDate: z.coerce.date(),
+  smartvasPdfUrl: z.string().url("URL PDF không hợp lệ").max(500).optional(),
+  smartvasXmlUrl: z.string().url("URL XML không hợp lệ").max(500).optional(),
+});
+
+/**
+ * Update payment date schema
+ */
+export const updatePaymentDateSchema = z.object({
+  invoiceId: z.string().cuid("ID hóa đơn không hợp lệ"),
+  paymentDate: z.coerce.date(),
+});
+
+export type LinkSmartvasInput = z.infer<typeof linkSmartvasSchema>;
+export type UpdatePaymentDateInput = z.infer<typeof updatePaymentDateSchema>;

@@ -40,10 +40,12 @@ export function formatCurrencyNumeric(value: DecimalLike): string {
  */
 export function formatCurrencyForExcel(amount: DecimalLike): string {
   const num = typeof amount === "object" ? Number(amount.toString()) : Number(amount);
-  return num.toLocaleString("vi-VN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).replace(/\u00A0/g, " "); // Remove nbsp
+  return num
+    .toLocaleString("vi-VN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+    .replace(/\u00A0/g, " "); // Remove nbsp
 }
 
 /**

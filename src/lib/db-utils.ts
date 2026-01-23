@@ -48,7 +48,10 @@ export function addDecimal(a: Decimal | number | string, b: Decimal | number | s
 /**
  * Subtract Decimal values safely
  */
-export function subtractDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+export function subtractDecimal(
+  a: Decimal | number | string,
+  b: Decimal | number | string
+): Decimal {
   const decimalA = a instanceof Decimal ? a : new Decimal(a);
   const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.minus(decimalB);
@@ -57,7 +60,10 @@ export function subtractDecimal(a: Decimal | number | string, b: Decimal | numbe
 /**
  * Multiply Decimal values safely
  */
-export function multiplyDecimal(a: Decimal | number | string, b: Decimal | number | string): Decimal {
+export function multiplyDecimal(
+  a: Decimal | number | string,
+  b: Decimal | number | string
+): Decimal {
   const decimalA = a instanceof Decimal ? a : new Decimal(a);
   const decimalB = b instanceof Decimal ? b : new Decimal(b);
   return decimalA.times(decimalB);

@@ -1,11 +1,4 @@
-import type {
-  Customer,
-  Invoice,
-  CareSchedule,
-  Payment,
-  Contract,
-  Prisma,
-} from "@prisma/client";
+import type { Customer, Invoice, CareSchedule, Payment, Contract, Prisma } from "@prisma/client";
 
 type Decimal = Prisma.Decimal;
 

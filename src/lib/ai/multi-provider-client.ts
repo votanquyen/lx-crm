@@ -88,9 +88,7 @@ const DEFAULT_CHAIN: string[] = ["qwen3", "deepseek", "llama4", "gemini"];
  */
 function getProviderChain(taskType?: TaskType): AIProvider[] {
   const chainKeys = taskType ? TASK_CHAINS[taskType] : DEFAULT_CHAIN;
-  return chainKeys
-    .map((key) => ALL_PROVIDERS[key])
-    .filter((p): p is AIProvider => p !== undefined);
+  return chainKeys.map((key) => ALL_PROVIDERS[key]).filter((p): p is AIProvider => p !== undefined);
 }
 
 /**
@@ -215,29 +213,22 @@ export async function callAI(prompt: string, taskType?: TaskType): Promise<strin
 /**
  * OpenRouter API (DeepSeek V3, Qwen 2.5)
  */
-async function callOpenRouter(
-  prompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const response = await fetchWithTimeout(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "Lộc Xanh CRM",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 2048,
-      }),
-    }
-  );
+async function callOpenRouter(prompt: string, model: string, apiKey: string): Promise<string> {
+  const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "Lộc Xanh CRM",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 2048,
+    }),
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -259,27 +250,20 @@ async function callOpenRouter(
 /**
  * Groq API (Llama 3.3 70B)
  */
-async function callGroq(
-  prompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const response = await fetchWithTimeout(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 2048,
-      }),
-    }
-  );
+async function callGroq(prompt: string, model: string, apiKey: string): Promise<string> {
+  const response = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 2048,
+    }),
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -345,8 +329,7 @@ export function extractJson<T>(text: string): T {
     return JSON.parse(text) as T;
   } catch {
     // Extract from markdown code block or raw JSON
-    const match =
-      text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/\{[\s\S]*\}/);
+    const match = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/\{[\s\S]*\}/);
     if (!match) {
       throw new Error("No JSON found in response");
     }

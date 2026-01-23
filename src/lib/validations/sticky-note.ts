@@ -19,21 +19,9 @@ export const noteCategoryEnum = z.enum([
   "PAYMENT",
 ]);
 
-export const noteStatusEnum = z.enum([
-  "OPEN",
-  "IN_PROGRESS",
-  "RESOLVED",
-  "CANCELLED",
-]);
+export const noteStatusEnum = z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CANCELLED"]);
 
-export const noteSourceEnum = z.enum([
-  "PHONE",
-  "EMAIL",
-  "TELEGRAM",
-  "CARE_VISIT",
-  "MANUAL",
-  "WEB",
-]);
+export const noteSourceEnum = z.enum(["PHONE", "EMAIL", "TELEGRAM", "CARE_VISIT", "MANUAL", "WEB"]);
 
 // ============================================================
 // CREATE STICKY NOTE
@@ -44,9 +32,11 @@ export const createStickyNoteSchema = z.object({
     message: "Vui lòng chọn khách hàng",
   }),
   title: z.string().optional(),
-  content: z.string({
-    message: "Vui lòng nhập nội dung ghi chú",
-  }).min(1, "Nội dung không được để trống"),
+  content: z
+    .string({
+      message: "Vui lòng nhập nội dung ghi chú",
+    })
+    .min(1, "Nội dung không được để trống"),
   category: noteCategoryEnum.default("GENERAL"),
   priority: z.coerce
     .number()
@@ -106,9 +96,11 @@ export type UpdateStickyNoteInput = z.infer<typeof updateStickyNoteSchema>;
 // ============================================================
 
 export const resolveStickyNoteSchema = z.object({
-  resolution: z.string({
-    message: "Vui lòng nhập giải pháp",
-  }).min(1, "Giải pháp không được để trống"),
+  resolution: z
+    .string({
+      message: "Vui lòng nhập giải pháp",
+    })
+    .min(1, "Giải pháp không được để trống"),
 });
 
 export type ResolveStickyNoteInput = z.infer<typeof resolveStickyNoteSchema>;
@@ -188,22 +180,21 @@ export type StickyNoteSearchInput = z.infer<typeof stickyNoteSearchSchema>;
 // LINK NOTE TO RECORD
 // ============================================================
 
-export const linkNoteSchema = z.object({
-  linkedCareId: z.string().optional(),
-  linkedExchangeId: z.string().optional(),
-  linkedInvoiceId: z.string().optional(),
-  linkedQuotationId: z.string().optional(),
-}).refine(
-  (data) => {
-    // At least one link must be provided
-    return Boolean(
-      data.linkedCareId ||
-      data.linkedExchangeId ||
-      data.linkedInvoiceId ||
-      data.linkedQuotationId
-    );
-  },
-  { message: "Vui lòng chọn ít nhất một liên kết" }
-);
+export const linkNoteSchema = z
+  .object({
+    linkedCareId: z.string().optional(),
+    linkedExchangeId: z.string().optional(),
+    linkedInvoiceId: z.string().optional(),
+    linkedQuotationId: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // At least one link must be provided
+      return Boolean(
+        data.linkedCareId || data.linkedExchangeId || data.linkedInvoiceId || data.linkedQuotationId
+      );
+    },
+    { message: "Vui lòng chọn ít nhất một liên kết" }
+  );
 
 export type LinkNoteInput = z.infer<typeof linkNoteSchema>;

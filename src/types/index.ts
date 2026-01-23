@@ -32,7 +32,6 @@ export {
   ExchangeStatus,
   ExchangePriority,
   NoteStatus,
-  
   NoteCategory,
   PlantStatus,
 } from "@prisma/client";

@@ -3,10 +3,7 @@
  * Generate CSV exports for various analytics reports
  */
 import { formatCurrencyForExcel } from "@/lib/format";
-import {
-  arrayToCSV,
-  formatDateForCSV,
-} from "./csv-utils";
+import { arrayToCSV, formatDateForCSV } from "./csv-utils";
 
 /**
  * Monthly Revenue CSV Export
@@ -106,9 +103,7 @@ export interface OverdueInvoiceData {
   daysOverdue: number;
 }
 
-export function generateOverdueInvoicesCSV(
-  data: OverdueInvoiceData[]
-): string {
+export function generateOverdueInvoicesCSV(data: OverdueInvoiceData[]): string {
   const formattedData = data.map((invoice) => ({
     ...invoice,
     issueDate: formatDateForCSV(invoice.issueDate),

@@ -19,7 +19,9 @@ function getEncryptionKey(): Buffer {
     if (process.env.NODE_ENV === "production") {
       throw new Error("SETTINGS_ENCRYPTION_KEY must be set in production");
     }
-    console.warn("[crypto] SETTINGS_ENCRYPTION_KEY not set, using default (NOT SECURE FOR PRODUCTION)");
+    console.warn(
+      "[crypto] SETTINGS_ENCRYPTION_KEY not set, using default (NOT SECURE FOR PRODUCTION)"
+    );
     // Default key for development only - 32 bytes
     return Buffer.from("01234567890123456789012345678901");
   }

@@ -37,9 +37,7 @@ const PLANT_CODES: Record<string, string> = {
 /**
  * Parse plant positions from natural text
  */
-export async function parsePlantPositions(
-  entries: string[]
-): Promise<ParsedPlant[]> {
+export async function parsePlantPositions(entries: string[]): Promise<ParsedPlant[]> {
   if (entries.length === 0) return [];
 
   const prompt = `Phân tích ${entries.length} ghi chú vị trí cây thuê.

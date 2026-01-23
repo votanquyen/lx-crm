@@ -7,7 +7,15 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
 /** Supported entity types for audit logging */
-export type EntityType = "Customer" | "Contract" | "Invoice" | "Payment" | "CareSchedule" | "User" | "PlantType" | "Setting";
+export type EntityType =
+  | "Customer"
+  | "Contract"
+  | "Invoice"
+  | "Payment"
+  | "CareSchedule"
+  | "User"
+  | "PlantType"
+  | "Setting";
 
 /** Supported action types for audit logging */
 export type ActionType = "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "EXPORT" | "IMPORT";
@@ -33,9 +41,8 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
 
   // Extract IP address from headers (handles proxied requests)
   const forwardedFor = headersList.get("x-forwarded-for");
-  const ipAddress = forwardedFor?.split(",")[0]?.trim()
-    ?? headersList.get("x-real-ip")
-    ?? "unknown";
+  const ipAddress =
+    forwardedFor?.split(",")[0]?.trim() ?? headersList.get("x-real-ip") ?? "unknown";
 
   // Extract user agent
   const userAgent = headersList.get("user-agent") ?? "unknown";
@@ -47,9 +54,9 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
       entityType: params.entityType,
       entityId: params.entityId,
       description: params.description ?? null,
-      oldValues: params.oldValues as Prisma.JsonObject ?? null,
-      newValues: params.newValues as Prisma.JsonObject ?? null,
-      metadata: params.metadata as Prisma.JsonObject ?? null,
+      oldValues: (params.oldValues as Prisma.JsonObject) ?? null,
+      newValues: (params.newValues as Prisma.JsonObject) ?? null,
+      metadata: (params.metadata as Prisma.JsonObject) ?? null,
       ipAddress,
       userAgent,
     },
@@ -86,7 +93,15 @@ export const logCustomerAction = (
   entityId: string,
   oldValues?: object,
   newValues?: object
-) => logEntityAction(userId, action, "Customer", entityId, oldValues as Record<string, unknown>, newValues as Record<string, unknown>);
+) =>
+  logEntityAction(
+    userId,
+    action,
+    "Customer",
+    entityId,
+    oldValues as Record<string, unknown>,
+    newValues as Record<string, unknown>
+  );
 
 /** @deprecated Use logEntityAction(userId, action, "Contract", ...) instead */
 export const logContractAction = (
@@ -95,7 +110,15 @@ export const logContractAction = (
   entityId: string,
   oldValues?: object,
   newValues?: object
-) => logEntityAction(userId, action, "Contract", entityId, oldValues as Record<string, unknown>, newValues as Record<string, unknown>);
+) =>
+  logEntityAction(
+    userId,
+    action,
+    "Contract",
+    entityId,
+    oldValues as Record<string, unknown>,
+    newValues as Record<string, unknown>
+  );
 
 /** @deprecated Use logEntityAction(userId, action, "Invoice", ...) instead */
 export const logInvoiceAction = (
@@ -104,5 +127,12 @@ export const logInvoiceAction = (
   entityId: string,
   oldValues?: object,
   newValues?: object
-) => logEntityAction(userId, action, "Invoice", entityId, oldValues as Record<string, unknown>, newValues as Record<string, unknown>);
-
+) =>
+  logEntityAction(
+    userId,
+    action,
+    "Invoice",
+    entityId,
+    oldValues as Record<string, unknown>,
+    newValues as Record<string, unknown>
+  );

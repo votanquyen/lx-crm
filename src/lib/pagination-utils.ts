@@ -72,7 +72,9 @@ export function calculateOffset(page: number, limit: number): number {
 /**
  * Parse and validate pagination from search params
  */
-export function parsePaginationParams(searchParams: Record<string, string | undefined>): PaginationParams {
+export function parsePaginationParams(
+  searchParams: Record<string, string | undefined>
+): PaginationParams {
   const result = paginationSchema.safeParse({
     page: searchParams.page ? parseInt(searchParams.page, 10) : PAGINATION.DEFAULT_PAGE,
     limit: searchParams.limit ? parseInt(searchParams.limit, 10) : PAGINATION.DEFAULT_LIMIT,

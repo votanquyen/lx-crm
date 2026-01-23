@@ -148,10 +148,16 @@ export async function generateCustomerSummary(
 Khách hàng: ${customerName}
 
 Các ghi chú gần đây:
-${notes.slice(0, 10).map((n, i) => `${i + 1}. ${n}`).join("\n")}
+${notes
+  .slice(0, 10)
+  .map((n, i) => `${i + 1}. ${n}`)
+  .join("\n")}
 
 Hoạt động gần đây:
-${recentActivities.slice(0, 5).map((a, i) => `${i + 1}. ${a}`).join("\n")}
+${recentActivities
+  .slice(0, 5)
+  .map((a, i) => `${i + 1}. ${a}`)
+  .join("\n")}
 
 Viết tóm tắt 2-3 câu về tình trạng khách hàng, các vấn đề cần lưu ý, và đề xuất hành động.`;
 
@@ -207,7 +213,11 @@ export function generateNoteSuggestions(
       });
     }
 
-    if (actionLower.includes("nhắc") || actionLower.includes("gọi") || actionLower.includes("liên hệ")) {
+    if (
+      actionLower.includes("nhắc") ||
+      actionLower.includes("gọi") ||
+      actionLower.includes("liên hệ")
+    ) {
       suggestions.push({
         action: "Liên hệ khách hàng",
         actionType: "CALL",

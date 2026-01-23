@@ -32,10 +32,7 @@ export const customerSchema = z.object({
     .string()
     .min(1, "Tên công ty không được để trống")
     .max(255, "Tên công ty tối đa 255 ký tự"),
-  address: z
-    .string()
-    .min(1, "Địa chỉ không được để trống")
-    .max(500, "Địa chỉ tối đa 500 ký tự"),
+  address: z.string().min(1, "Địa chỉ không được để trống").max(500, "Địa chỉ tối đa 500 ký tự"),
   district: z.string().max(100).optional().nullable(),
   city: z.string().max(100).default("TP.HCM").optional(),
   taxCode: z.string().max(20).optional().nullable(),
@@ -44,23 +41,13 @@ export const customerSchema = z.object({
   // Primary Contact
   contactName: z.string().max(100).optional().nullable(),
   contactPhone: phoneSchema,
-  contactEmail: z
-    .string()
-    .email("Email không hợp lệ")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contactEmail: z.string().email("Email không hợp lệ").optional().nullable().or(z.literal("")),
   contactTitle: z.string().max(100).optional().nullable(),
 
   // Secondary Contact
   contact2Name: z.string().max(100).optional().nullable(),
   contact2Phone: phoneSchema,
-  contact2Email: z
-    .string()
-    .email("Email không hợp lệ")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contact2Email: z.string().email("Email không hợp lệ").optional().nullable().or(z.literal("")),
   contact2Title: z.string().max(100).optional().nullable(),
 
   // Accounting Contact

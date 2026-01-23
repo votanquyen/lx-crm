@@ -31,16 +31,12 @@ interface AIVerifyResponse {
  * Detect duplicates for a batch of company names
  * Uses parallel queries for better performance
  */
-export async function detectDuplicates(
-  names: string[]
-): Promise<DuplicateResult[]> {
+export async function detectDuplicates(names: string[]): Promise<DuplicateResult[]> {
   if (names.length === 0) return [];
 
   // Step 1: Run all pg_trgm queries in parallel
   const fuzzyMatchPromises = names.map((name) =>
-    prisma.$queryRaw<
-      Array<{ id: string; companyName: string; similarity: number }>
-    >`
+    prisma.$queryRaw<Array<{ id: string; companyName: string; similarity: number }>>`
       SELECT id, "companyName",
              similarity("companyName", ${name}) as similarity
       FROM customers
@@ -77,10 +73,7 @@ async function verifyDuplicatesWithAI(
 
 DANH SÁCH CÔNG TY HIỆN CÓ:
 ${candidates
-  .map(
-    (c, i) =>
-      `${i + 1}. "${c.companyName}" (similarity: ${(c.similarity * 100).toFixed(0)}%)`
-  )
+  .map((c, i) => `${i + 1}. "${c.companyName}" (similarity: ${(c.similarity * 100).toFixed(0)}%)`)
   .join("\n")}
 
 QUY TẮC:

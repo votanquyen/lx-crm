@@ -65,17 +65,13 @@ export function calculatePriorityScore(input: PriorityScoringInput): number {
   score += Math.min(input.quantity * 4, 20);
 
   // Request age weight (0-20) - older requests get higher priority
-  const ageInDays = Math.floor(
-    (Date.now() - input.createdAt.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const ageInDays = Math.floor((Date.now() - input.createdAt.getTime()) / (1000 * 60 * 60 * 24));
   score += Math.min(ageInDays * 2, 20);
 
   // Urgent keywords weight (0-10)
   if (input.reason) {
     const reasonLower = input.reason.toLowerCase();
-    const hasUrgentKeyword = URGENT_KEYWORDS.some((kw) =>
-      reasonLower.includes(kw)
-    );
+    const hasUrgentKeyword = URGENT_KEYWORDS.some((kw) => reasonLower.includes(kw));
     if (hasUrgentKeyword) {
       score += 10;
     }

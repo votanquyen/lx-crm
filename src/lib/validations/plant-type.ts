@@ -14,10 +14,7 @@ export const createPlantTypeSchema = z.object({
     .min(1, "Mã cây không được để trống")
     .max(10, "Mã cây tối đa 10 ký tự")
     .regex(/^[A-Z0-9]+$/, "Mã cây chỉ được chứa chữ in hoa và số (VD: KT, PT01)"),
-  name: z
-    .string()
-    .min(1, "Tên cây không được để trống")
-    .max(255, "Tên cây tối đa 255 ký tự"),
+  name: z.string().min(1, "Tên cây không được để trống").max(255, "Tên cây tối đa 255 ký tự"),
   description: z.string().max(2000, "Mô tả tối đa 2000 ký tự").optional().nullable(),
   category: z.string().max(50).optional().nullable(),
 
@@ -29,10 +26,7 @@ export const createPlantTypeSchema = z.object({
   potDiameter: z.number().int().positive().optional().nullable(),
 
   // Pricing (VND)
-  rentalPrice: z
-    .number()
-    .nonnegative("Giá thuê phải >= 0")
-    .default(50000),
+  rentalPrice: z.number().nonnegative("Giá thuê phải >= 0").default(50000),
   depositPrice: z.number().nonnegative().optional().nullable(),
   salePrice: z.number().nonnegative().optional().nullable(),
   replacementPrice: z.number().nonnegative().optional().nullable(),
@@ -78,38 +72,41 @@ export type PlantTypeSearchParams = z.infer<typeof plantTypeSearchSchema>;
 /**
  * Inventory Update Schema
  */
-export const updateInventorySchema = z.object({
-  plantTypeId: z.string().cuid(),
-  totalStock: z.number().int().nonnegative().optional(),
-  availableStock: z.number().int().nonnegative().optional(),
-  rentedStock: z.number().int().nonnegative().optional(),
-  reservedStock: z.number().int().nonnegative().optional(),
-  damagedStock: z.number().int().nonnegative().optional(),
-  maintenanceStock: z.number().int().nonnegative().optional(),
-  lowStockThreshold: z.number().int().nonnegative().optional(),
-  reorderPoint: z.number().int().nonnegative().optional(),
-  reorderQuantity: z.number().int().positive().optional(),
-  warehouseLocation: z.string().max(100).optional().nullable(),
-  shelfNumber: z.string().max(50).optional().nullable(),
-  notes: z.string().max(1000).optional().nullable(),
-}).refine(
-  (data) => {
-    // Validate: totalStock >= availableStock + rentedStock + reservedStock + damagedStock + maintenanceStock
-    if (data.totalStock !== undefined) {
-      const allocated =
-        (data.availableStock || 0) +
-        (data.rentedStock || 0) +
-        (data.reservedStock || 0) +
-        (data.damagedStock || 0) +
-        (data.maintenanceStock || 0);
-      return data.totalStock >= allocated;
+export const updateInventorySchema = z
+  .object({
+    plantTypeId: z.string().cuid(),
+    totalStock: z.number().int().nonnegative().optional(),
+    availableStock: z.number().int().nonnegative().optional(),
+    rentedStock: z.number().int().nonnegative().optional(),
+    reservedStock: z.number().int().nonnegative().optional(),
+    damagedStock: z.number().int().nonnegative().optional(),
+    maintenanceStock: z.number().int().nonnegative().optional(),
+    lowStockThreshold: z.number().int().nonnegative().optional(),
+    reorderPoint: z.number().int().nonnegative().optional(),
+    reorderQuantity: z.number().int().positive().optional(),
+    warehouseLocation: z.string().max(100).optional().nullable(),
+    shelfNumber: z.string().max(50).optional().nullable(),
+    notes: z.string().max(1000).optional().nullable(),
+  })
+  .refine(
+    (data) => {
+      // Validate: totalStock >= availableStock + rentedStock + reservedStock + damagedStock + maintenanceStock
+      if (data.totalStock !== undefined) {
+        const allocated =
+          (data.availableStock || 0) +
+          (data.rentedStock || 0) +
+          (data.reservedStock || 0) +
+          (data.damagedStock || 0) +
+          (data.maintenanceStock || 0);
+        return data.totalStock >= allocated;
+      }
+      return true;
+    },
+    {
+      message:
+        "Tổng tồn kho phải >= tổng phân bổ (available + rented + reserved + damaged + maintenance)",
     }
-    return true;
-  },
-  {
-    message: "Tổng tồn kho phải >= tổng phân bổ (available + rented + reserved + damaged + maintenance)",
-  }
-);
+  );
 
 /**
  * Bulk Import Plant Types Schema
