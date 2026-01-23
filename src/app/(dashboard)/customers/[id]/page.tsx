@@ -17,10 +17,7 @@ export default async function CustomerDetailPage({ params, searchParams }: PageP
   const { tab } = await searchParams;
 
   try {
-    const [customer, notes] = await Promise.all([
-      getCustomerById(id),
-      getCustomerNotes(id),
-    ]);
+    const [customer, notes] = await Promise.all([getCustomerById(id), getCustomerNotes(id)]);
     return (
       <>
         <CustomerDetail customer={customer} notes={notes} defaultTab={tab} />

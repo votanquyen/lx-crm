@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -69,13 +69,18 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+  .maplibregl-popup-content {
+    @apply rounded-none! bg-transparent! p-0! shadow-none!;
+  }
+  .maplibregl-popup-tip {
+    @apply hidden!;
   }
 }
 
@@ -135,30 +140,32 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
 }
 
 /* Enterprise UI Components */
 @layer components {
   .enterprise-card {
-    @apply bg-card rounded-lg border border-border shadow-sm transition-all hover:shadow-md;
+    @apply bg-card border-border rounded-lg border shadow-sm transition-all hover:shadow-md;
   }
 
   .data-table-row {
-    @apply border-b border-border/50 hover:bg-slate-50/50 transition-colors;
+    @apply border-border/50 border-b transition-colors hover:bg-slate-50/50;
   }
 
   .status-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border;
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium;
   }
 
   .kpi-title {
-    @apply text-sm font-medium text-muted-foreground uppercase tracking-tight;
+    @apply text-muted-foreground text-sm font-medium tracking-tight uppercase;
   }
 
   .kpi-value {
-    @apply text-2xl font-bold tracking-tight text-foreground;
+    @apply text-foreground text-2xl font-bold tracking-tight;
   }
 }
 

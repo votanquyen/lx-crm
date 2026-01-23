@@ -24,10 +24,12 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const page = Number(params.page) || 1;
   const search = params.search;
   // Validate role parameter to avoid as any
-  const role = params.role && VALID_ROLES.includes(params.role as ValidRole)
-    ? (params.role as ValidRole)
-    : undefined;
-  const isActive = params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
+  const role =
+    params.role && VALID_ROLES.includes(params.role as ValidRole)
+      ? (params.role as ValidRole)
+      : undefined;
+  const isActive =
+    params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
 
   const [usersData, stats] = await Promise.all([
     getUsers({ page, limit: 20, search, role, isActive }),
@@ -53,9 +55,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle>Danh sách Người dùng</CardTitle>
-          <CardDescription>
-            Tổng số {usersData.pagination.total} người dùng
-          </CardDescription>
+          <CardDescription>Tổng số {usersData.pagination.total} người dùng</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <UserFilters />

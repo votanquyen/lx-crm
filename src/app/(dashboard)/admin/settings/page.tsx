@@ -35,9 +35,7 @@ export default async function SettingsPage() {
     <div className="flex flex-col gap-6 p-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Cài đặt Hệ thống</h1>
-        <p className="text-muted-foreground">
-          Quản lý cấu hình và API keys (Chỉ dành cho Admin)
-        </p>
+        <p className="text-muted-foreground">Quản lý cấu hình và API keys (Chỉ dành cho Admin)</p>
       </div>
 
       <Tabs defaultValue="general">

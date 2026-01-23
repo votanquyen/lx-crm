@@ -108,7 +108,7 @@ export function UserTable({ data, pagination }: UserTableProps) {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-muted-foreground text-center">
                   Không tìm thấy người dùng nào
                 </TableCell>
               </TableRow>
@@ -130,9 +130,7 @@ export function UserTable({ data, pagination }: UserTableProps) {
                       <div>
                         <div className="font-medium">{user.name}</div>
                         {user.phone && (
-                          <div className="text-sm text-muted-foreground">
-                            {user.phone}
-                          </div>
+                          <div className="text-muted-foreground text-sm">{user.phone}</div>
                         )}
                       </div>
                     </div>
@@ -141,41 +139,36 @@ export function UserTable({ data, pagination }: UserTableProps) {
                     <div className="flex flex-col">
                       <span>{user.email}</span>
                       {user.emailVerified && (
-                        <span className="text-xs text-green-600">
-                          ✓ Đã xác thực
-                        </span>
+                        <span className="text-xs text-green-600">✓ Đã xác thực</span>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={roleColors[user.role]}
-                    >
+                    <Badge variant="outline" className={roleColors[user.role]}>
                       {roleLabels[user.role]}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {user.isActive ? (
-                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                      <Badge className="border-green-200 bg-green-100 text-green-800">
                         Hoạt động
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+                      <Badge variant="outline" className="border-red-200 bg-red-100 text-red-800">
                         Vô hiệu hóa
                       </Badge>
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {user._count.activityLogs} hoạt động
                     </span>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" aria-label="Tùy chọn">
+                          <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -200,7 +193,7 @@ export function UserTable({ data, pagination }: UserTableProps) {
       {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             Trang {pagination.page} / {pagination.totalPages} ({pagination.total} người dùng)
           </div>
           <div className="flex gap-2">
@@ -227,11 +220,7 @@ export function UserTable({ data, pagination }: UserTableProps) {
       {/* Dialogs */}
       {selectedUser && (
         <>
-          <EditRoleDialog
-            user={selectedUser}
-            open={editRoleOpen}
-            onOpenChange={setEditRoleOpen}
-          />
+          <EditRoleDialog user={selectedUser} open={editRoleOpen} onOpenChange={setEditRoleOpen} />
           <ToggleActiveDialog
             user={selectedUser}
             open={toggleActiveOpen}

@@ -53,12 +53,12 @@ export function ApiKeyInput({ value, onChange, placeholder }: ApiKeyInputProps) 
         type="button"
         variant="ghost"
         size="icon"
-        className="absolute right-0 top-0 h-full"
+        className="absolute top-0 right-0 h-full"
         onClick={() => setShowValue(!showValue)}
         tabIndex={-1}
         aria-label={showValue ? "Ẩn API key" : "Hiện API key"}
       >
-        {showValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        {showValue ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
       </Button>
     </div>
   );

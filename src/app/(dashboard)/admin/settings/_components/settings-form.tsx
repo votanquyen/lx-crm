@@ -129,9 +129,7 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
   if (settings.length === 0) {
     return (
       <div className="space-y-6">
-        <p className="text-sm text-muted-foreground">
-          Chưa có cài đặt nào trong danh mục này.
-        </p>
+        <p className="text-muted-foreground text-sm">Chưa có cài đặt nào trong danh mục này.</p>
         <AddSettingForm
           newKey={newKey}
           newValue={newValue}
@@ -153,9 +151,7 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
             <Label htmlFor={setting.key}>
               {setting.key}
               {setting.description && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({setting.description})
-                </span>
+                <span className="text-muted-foreground ml-2 text-xs">({setting.description})</span>
               )}
             </Label>
             {setting.isSensitive ? (
@@ -169,17 +165,13 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
               values[setting.key] === "false" ? (
               <Switch
                 checked={values[setting.key] === "true"}
-                onCheckedChange={(c) =>
-                  setValues({ ...values, [setting.key]: String(c) })
-                }
+                onCheckedChange={(c) => setValues({ ...values, [setting.key]: String(c) })}
               />
             ) : (
               <Input
                 id={setting.key}
                 value={values[setting.key] ?? ""}
-                onChange={(e) =>
-                  setValues({ ...values, [setting.key]: e.target.value })
-                }
+                onChange={(e) => setValues({ ...values, [setting.key]: e.target.value })}
               />
             )}
           </div>
@@ -194,9 +186,9 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
               title="Kiểm tra kết nối"
             >
               {testing === setting.key ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4" aria-hidden="true" />
               )}
             </Button>
           )}
@@ -207,11 +199,12 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
             onClick={() => handleSave(setting.key, setting.isSensitive ?? false)}
             disabled={saving === setting.key}
             title="Lưu"
+            aria-label="Lưu"
           >
             {saving === setting.key ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4" aria-hidden="true" />
             )}
           </Button>
           <Button
@@ -220,8 +213,9 @@ export function SettingsForm({ settings, category }: SettingsFormProps) {
             onClick={() => handleDelete(setting.key)}
             disabled={saving === setting.key}
             title="Xóa"
+            aria-label="Xóa"
           >
-            <Trash2 className="h-4 w-4 text-destructive" />
+            <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       ))}
@@ -276,9 +270,9 @@ function AddSettingForm({
         </div>
         <Button onClick={onAdd} disabled={saving === "new"}>
           {saving === "new" ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
           ) : (
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
           )}
           Thêm
         </Button>

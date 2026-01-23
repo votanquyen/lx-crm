@@ -7,18 +7,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateQuotationPDF, type QuotationPDFData } from "@/lib/pdf/quotation-pdf";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Authentication check
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -60,10 +54,7 @@ export async function GET(
     });
 
     if (!quotation) {
-      return NextResponse.json(
-        { error: "Quotation not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
     }
 
     // Transform to PDF data structure
@@ -81,9 +72,11 @@ export async function GET(
         contactEmail: quotation.customer.contactEmail,
         taxCode: quotation.customer.taxCode,
       },
-      createdBy: quotation.createdBy ? {
-        name: quotation.createdBy.name,
-      } : null,
+      createdBy: quotation.createdBy
+        ? {
+            name: quotation.createdBy.name,
+          }
+        : null,
       items: quotation.items.map((item) => ({
         plantType: {
           code: item.plantType.code,
@@ -122,9 +115,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("Error generating quotation PDF:", error);
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
   }
 }

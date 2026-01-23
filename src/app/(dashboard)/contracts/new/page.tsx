@@ -35,9 +35,7 @@ export default async function NewContractPage({ searchParams }: NewContractPageP
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Tạo hợp đồng mới</h1>
-        <p className="text-muted-foreground">
-          Điền thông tin để tạo hợp đồng thuê cây
-        </p>
+        <p className="text-muted-foreground">Điền thông tin để tạo hợp đồng thuê cây</p>
       </div>
 
       <ContractForm

@@ -3,7 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { useState, useTransition } from "react";
@@ -91,17 +97,12 @@ export function UserFilters() {
         {/* Actions */}
         <div className="flex items-end gap-2">
           <Button onClick={handleFilter} disabled={isPending} className="flex-1">
-            <Search className="mr-2 h-4 w-4" />
+            <Search className="mr-2 h-4 w-4" aria-hidden="true" />
             Lọc
           </Button>
           {hasFilters && (
-            <Button
-              onClick={handleClear}
-              disabled={isPending}
-              variant="outline"
-              size="icon"
-            >
-              <X className="h-4 w-4" />
+            <Button onClick={handleClear} disabled={isPending} variant="outline" size="icon" aria-label="Xóa bộ lọc">
+              <X className="h-4 w-4" aria-hidden="true" />
             </Button>
           )}
         </div>

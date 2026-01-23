@@ -77,17 +77,17 @@ export async function GET(request: NextRequest) {
           type: "Point" as const,
           coordinates: [c.longitude ?? 0, c.latitude ?? 0] as [number, number],
         },
-      properties: {
-        id: c.id,
-        code: c.code,
-        companyName: c.companyName,
-        address: c.address,
-        district: c.district ?? "",
-        contactPhone: c.contactPhone,
-        status: c.status,
-        plantCount: c._count.customerPlants,
-      },
-    })),
+        properties: {
+          id: c.id,
+          code: c.code,
+          companyName: c.companyName,
+          address: c.address,
+          district: c.district ?? "",
+          contactPhone: c.contactPhone,
+          status: c.status,
+          plantCount: c._count.customerPlants,
+        },
+      })),
   };
 
   return NextResponse.json(geojson, {
