@@ -21,7 +21,7 @@ function addResult(test: string, passed: boolean, message: string) {
 
 async function main() {
   console.log("🧪 Starting Quotation System Manual Tests\n");
-  console.log("=" .repeat(60) + "\n");
+  console.log("=".repeat(60) + "\n");
 
   // Get test data
   const customer = await prisma.customer.findFirst();
@@ -410,11 +410,7 @@ async function main() {
     console.log(`   Pending (Sent): ${sentCount}`);
     console.log(`   Accepted: ${acceptedCount}`);
 
-    addResult(
-      "Statistics Query",
-      totalCount > 0,
-      `Found ${totalCount} total quotations`
-    );
+    addResult("Statistics Query", totalCount > 0, `Found ${totalCount} total quotations`);
 
     // Test pagination
     const page1 = await prisma.quotation.findMany({
