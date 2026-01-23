@@ -26,7 +26,8 @@ export async function getPlantTypes(params: PlantTypeSearchParams) {
   await requireAuth();
 
   const validated = plantTypeSearchSchema.parse(params);
-  const { page, limit, search, category, isActive, minPrice, maxPrice, sortBy, sortOrder } = validated;
+  const { page, limit, search, category, isActive, minPrice, maxPrice, sortBy, sortOrder } =
+    validated;
 
   const skip = (page - 1) * limit;
 
@@ -362,7 +363,9 @@ export async function updatePlantType(id: string, data: unknown) {
       rentalPrice: validated.rentalPrice ? toDecimal(validated.rentalPrice) : undefined,
       depositPrice: validated.depositPrice ? toDecimal(validated.depositPrice) : undefined,
       salePrice: validated.salePrice ? toDecimal(validated.salePrice) : undefined,
-      replacementPrice: validated.replacementPrice ? toDecimal(validated.replacementPrice) : undefined,
+      replacementPrice: validated.replacementPrice
+        ? toDecimal(validated.replacementPrice)
+        : undefined,
     },
     include: {
       inventory: true,
@@ -500,4 +503,92 @@ export async function getPlantCategories() {
   });
 
   return categories.map((c) => c.category).filter((c): c is string => c !== null);
+}
+
+/**
+ * Search plant types for autocomplete (lightweight)
+ * Returns plants grouped by category and price for bang-ke editing
+ */
+export async function searchPlantTypesForAutocomplete(query: string, limit = 20) {
+  await requireAuth();
+
+  const normalized = normalizeVietnamese(query);
+
+  const plants = await prisma.plantType.findMany({
+    where: {
+      isActive: true,
+      OR: [
+        { name: { contains: query, mode: "insensitive" } },
+        { nameNormalized: { contains: normalized, mode: "insensitive" } },
+        { code: { contains: query.toUpperCase(), mode: "insensitive" } },
+      ],
+    },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      category: true,
+      sizeSpec: true,
+      rentalPrice: true,
+    },
+    orderBy: [{ category: "asc" }, { rentalPrice: "desc" }],
+    take: limit,
+  });
+
+  // Convert Decimal to number
+  return plants.map((p) => ({
+    id: p.id,
+    code: p.code,
+    name: p.name,
+    category: p.category,
+    sizeSpec: p.sizeSpec,
+    unitPrice: p.rentalPrice.toNumber(),
+  }));
+}
+
+/**
+ * Get all plant types for autocomplete dropdown (cached)
+ * Used for bang-ke inline editing
+ */
+export async function getPlantTypesForAutocomplete() {
+  await requireAuth();
+
+  const plants = await prisma.plantType.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      category: true,
+      sizeSpec: true,
+      rentalPrice: true,
+    },
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+  });
+
+  // Group by category
+  const grouped: Record<
+    string,
+    Array<{
+      id: string;
+      code: string;
+      name: string;
+      sizeSpec: string | null;
+      unitPrice: number;
+    }>
+  > = {};
+
+  for (const p of plants) {
+    const cat = p.category || "Khác";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push({
+      id: p.id,
+      code: p.code,
+      name: p.name,
+      sizeSpec: p.sizeSpec,
+      unitPrice: p.rentalPrice.toNumber(),
+    });
+  }
+
+  return grouped;
 }

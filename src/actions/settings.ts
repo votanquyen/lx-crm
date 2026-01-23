@@ -461,9 +461,19 @@ export async function seedDefaultSettings(): Promise<ActionResponse<{ count: num
 
     const defaults = [
       { key: "COMPANY_NAME", value: "Lộc Xanh", category: "general", description: "Tên công ty" },
-      { key: "COMPANY_EMAIL", value: "contact@locxanh.vn", category: "general", description: "Email công ty" },
+      {
+        key: "COMPANY_EMAIL",
+        value: "contact@locxanh.vn",
+        category: "general",
+        description: "Email công ty",
+      },
       { key: "AI_ENABLED", value: true, category: "ai", description: "Bật/tắt tính năng AI" },
-      { key: "AI_PROVIDER", value: "auto", category: "ai", description: "Nhà cung cấp AI (auto/groq/openrouter/gemini)" },
+      {
+        key: "AI_PROVIDER",
+        value: "auto",
+        category: "ai",
+        description: "Nhà cung cấp AI (auto/groq/openrouter/gemini)",
+      },
     ];
 
     let count = 0;

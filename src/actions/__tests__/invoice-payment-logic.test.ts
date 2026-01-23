@@ -2,7 +2,7 @@
  * Integration Tests for Invoice Payment Logic
  * Tests payment calculation and status transitions
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   toDecimal,
   toNumber,
@@ -10,14 +10,14 @@ import {
   subtractDecimal,
   compareDecimal,
   multiplyDecimal,
-} from '@/lib/db-utils';
+} from "@/lib/db-utils";
 
-describe('Invoice Payment Logic: Calculation Tests', () => {
-  describe('Invoice Amount Calculations', () => {
-    it('calculates invoice total from line items correctly', () => {
+describe("Invoice Payment Logic: Calculation Tests", () => {
+  describe("Invoice Amount Calculations", () => {
+    it("calculates invoice total from line items correctly", () => {
       const items = [
-        { description: 'Plant rental', quantity: 10, unitPrice: 50000 },
-        { description: 'Plant care', quantity: 5, unitPrice: 30000 },
+        { description: "Plant rental", quantity: 10, unitPrice: 50000 },
+        { description: "Plant care", quantity: 5, unitPrice: 30000 },
       ];
 
       const subtotal = items.reduce(
@@ -28,7 +28,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(subtotal)).toBe(650000); // 500k + 150k
     });
 
-    it('calculates complex invoice with many items', () => {
+    it("calculates complex invoice with many items", () => {
       const items = [
         { quantity: 15, unitPrice: 45000 },
         { quantity: 8, unitPrice: 62500 },
@@ -45,7 +45,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(subtotal)).toBe(expected); // 2,110,000
     });
 
-    it('handles zero quantity items', () => {
+    it("handles zero quantity items", () => {
       const items = [
         { quantity: 0, unitPrice: 50000 },
         { quantity: 5, unitPrice: 30000 },
@@ -59,7 +59,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(subtotal)).toBe(150000); // Only second item
     });
 
-    it('handles large quantities without overflow', () => {
+    it("handles large quantities without overflow", () => {
       const items = [{ quantity: 1000, unitPrice: 999999 }];
 
       const subtotal = items.reduce(
@@ -71,8 +71,8 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
   });
 
-  describe('Payment Application Logic', () => {
-    it('applies partial payment correctly', () => {
+  describe("Payment Application Logic", () => {
+    it("applies partial payment correctly", () => {
       const totalAmount = 1000000;
       const payment = 300000;
 
@@ -83,7 +83,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(outstanding)).toBe(700000);
     });
 
-    it('applies multiple partial payments', () => {
+    it("applies multiple partial payments", () => {
       const totalAmount = 1000000;
       let paidAmount = toDecimal(0);
 
@@ -109,7 +109,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(outstanding)).toBe(0);
     });
 
-    it('detects overpayment correctly', () => {
+    it("detects overpayment correctly", () => {
       // totalAmount context: testing overpayment with 400k against 300k outstanding
       const outstandingAmount = 300000;
       const excessivePayment = 400000;
@@ -119,7 +119,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(comparison).toBeGreaterThan(0); // Payment exceeds outstanding
     });
 
-    it('detects exact payment', () => {
+    it("detects exact payment", () => {
       const outstandingAmount = 500000;
       const exactPayment = 500000;
 
@@ -128,7 +128,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(comparison).toBe(0); // Exact match
     });
 
-    it('detects underpayment', () => {
+    it("detects underpayment", () => {
       const outstandingAmount = 500000;
       const partialPayment = 300000;
 
@@ -138,8 +138,8 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
   });
 
-  describe('Invoice Status Determination', () => {
-    it('determines DRAFT status (no payments)', () => {
+  describe("Invoice Status Determination", () => {
+    it("determines DRAFT status (no payments)", () => {
       const totalAmount = 1000000;
       const paidAmount = 0;
 
@@ -152,7 +152,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       // Status should be DRAFT or SENT (not PARTIAL or PAID)
     });
 
-    it('determines PARTIAL status (some payment)', () => {
+    it("determines PARTIAL status (some payment)", () => {
       const totalAmount = 1000000;
       const paidAmount = 300000;
 
@@ -165,7 +165,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       // Status should be PARTIAL
     });
 
-    it('determines PAID status (full payment)', () => {
+    it("determines PAID status (full payment)", () => {
       const totalAmount = 1000000;
       const paidAmount = 1000000;
 
@@ -177,7 +177,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       // Status should be PAID
     });
 
-    it('determines PAID status after multiple payments', () => {
+    it("determines PAID status after multiple payments", () => {
       const totalAmount = 1000000;
       let paidAmount = toDecimal(0);
 
@@ -194,8 +194,8 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
   });
 
-  describe('Decimal Precision in Payment Flow', () => {
-    it('maintains precision with decimal amounts', () => {
+  describe("Decimal Precision in Payment Flow", () => {
+    it("maintains precision with decimal amounts", () => {
       const totalAmount = 1000000.5;
       const payment1 = 300000.2;
       const payment2 = 200000.15;
@@ -207,7 +207,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(outstanding)).toBe(500000.15);
     });
 
-    it('prevents floating point errors in additions', () => {
+    it("prevents floating point errors in additions", () => {
       // Classic JS bug: 0.1 + 0.2 !== 0.3
       const payment1 = 100000.1;
       const payment2 = 200000.2;
@@ -217,7 +217,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(paidAmount)).toBe(300000.3); // Correct, no floating point error
     });
 
-    it('maintains precision in complex calculations', () => {
+    it("maintains precision in complex calculations", () => {
       const items = [
         { quantity: 10, unitPrice: 99.99 },
         { quantity: 5, unitPrice: 149.95 },
@@ -233,8 +233,8 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
   });
 
-  describe('Real-world Payment Scenarios', () => {
-    it('processes full lifecycle: invoice creation to full payment', () => {
+  describe("Real-world Payment Scenarios", () => {
+    it("processes full lifecycle: invoice creation to full payment", () => {
       // 1. Create invoice
       const items = [
         { quantity: 10, unitPrice: 60000 }, // 600k
@@ -280,7 +280,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(isPaid).toBe(true);
     });
 
-    it('handles overpayment attempt validation', () => {
+    it("handles overpayment attempt validation", () => {
       const totalAmount = 1000000;
       const paidAmount = 600000;
       const outstandingAmount = subtractDecimal(totalAmount, paidAmount);
@@ -293,7 +293,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       // This payment should be rejected
     });
 
-    it('processes monthly contract payments', () => {
+    it("processes monthly contract payments", () => {
       // Monthly contract: 20 plants × 50k/month = 1M/month
       const monthlyAmount = multiplyDecimal(20, 50000);
       expect(toNumber(monthlyAmount)).toBe(1000000);
@@ -310,7 +310,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(finalAmount)).toBe(10800000);
     });
 
-    it('calculates payment installments', () => {
+    it("calculates payment installments", () => {
       const totalAmount = 12000000;
       const installments = 6;
 
@@ -327,7 +327,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(paidAmount)).toBe(totalAmount);
     });
 
-    it('handles mixed payment methods tracking', () => {
+    it("handles mixed payment methods tracking", () => {
       const totalAmount = 1500000;
       let paidAmount = toDecimal(0);
 
@@ -351,8 +351,8 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('handles zero total amount invoice', () => {
+  describe("Edge Cases", () => {
+    it("handles zero total amount invoice", () => {
       const totalAmount = 0;
       const paidAmount = 0;
 
@@ -363,7 +363,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(isPaid).toBe(true);
     });
 
-    it('handles very large invoice amounts', () => {
+    it("handles very large invoice amounts", () => {
       const largeAmount = 999999999; // Nearly 1 billion VND
       const payment = 500000000; // 500 million
 
@@ -374,7 +374,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(outstanding)).toBe(499999999);
     });
 
-    it('handles very small precision amounts', () => {
+    it("handles very small precision amounts", () => {
       const totalAmount = 1000.01;
       const payment = 500.005;
 
@@ -385,7 +385,7 @@ describe('Invoice Payment Logic: Calculation Tests', () => {
       expect(toNumber(outstanding)).toBe(500.005);
     });
 
-    it('correctly identifies fully paid with rounding', () => {
+    it("correctly identifies fully paid with rounding", () => {
       const totalAmount = 1000000;
       const payment1 = 333333.33;
       const payment2 = 333333.33;

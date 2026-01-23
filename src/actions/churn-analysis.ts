@@ -75,8 +75,7 @@ async function getPaymentMetrics(customerId: string): Promise<PaymentMetrics> {
       partialCount++;
     }
   }
-  const partialPaymentRatio =
-    invoices.length > 0 ? partialCount / invoices.length : 0;
+  const partialPaymentRatio = invoices.length > 0 ? partialCount / invoices.length : 0;
 
   return {
     overdueCount,
@@ -108,9 +107,7 @@ async function getContractMetrics(customerId: string): Promise<ContractMetrics> 
 
   // Find oldest contract for age
   const oldestContract = contracts[contracts.length - 1];
-  const contractAgeMs = oldestContract
-    ? Date.now() - oldestContract.startDate.getTime()
-    : 0;
+  const contractAgeMs = oldestContract ? Date.now() - oldestContract.startDate.getTime() : 0;
   const contractAgeMonths = Math.floor(contractAgeMs / (1000 * 60 * 60 * 24 * 30));
 
   // Renewal count = total contracts - 1 (first contract is not a renewal)
@@ -118,9 +115,7 @@ async function getContractMetrics(customerId: string): Promise<ContractMetrics> 
 
   // Current monthly fee from latest contract
   const latestContract = contracts[0];
-  const currentMonthlyFee = latestContract
-    ? Number(latestContract.monthlyFee || 0)
-    : 0;
+  const currentMonthlyFee = latestContract ? Number(latestContract.monthlyFee || 0) : 0;
 
   return {
     contractAgeMonths,
@@ -132,9 +127,7 @@ async function getContractMetrics(customerId: string): Promise<ContractMetrics> 
 /**
  * Get operational metrics for a customer (last 30 days)
  */
-async function getOperationalMetrics(
-  customerId: string
-): Promise<OperationalMetrics> {
+async function getOperationalMetrics(customerId: string): Promise<OperationalMetrics> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -238,65 +231,64 @@ async function batchFetchChurnData(customerIds: string[]): Promise<{
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   // Fetch all data in parallel
-  const [allInvoices, allContracts, allExchanges, allCareSchedules, allNotes] =
-    await Promise.all([
-      // 1. Invoices for payment metrics
-      prisma.invoice.findMany({
-        where: {
-          customerId: { in: customerIds },
-          createdAt: { gte: sixMonthsAgo },
-        },
-        select: {
-          customerId: true,
-          status: true,
-          dueDate: true,
-          paidDate: true,
-          totalAmount: true,
-          paidAmount: true,
-        },
-      }),
-      // 2. Contracts for contract metrics
-      prisma.contract.findMany({
-        where: { customerId: { in: customerIds } },
-        select: {
-          customerId: true,
-          startDate: true,
-          monthlyFee: true,
-        },
-        orderBy: { startDate: "desc" },
-      }),
-      // 3. Exchange requests count (last 30 days)
-      prisma.exchangeRequest.groupBy({
-        by: ["customerId"],
-        where: {
-          customerId: { in: customerIds },
-          createdAt: { gte: thirtyDaysAgo },
-        },
-        _count: true,
-      }),
-      // 4. Care schedules for satisfaction + complaints
-      prisma.careSchedule.findMany({
-        where: {
-          customerId: { in: customerIds },
-          status: "COMPLETED",
-        },
-        select: {
-          customerId: true,
-          satisfactionRating: true,
-          notes: true,
-        },
-        orderBy: { scheduledDate: "desc" },
-      }),
-      // 5. Sticky notes
-      prisma.stickyNote.findMany({
-        where: { customerId: { in: customerIds } },
-        select: {
-          customerId: true,
-          content: true,
-        },
-        orderBy: { createdAt: "desc" },
-      }),
-    ]);
+  const [allInvoices, allContracts, allExchanges, allCareSchedules, allNotes] = await Promise.all([
+    // 1. Invoices for payment metrics
+    prisma.invoice.findMany({
+      where: {
+        customerId: { in: customerIds },
+        createdAt: { gte: sixMonthsAgo },
+      },
+      select: {
+        customerId: true,
+        status: true,
+        dueDate: true,
+        paidDate: true,
+        totalAmount: true,
+        paidAmount: true,
+      },
+    }),
+    // 2. Contracts for contract metrics
+    prisma.contract.findMany({
+      where: { customerId: { in: customerIds } },
+      select: {
+        customerId: true,
+        startDate: true,
+        monthlyFee: true,
+      },
+      orderBy: { startDate: "desc" },
+    }),
+    // 3. Exchange requests count (last 30 days)
+    prisma.exchangeRequest.groupBy({
+      by: ["customerId"],
+      where: {
+        customerId: { in: customerIds },
+        createdAt: { gte: thirtyDaysAgo },
+      },
+      _count: true,
+    }),
+    // 4. Care schedules for satisfaction + complaints
+    prisma.careSchedule.findMany({
+      where: {
+        customerId: { in: customerIds },
+        status: "COMPLETED",
+      },
+      select: {
+        customerId: true,
+        satisfactionRating: true,
+        notes: true,
+      },
+      orderBy: { scheduledDate: "desc" },
+    }),
+    // 5. Sticky notes
+    prisma.stickyNote.findMany({
+      where: { customerId: { in: customerIds } },
+      select: {
+        customerId: true,
+        content: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   // Build lookup maps
   const invoiceMap = new Map<string, BatchInvoiceData[]>();
@@ -386,9 +378,7 @@ async function batchFetchChurnData(customerIds: string[]): Promise<{
 /**
  * Calculate payment metrics from batch data
  */
-function calculatePaymentMetricsFromBatch(
-  invoices: BatchInvoiceData[]
-): PaymentMetrics {
+function calculatePaymentMetricsFromBatch(invoices: BatchInvoiceData[]): PaymentMetrics {
   const overdueCount = invoices.filter((inv) => inv.status === "OVERDUE").length;
 
   let totalDaysLate = 0;
@@ -415,8 +405,7 @@ function calculatePaymentMetricsFromBatch(
       partialCount++;
     }
   }
-  const partialPaymentRatio =
-    invoices.length > 0 ? partialCount / invoices.length : 0;
+  const partialPaymentRatio = invoices.length > 0 ? partialCount / invoices.length : 0;
 
   return { overdueCount, avgDaysLate, partialPaymentRatio };
 }
@@ -424,17 +413,13 @@ function calculatePaymentMetricsFromBatch(
 /**
  * Calculate contract metrics from batch data
  */
-function calculateContractMetricsFromBatch(
-  contracts: BatchContractData[]
-): ContractMetrics {
+function calculateContractMetricsFromBatch(contracts: BatchContractData[]): ContractMetrics {
   if (contracts.length === 0) {
     return { contractAgeMonths: 0, renewalCount: 0, currentMonthlyFee: 0 };
   }
 
   const oldestContract = contracts[contracts.length - 1];
-  const contractAgeMs = oldestContract
-    ? Date.now() - oldestContract.startDate.getTime()
-    : 0;
+  const contractAgeMs = oldestContract ? Date.now() - oldestContract.startDate.getTime() : 0;
   const contractAgeMonths = Math.floor(contractAgeMs / (1000 * 60 * 60 * 24 * 30));
   const renewalCount = Math.max(0, contracts.length - 1);
   const latestContract = contracts[0];
@@ -490,13 +475,12 @@ export async function analyzeCustomerChurnRisk(
   }
 
   // Fetch all metrics in parallel
-  const [paymentMetrics, contractMetrics, operationalMetrics, recentNotes] =
-    await Promise.all([
-      getPaymentMetrics(customerId),
-      getContractMetrics(customerId),
-      getOperationalMetrics(customerId),
-      getRecentStickyNotes(customerId),
-    ]);
+  const [paymentMetrics, contractMetrics, operationalMetrics, recentNotes] = await Promise.all([
+    getPaymentMetrics(customerId),
+    getContractMetrics(customerId),
+    getOperationalMetrics(customerId),
+    getRecentStickyNotes(customerId),
+  ]);
 
   const input: ChurnRiskInput = {
     customerId: customer.id,
@@ -565,10 +549,7 @@ export async function getAtRiskCustomers(options?: {
 
       const paymentMetrics = calculatePaymentMetricsFromBatch(invoices);
       const contractMetrics = calculateContractMetricsFromBatch(contracts);
-      const operationalMetrics = calculateOperationalMetricsFromBatch(
-        exchangeCount,
-        careSchedules
-      );
+      const operationalMetrics = calculateOperationalMetricsFromBatch(exchangeCount, careSchedules);
 
       const input: ChurnRiskInput = {
         customerId: customer.id,
@@ -591,18 +572,13 @@ export async function getAtRiskCustomers(options?: {
         });
       }
     } catch (error) {
-      console.error(
-        `[ChurnAnalysis] Failed to analyze customer ${customer.id}:`,
-        error
-      );
+      console.error(`[ChurnAnalysis] Failed to analyze customer ${customer.id}:`, error);
       // Continue with other customers
     }
   }
 
   // Sort by risk score descending and limit
-  return results
-    .sort((a, b) => b.riskResult.riskScore - a.riskResult.riskScore)
-    .slice(0, limit);
+  return results.sort((a, b) => b.riskResult.riskScore - a.riskResult.riskScore).slice(0, limit);
 }
 
 /**

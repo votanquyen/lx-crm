@@ -93,114 +93,111 @@ export async function getRecentSchedules(limit = 10) {
 /**
  * Create daily schedule from exchange requests
  */
-export const createDailySchedule = createAction(
-  createDailyScheduleSchema,
-  async (input) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const createDailySchedule = createAction(createDailyScheduleSchema, async (input) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    // Check if schedule already exists for this date
-    const existing = await prisma.dailySchedule.findUnique({
-      where: { scheduleDate: input.scheduleDate },
-    });
+  // Check if schedule already exists for this date
+  const existing = await prisma.dailySchedule.findUnique({
+    where: { scheduleDate: input.scheduleDate },
+  });
 
-    if (existing) {
-      throw new AppError("Đã có lịch cho ngày này", "DUPLICATE_SCHEDULE");
-    }
-
-    // Verify all exchange requests exist and are pending/scheduled
-    const requests = await prisma.exchangeRequest.findMany({
-      where: {
-        id: { in: input.exchangeRequestIds },
-        status: { in: ["PENDING", "SCHEDULED"] },
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            companyName: true,
-            address: true,
-            latitude: true,
-            longitude: true,
-          },
-        },
-      },
-    });
-
-    if (requests.length !== input.exchangeRequestIds.length) {
-      throw new AppError("Một số yêu cầu không hợp lệ hoặc đã hoàn thành", "INVALID_REQUESTS");
-    }
-
-    // Create schedule with exchanges
-    const schedule = await prisma.$transaction(async (tx) => {
-      // Create daily schedule
-      const dailySchedule = await tx.dailySchedule.create({
-        data: {
-          scheduleDate: input.scheduleDate,
-          status: "DRAFT",
-          createdById: session.user.id,
-          totalStops: requests.length,
-          totalPlants: requests.reduce((sum, r) => sum + r.quantity, 0),
-          notes: input.notes,
-        },
-      });
-
-      // Create scheduled exchanges
-      const scheduledExchanges = await Promise.all(
-        requests.map((request, index) =>
-          tx.scheduledExchange.create({
-            data: {
-              scheduleId: dailySchedule.id,
-              customerId: request.customerId,
-              stopOrder: index + 1,
-              exchangeRequestId: request.id,
-              totalPlantCount: request.quantity,
-              plantsToRemove: request.quantity,
-              plantsToInstall: request.quantity,
-              status: "PENDING",
-              plantsData: [
-                {
-                  action: "remove",
-                  plantType: request.currentPlant || "Unknown",
-                  qty: request.quantity,
-                  condition: "poor",
-                },
-                {
-                  action: "install",
-                  plantType: request.requestedPlant || "New plant",
-                  qty: request.quantity,
-                },
-              ] as Prisma.InputJsonValue,
-            },
-          })
-        )
-      );
-
-      // Update exchange requests to SCHEDULED
-      await tx.exchangeRequest.updateMany({
-        where: { id: { in: input.exchangeRequestIds } },
-        data: { status: "SCHEDULED", scheduledDate: input.scheduleDate },
-      });
-
-      return { dailySchedule, scheduledExchanges };
-    });
-
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CREATE",
-        entityType: "DailySchedule",
-        entityId: schedule.dailySchedule.id,
-        description: `Created daily schedule for ${input.scheduleDate.toLocaleDateString()}`,
-      },
-    });
-
-    revalidatePath("/exchanges");
-    revalidatePath("/exchanges/daily-schedule");
-    return schedule.dailySchedule;
+  if (existing) {
+    throw new AppError("Đã có lịch cho ngày này", "DUPLICATE_SCHEDULE");
   }
-);
+
+  // Verify all exchange requests exist and are pending/scheduled
+  const requests = await prisma.exchangeRequest.findMany({
+    where: {
+      id: { in: input.exchangeRequestIds },
+      status: { in: ["PENDING", "SCHEDULED"] },
+    },
+    include: {
+      customer: {
+        select: {
+          id: true,
+          companyName: true,
+          address: true,
+          latitude: true,
+          longitude: true,
+        },
+      },
+    },
+  });
+
+  if (requests.length !== input.exchangeRequestIds.length) {
+    throw new AppError("Một số yêu cầu không hợp lệ hoặc đã hoàn thành", "INVALID_REQUESTS");
+  }
+
+  // Create schedule with exchanges
+  const schedule = await prisma.$transaction(async (tx) => {
+    // Create daily schedule
+    const dailySchedule = await tx.dailySchedule.create({
+      data: {
+        scheduleDate: input.scheduleDate,
+        status: "DRAFT",
+        createdById: session.user.id,
+        totalStops: requests.length,
+        totalPlants: requests.reduce((sum, r) => sum + r.quantity, 0),
+        notes: input.notes,
+      },
+    });
+
+    // Create scheduled exchanges
+    const scheduledExchanges = await Promise.all(
+      requests.map((request, index) =>
+        tx.scheduledExchange.create({
+          data: {
+            scheduleId: dailySchedule.id,
+            customerId: request.customerId,
+            stopOrder: index + 1,
+            exchangeRequestId: request.id,
+            totalPlantCount: request.quantity,
+            plantsToRemove: request.quantity,
+            plantsToInstall: request.quantity,
+            status: "PENDING",
+            plantsData: [
+              {
+                action: "remove",
+                plantType: request.currentPlant || "Unknown",
+                qty: request.quantity,
+                condition: "poor",
+              },
+              {
+                action: "install",
+                plantType: request.requestedPlant || "New plant",
+                qty: request.quantity,
+              },
+            ] as Prisma.InputJsonValue,
+          },
+        })
+      )
+    );
+
+    // Update exchange requests to SCHEDULED
+    await tx.exchangeRequest.updateMany({
+      where: { id: { in: input.exchangeRequestIds } },
+      data: { status: "SCHEDULED", scheduledDate: input.scheduleDate },
+    });
+
+    return { dailySchedule, scheduledExchanges };
+  });
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "DailySchedule",
+      entityId: schedule.dailySchedule.id,
+      description: `Created daily schedule for ${input.scheduleDate.toLocaleDateString()}`,
+    },
+  });
+
+  revalidatePath("/exchanges");
+  revalidatePath("/exchanges/daily-schedule");
+  return schedule.dailySchedule;
+});
 
 /**
  * Update stop order (drag-and-drop reordering)
@@ -432,11 +429,7 @@ export const startScheduleExecution = createSimpleAction(async (scheduleId: stri
 
   // Authorization check: Only creator or approver can execute
   if (schedule.createdById !== session.user.id && schedule.approvedById !== session.user.id) {
-    throw new AppError(
-      "Bạn không có quyền thực hiện lịch trình này",
-      "FORBIDDEN",
-      403
-    );
+    throw new AppError("Bạn không có quyền thực hiện lịch trình này", "FORBIDDEN", 403);
   }
 
   if (schedule.status !== "APPROVED") {
@@ -475,17 +468,20 @@ const completeStopSchema = z.object({
   customerFeedback: z.string().max(500).optional(),
   photoUrls: z
     .array(
-      z.string().url().refine(
-        (url) => {
-          // Only accept URLs from approved S3 bucket to prevent SSRF
-          const bucketUrl = process.env.MINIO_PUBLIC_URL;
-          if (!bucketUrl) return true; // If not configured, skip validation
-          return url.startsWith(bucketUrl);
-        },
-        {
-          message: "Photo URLs must be from the approved S3 bucket",
-        }
-      )
+      z
+        .string()
+        .url()
+        .refine(
+          (url) => {
+            // Only accept URLs from approved S3 bucket to prevent SSRF
+            const bucketUrl = process.env.MINIO_PUBLIC_URL;
+            if (!bucketUrl) return true; // If not configured, skip validation
+            return url.startsWith(bucketUrl);
+          },
+          {
+            message: "Photo URLs must be from the approved S3 bucket",
+          }
+        )
     )
     .optional(),
   customerVerified: z.boolean().default(false),
@@ -520,11 +516,7 @@ export const completeStop = createAction(completeStopSchema, async (input) => {
     stop.schedule.createdById !== session.user.id &&
     stop.schedule.approvedById !== session.user.id
   ) {
-    throw new AppError(
-      "Bạn không có quyền cập nhật điểm dừng này",
-      "FORBIDDEN",
-      403
-    );
+    throw new AppError("Bạn không có quyền cập nhật điểm dừng này", "FORBIDDEN", 403);
   }
 
   if (stop.status === "COMPLETED") {
@@ -602,11 +594,7 @@ export const skipStop = createAction(skipStopSchema, async (input) => {
     stop.schedule.createdById !== session.user.id &&
     stop.schedule.approvedById !== session.user.id
   ) {
-    throw new AppError(
-      "Bạn không có quyền bỏ qua điểm dừng này",
-      "FORBIDDEN",
-      403
-    );
+    throw new AppError("Bạn không có quyền bỏ qua điểm dừng này", "FORBIDDEN", 403);
   }
 
   await prisma.scheduledExchange.update({
@@ -644,15 +632,8 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
   if (!schedule) throw new NotFoundError("Lịch trình");
 
   // Authorization check: Only creator or approver can complete
-  if (
-    schedule.createdById !== session.user.id &&
-    schedule.approvedById !== session.user.id
-  ) {
-    throw new AppError(
-      "Bạn không có quyền hoàn thành lịch trình này",
-      "FORBIDDEN",
-      403
-    );
+  if (schedule.createdById !== session.user.id && schedule.approvedById !== session.user.id) {
+    throw new AppError("Bạn không có quyền hoàn thành lịch trình này", "FORBIDDEN", 403);
   }
 
   if (schedule.status !== "IN_PROGRESS") {
@@ -665,10 +646,7 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
   );
 
   if (pendingStops.length > 0) {
-    throw new AppError(
-      `Còn ${pendingStops.length} điểm dừng chưa hoàn thành`,
-      "INCOMPLETE_STOPS"
-    );
+    throw new AppError(`Còn ${pendingStops.length} điểm dừng chưa hoàn thành`, "INCOMPLETE_STOPS");
   }
 
   // Calculate actual duration

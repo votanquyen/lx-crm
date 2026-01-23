@@ -158,109 +158,99 @@ export async function getExchangeRequestById(id: string) {
 /**
  * Create exchange request
  */
-export const createExchangeRequest = createAction(
-  createExchangeRequestSchema,
-  async (input) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const createExchangeRequest = createAction(createExchangeRequestSchema, async (input) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    // Verify customer
-    const customer = await prisma.customer.findUnique({
-      where: { id: input.customerId },
-    });
-    if (!customer) throw new NotFoundError("Khách hàng");
+  // Verify customer
+  const customer = await prisma.customer.findUnique({
+    where: { id: input.customerId },
+  });
+  if (!customer) throw new NotFoundError("Khách hàng");
 
-    // Calculate priority score with enhanced algorithm
-    const priorityScore = calculatePriorityScore(
-      input.priority,
-      input.quantity,
-      input.reason
-    );
+  // Calculate priority score with enhanced algorithm
+  const priorityScore = calculatePriorityScore(input.priority, input.quantity, input.reason);
 
-    const request = await prisma.exchangeRequest.create({
-      data: {
-        customerId: input.customerId,
-        priority: input.priority,
-        priorityScore,
-        quantity: input.quantity,
-        reason: input.reason,
-        preferredDate: input.preferredDate,
-        currentPlant: input.currentPlant,
-        requestedPlant: input.requestedPlant,
-        plantLocation: input.plantLocation,
-        status: "PENDING",
-      },
-      include: {
-        customer: { select: { id: true, companyName: true } },
-      },
-    });
+  const request = await prisma.exchangeRequest.create({
+    data: {
+      customerId: input.customerId,
+      priority: input.priority,
+      priorityScore,
+      quantity: input.quantity,
+      reason: input.reason,
+      preferredDate: input.preferredDate,
+      currentPlant: input.currentPlant,
+      requestedPlant: input.requestedPlant,
+      plantLocation: input.plantLocation,
+      status: "PENDING",
+    },
+    include: {
+      customer: { select: { id: true, companyName: true } },
+    },
+  });
 
-    // Log activity
-    await prisma.activityLog.create({
-      data: {
-        userId: session.user.id,
-        action: "CREATE",
-        entityType: "ExchangeRequest",
-        entityId: request.id,
-        newValues: request as unknown as Prisma.JsonObject,
-      },
-    });
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "CREATE",
+      entityType: "ExchangeRequest",
+      entityId: request.id,
+      newValues: request as unknown as Prisma.JsonObject,
+    },
+  });
 
-    revalidatePath("/exchanges");
-    revalidatePath(`/customers/${input.customerId}`);
-    return request;
-  }
-);
+  revalidatePath("/exchanges");
+  revalidatePath(`/customers/${input.customerId}`);
+  return request;
+});
 
 /**
  * Update exchange request
  */
-export const updateExchangeRequest = createAction(
-  updateExchangeRequestSchema,
-  async (input) => {
-    const session = await auth();
-    if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
+export const updateExchangeRequest = createAction(updateExchangeRequestSchema, async (input) => {
+  const session = await auth();
+  if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-    const { id, ...updateData } = input;
+  const { id, ...updateData } = input;
 
-    const existing = await prisma.exchangeRequest.findUnique({
-      where: { id },
-      include: { customer: true },
-    });
-    if (!existing) throw new NotFoundError("Yêu cầu đổi cây");
+  const existing = await prisma.exchangeRequest.findUnique({
+    where: { id },
+    include: { customer: true },
+  });
+  if (!existing) throw new NotFoundError("Yêu cầu đổi cây");
 
-    // Cannot update completed/cancelled
-    if (["COMPLETED", "CANCELLED"].includes(existing.status)) {
-      throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
-    }
-
-    // Recalculate priority if priority, quantity, or reason changed
-    let priorityScore = existing.priorityScore;
-    if (updateData.priority || updateData.quantity || updateData.reason) {
-      const quantity = updateData.quantity || existing.quantity;
-      priorityScore = calculatePriorityScore(
-        updateData.priority || existing.priority,
-        quantity,
-        updateData.reason || existing.reason,
-        existing.createdAt
-      );
-    }
-
-    const request = await prisma.exchangeRequest.update({
-      where: { id },
-      data: {
-        ...updateData,
-        priorityScore,
-      },
-      include: {
-        customer: { select: { id: true, companyName: true } },
-      },
-    });
-
-    revalidatePath("/exchanges");
-    return request;
+  // Cannot update completed/cancelled
+  if (["COMPLETED", "CANCELLED"].includes(existing.status)) {
+    throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
   }
-);
+
+  // Recalculate priority if priority, quantity, or reason changed
+  let priorityScore = existing.priorityScore;
+  if (updateData.priority || updateData.quantity || updateData.reason) {
+    const quantity = updateData.quantity || existing.quantity;
+    priorityScore = calculatePriorityScore(
+      updateData.priority || existing.priority,
+      quantity,
+      updateData.reason || existing.reason,
+      existing.createdAt
+    );
+  }
+
+  const request = await prisma.exchangeRequest.update({
+    where: { id },
+    data: {
+      ...updateData,
+      priorityScore,
+    },
+    include: {
+      customer: { select: { id: true, companyName: true } },
+    },
+  });
+
+  revalidatePath("/exchanges");
+  return request;
+});
 
 /**
  * Approve exchange request
@@ -314,7 +304,9 @@ export const cancelExchangeRequest = createSimpleAction(
       where: { id: data.id },
       data: {
         status: "CANCELLED",
-        reason: data.reason ? `${request.reason || ""}\n[Lý do hủy: ${data.reason}]` : request.reason,
+        reason: data.reason
+          ? `${request.reason || ""}\n[Lý do hủy: ${data.reason}]`
+          : request.reason,
       },
     });
 
@@ -393,10 +385,7 @@ export const completeExchangeWithInventory = createSimpleAction(
         const errorItems = insufficientStock
           .map((item) => `${item.name}: cần ${item.required}, có ${item.available}`)
           .join(", ");
-        throw new AppError(
-          `Không đủ số lượng cây trong kho: ${errorItems}`,
-          "INSUFFICIENT_STOCK"
-        );
+        throw new AppError(`Không đủ số lượng cây trong kho: ${errorItems}`, "INSUFFICIENT_STOCK");
       }
     }
 

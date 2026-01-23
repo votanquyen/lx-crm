@@ -69,9 +69,8 @@ const getCachedRevenueOverview = unstable_cache(
     // Calculate growth rate
     const lastMonthTotal = Number(lastMonthRevenue._sum.totalAmount || 0);
     const thisMonthTotal = Number(mtdRevenue._sum.totalAmount || 0);
-    const revenueGrowth = lastMonthTotal > 0
-      ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100
-      : 0;
+    const revenueGrowth =
+      lastMonthTotal > 0 ? ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100 : 0;
 
     // Average contract value
     const avgContract = await prisma.contract.aggregate({
@@ -87,7 +86,7 @@ const getCachedRevenueOverview = unstable_cache(
       avgContractValue: Number(avgContract._avg.monthlyFee || 0),
     };
   },
-  ['revenue-overview'],
+  ["revenue-overview"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -108,10 +107,12 @@ export async function getRevenueOverview() {
 const getCachedMonthlyRevenue = unstable_cache(
   async () => {
     // Use SQL for efficient grouping instead of fetching all invoices
-    const monthlyData = await prisma.$queryRaw<Array<{
-      month: Date;
-      amount: string | null;
-    }>>`
+    const monthlyData = await prisma.$queryRaw<
+      Array<{
+        month: Date;
+        amount: string | null;
+      }>
+    >`
       SELECT
         DATE_TRUNC('month', i."issueDate") as month,
         SUM(i."totalAmount") as amount
@@ -132,7 +133,7 @@ const getCachedMonthlyRevenue = unstable_cache(
       const monthLabel = format(monthDate, "MMM yyyy");
 
       // Find matching data from SQL result
-      const matchingData = monthlyData.find(d => {
+      const matchingData = monthlyData.find((d) => {
         const dataKey = format(new Date(d.month), "yyyy-MM");
         return dataKey === monthKey;
       });
@@ -146,7 +147,7 @@ const getCachedMonthlyRevenue = unstable_cache(
 
     return result;
   },
-  ['monthly-revenue'],
+  ["monthly-revenue"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -177,7 +178,7 @@ const getCachedRevenueByPaymentMethod = unstable_cache(
       count: stat._count,
     }));
   },
-  ['revenue-by-payment'],
+  ["revenue-by-payment"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -228,9 +229,10 @@ const getCachedInvoiceAnalytics = unstable_cache(
       _sum: { amount: true },
     });
 
-    const collectionRate = Number(totalIssued._sum.totalAmount || 0) > 0
-      ? (Number(totalPaid._sum.amount || 0) / Number(totalIssued._sum.totalAmount || 0)) * 100
-      : 0;
+    const collectionRate =
+      Number(totalIssued._sum.totalAmount || 0) > 0
+        ? (Number(totalPaid._sum.amount || 0) / Number(totalIssued._sum.totalAmount || 0)) * 100
+        : 0;
 
     // Average days to payment - optimized with SQL aggregate
     // Replaces unbounded findMany that fetched ALL paid invoices
@@ -253,7 +255,7 @@ const getCachedInvoiceAnalytics = unstable_cache(
       avgDaysToPayment,
     };
   },
-  ['invoice-analytics'],
+  ["invoice-analytics"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -274,16 +276,18 @@ export async function getInvoiceAnalytics() {
 const getCachedInvoiceAging = unstable_cache(
   async () => {
     // Single SQL query with FILTER for all aging buckets
-    const agingData = await prisma.$queryRaw<Array<{
-      bucket_0_30_count: bigint;
-      bucket_0_30_amount: string | null;
-      bucket_31_60_count: bigint;
-      bucket_31_60_amount: string | null;
-      bucket_61_90_count: bigint;
-      bucket_61_90_amount: string | null;
-      bucket_90_plus_count: bigint;
-      bucket_90_plus_amount: string | null;
-    }>>`
+    const agingData = await prisma.$queryRaw<
+      Array<{
+        bucket_0_30_count: bigint;
+        bucket_0_30_amount: string | null;
+        bucket_31_60_count: bigint;
+        bucket_31_60_amount: string | null;
+        bucket_61_90_count: bigint;
+        bucket_61_90_amount: string | null;
+        bucket_90_plus_count: bigint;
+        bucket_90_plus_amount: string | null;
+      }>
+    >`
       SELECT
         COUNT(*) FILTER (WHERE NOW() - "dueDate" <= INTERVAL '30 days') as bucket_0_30_count,
         COALESCE(SUM("totalAmount") FILTER (WHERE NOW() - "dueDate" <= INTERVAL '30 days'), 0) as bucket_0_30_amount,
@@ -332,7 +336,7 @@ const getCachedInvoiceAging = unstable_cache(
       },
     ];
   },
-  ['invoice-aging'],
+  ["invoice-aging"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -366,10 +370,7 @@ const getCachedOverdueInvoicesDefault = unstable_cache(
           },
         },
       },
-      orderBy: [
-        { dueDate: "asc" },
-        { totalAmount: "desc" },
-      ],
+      orderBy: [{ dueDate: "asc" }, { totalAmount: "desc" }],
       take: 10,
     });
 
@@ -379,7 +380,7 @@ const getCachedOverdueInvoicesDefault = unstable_cache(
       daysOverdue: differenceInDays(now, inv.dueDate),
     }));
   },
-  ['overdue-invoices', 'limit-10'],
+  ["overdue-invoices", "limit-10"],
   { revalidate: CACHE_TTL.STATS }
 );
 
@@ -413,10 +414,7 @@ export async function getOverdueInvoices(limit: number = 10) {
             },
           },
         },
-        orderBy: [
-          { dueDate: "asc" },
-          { totalAmount: "desc" },
-        ],
+        orderBy: [{ dueDate: "asc" }, { totalAmount: "desc" }],
         take: limit,
       });
 
@@ -426,7 +424,7 @@ export async function getOverdueInvoices(limit: number = 10) {
         daysOverdue: differenceInDays(now, inv.dueDate),
       }));
     },
-    ['overdue-invoices', `limit-${limit}`],
+    ["overdue-invoices", `limit-${limit}`],
     { revalidate: CACHE_TTL.STATS }
   )();
 }
@@ -445,12 +443,16 @@ const getCachedCustomerAnalytics = unstable_cache(
     const startOfThisMonth = startOfMonth(now);
 
     // Consolidated customer analytics query (4 queries → 1)
-    const stats = await prisma.$queryRaw<[{
-      total_active: bigint;
-      new_this_month: bigint;
-      total_terminated: bigint;
-      avg_lifetime_value: string | null;
-    }]>`
+    const stats = await prisma.$queryRaw<
+      [
+        {
+          total_active: bigint;
+          new_this_month: bigint;
+          total_terminated: bigint;
+          avg_lifetime_value: string | null;
+        },
+      ]
+    >`
       SELECT
         COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as total_active,
         COUNT(*) FILTER (WHERE c.status = 'ACTIVE' AND c."createdAt" >= ${startOfThisMonth}) as new_this_month,
@@ -470,9 +472,8 @@ const getCachedCustomerAnalytics = unstable_cache(
 
     const totalActive = Number(stats[0].total_active);
     const totalTerminated = Number(stats[0].total_terminated);
-    const churnRate = totalActive > 0
-      ? (totalTerminated / (totalActive + totalTerminated)) * 100
-      : 0;
+    const churnRate =
+      totalActive > 0 ? (totalTerminated / (totalActive + totalTerminated)) * 100 : 0;
 
     return {
       totalActive,
@@ -481,7 +482,7 @@ const getCachedCustomerAnalytics = unstable_cache(
       avgLifetimeValue: Math.round(Number(stats[0].avg_lifetime_value || 0)),
     };
   },
-  ['customer-analytics'],
+  ["customer-analytics"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -501,14 +502,16 @@ export async function getCustomerAnalytics() {
 const getCachedTopCustomersDefault = unstable_cache(
   async () => {
     // Use database aggregation instead of fetching all customers
-    const customers = await prisma.$queryRaw<Array<{
-      id: string;
-      company_name: string;
-      code: string;
-      total_revenue: string | null;
-      monthly_fee: string | null;
-      invoice_count: bigint;
-    }>>`
+    const customers = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        company_name: string;
+        code: string;
+        total_revenue: string | null;
+        monthly_fee: string | null;
+        invoice_count: bigint;
+      }>
+    >`
       SELECT
         c.id,
         c."companyName" as company_name,
@@ -527,7 +530,7 @@ const getCachedTopCustomersDefault = unstable_cache(
       LIMIT 10
     `;
 
-    return customers.map(c => ({
+    return customers.map((c) => ({
       id: c.id,
       companyName: c.company_name,
       code: c.code,
@@ -536,7 +539,7 @@ const getCachedTopCustomersDefault = unstable_cache(
       invoiceCount: Number(c.invoice_count),
     }));
   },
-  ['top-customers', 'limit-10'],
+  ["top-customers", "limit-10"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -555,14 +558,16 @@ export async function getTopCustomers(limit: number = 10) {
   // For custom limits, create dynamic cache
   return unstable_cache(
     async () => {
-      const customers = await prisma.$queryRaw<Array<{
-        id: string;
-        company_name: string;
-        code: string;
-        total_revenue: string | null;
-        monthly_fee: string | null;
-        invoice_count: bigint;
-      }>>`
+      const customers = await prisma.$queryRaw<
+        Array<{
+          id: string;
+          company_name: string;
+          code: string;
+          total_revenue: string | null;
+          monthly_fee: string | null;
+          invoice_count: bigint;
+        }>
+      >`
         SELECT
           c.id,
           c."companyName" as company_name,
@@ -581,7 +586,7 @@ export async function getTopCustomers(limit: number = 10) {
         LIMIT ${limit}
       `;
 
-      return customers.map(c => ({
+      return customers.map((c) => ({
         id: c.id,
         companyName: c.company_name,
         code: c.code,
@@ -590,7 +595,7 @@ export async function getTopCustomers(limit: number = 10) {
         invoiceCount: Number(c.invoice_count),
       }));
     },
-    ['top-customers', `limit-${limit}`],
+    ["top-customers", `limit-${limit}`],
     { revalidate: CACHE_TTL.HEAVY_QUERY }
   )();
 }
@@ -611,12 +616,16 @@ const getCachedContractAnalytics = unstable_cache(
 
     // Consolidated contract analytics query (6 queries → 2)
     const [stats, contractsByStatus] = await Promise.all([
-      prisma.$queryRaw<[{
-        active_count: bigint;
-        expiring_soon: bigint;
-        expired_count: bigint;
-        avg_months: string | null;
-      }]>`
+      prisma.$queryRaw<
+        [
+          {
+            active_count: bigint;
+            expiring_soon: bigint;
+            expired_count: bigint;
+            avg_months: string | null;
+          },
+        ]
+      >`
         SELECT
           COUNT(*) FILTER (WHERE status = 'ACTIVE') as active_count,
           COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" >= ${now} AND "endDate" <= ${thirtyDaysLater}) as expiring_soon,
@@ -632,9 +641,7 @@ const getCachedContractAnalytics = unstable_cache(
 
     const activeCount = Number(stats[0].active_count);
     const expiredCount = Number(stats[0].expired_count);
-    const renewalRate = expiredCount > 0
-      ? (activeCount / expiredCount) * 100
-      : 0;
+    const renewalRate = expiredCount > 0 ? (activeCount / expiredCount) * 100 : 0;
 
     return {
       activeCount,
@@ -647,7 +654,7 @@ const getCachedContractAnalytics = unstable_cache(
       })),
     };
   },
-  ['contract-analytics'],
+  ["contract-analytics"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -696,7 +703,7 @@ const getCachedExpiringContractsDefault = unstable_cache(
       daysUntilExpiry: differenceInDays(contract.endDate, now),
     }));
   },
-  ['expiring-contracts', 'days-30'],
+  ["expiring-contracts", "days-30"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
@@ -745,7 +752,7 @@ export async function getExpiringContracts(daysAhead: number = 30) {
         daysUntilExpiry: differenceInDays(contract.endDate, now),
       }));
     },
-    ['expiring-contracts', `days-${daysAhead}`],
+    ["expiring-contracts", `days-${daysAhead}`],
     { revalidate: CACHE_TTL.HEAVY_QUERY }
   )();
 }
@@ -792,24 +799,18 @@ const getCachedPlantAnalytics = unstable_cache(
     });
 
     // Sort by total quantity
-    const mostRented = plantDetails
-      .sort((a, b) => b.totalQuantity - a.totalQuantity)
-      .slice(0, 10);
+    const mostRented = plantDetails.sort((a, b) => b.totalQuantity - a.totalQuantity).slice(0, 10);
 
     // Total plants in circulation
-    const totalInCirculation = plantDetails.reduce(
-      (sum, p) => sum + p.totalQuantity,
-      0
-    );
+    const totalInCirculation = plantDetails.reduce((sum, p) => sum + p.totalQuantity, 0);
 
     // Average plants per contract
     const activeContracts = await prisma.contract.count({
       where: { status: "ACTIVE" },
     });
 
-    const avgPlantsPerContract = activeContracts > 0
-      ? Math.round(totalInCirculation / activeContracts)
-      : 0;
+    const avgPlantsPerContract =
+      activeContracts > 0 ? Math.round(totalInCirculation / activeContracts) : 0;
 
     return {
       mostRented,
@@ -817,7 +818,7 @@ const getCachedPlantAnalytics = unstable_cache(
       avgPlantsPerContract,
     };
   },
-  ['plant-analytics'],
+  ["plant-analytics"],
   { revalidate: CACHE_TTL.HEAVY_QUERY }
 );
 
