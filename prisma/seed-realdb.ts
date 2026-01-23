@@ -208,9 +208,7 @@ interface ImportedCustomer {
  * Import customers from CSV
  * Returns map of taxCode -> customer for invoice linking
  */
-async function importCustomers(
-  csvPath: string
-): Promise<Map<string, ImportedCustomer>> {
+async function importCustomers(csvPath: string): Promise<Map<string, ImportedCustomer>> {
   const rows = parseCSV(csvPath);
   const customerMap = new Map<string, ImportedCustomer>();
   let counter = 1;
@@ -290,8 +288,7 @@ function mapInvoiceStatus(vietnamese: string): InvoiceStatus {
   const normalized = vietnamese.toLowerCase().trim();
   if (normalized.includes("đã thanh toán")) return "PAID";
   if (normalized.includes("quá hạn")) return "OVERDUE";
-  if (normalized.includes("đã hủy") || normalized.includes("hủy"))
-    return "CANCELLED";
+  if (normalized.includes("đã hủy") || normalized.includes("hủy")) return "CANCELLED";
   return "SENT"; // Default for "Chưa thanh toán"
 }
 
@@ -371,14 +368,9 @@ async function importInvoices(
         vatRate,
         vatAmount: new Prisma.Decimal(vatAmount),
         totalAmount: new Prisma.Decimal(totalAmount),
-        paidAmount:
-          status === "PAID"
-            ? new Prisma.Decimal(totalAmount)
-            : new Prisma.Decimal(0),
+        paidAmount: status === "PAID" ? new Prisma.Decimal(totalAmount) : new Prisma.Decimal(0),
         outstandingAmount:
-          status === "PAID"
-            ? new Prisma.Decimal(0)
-            : new Prisma.Decimal(totalAmount),
+          status === "PAID" ? new Prisma.Decimal(0) : new Prisma.Decimal(totalAmount),
         status,
         paidDate: status === "PAID" ? paidDate || issueDate : null,
         notes: row["Nội Dung"] || null,
@@ -493,9 +485,7 @@ async function main() {
 
   // Phase 3: Import customers
   const csvDir = path.join(__dirname, "../plans/realdB");
-  const customerMap = await importCustomers(
-    path.join(csvDir, "danh_sach_cong_ty_final.csv")
-  );
+  const customerMap = await importCustomers(path.join(csvDir, "danh_sach_cong_ty_final.csv"));
 
   // Phase 4: Import invoices
   const { imported, unmatched } = await importInvoices(

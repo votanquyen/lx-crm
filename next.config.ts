@@ -11,12 +11,13 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value:
-      "default-src 'self'; " +
+      "default-src 'self' blob:; " +
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' data: https: blob: https://api.node02.s3interdata.com; " +
       "font-src 'self' data:; " +
-      "connect-src 'self' https://accounts.google.com https://api.node02.s3interdata.com; " +
+      "connect-src 'self' https://accounts.google.com https://api.node02.s3interdata.com https://*.carto.com https://*.cartocdn.com; " +
+      "worker-src 'self' blob:; " +
       "frame-src 'self' https://accounts.google.com;",
   },
 ];
@@ -30,21 +31,35 @@ const nextConfig: NextConfig = {
 
   serverExternalPackages: ["@prisma/client", "prisma", "xlsx", "pg"],
 
-  // Turbopack configuration for custom file loaders
+  // Turbopack configuration (resolved file extensions)
   turbopack: {
-    rules: {
-      '*.txt': {
-        loaders: ['raw-loader'],
-        as: '*.js',
-      },
-    },
-    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json', '.txt'],
+    resolveExtensions: [".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
   },
 
   experimental: {
     serverActions: {
       bodySizeLimit: "30mb", // Support large image uploads
     },
+    // Optimize barrel file imports for better tree-shaking (Vercel React Best Practices)
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-label",
+      "@radix-ui/react-radio-group",
+      "@radix-ui/react-scroll-area",
+      "@radix-ui/react-select",
+      "@radix-ui/react-separator",
+      "@radix-ui/react-slot",
+      "@radix-ui/react-switch",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "date-fns",
+      "recharts",
+    ],
   },
   async headers() {
     return [
