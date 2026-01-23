@@ -1,12 +1,27 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Receipt, AlertTriangle, DollarSign, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { InvoiceTable } from "@/components/invoices/invoice-table";
 import { Pagination } from "@/components/ui/pagination";
 import { getInvoices, getInvoiceStats } from "@/actions/invoices";
 import { cn } from "@/lib/utils";
 import type { InvoiceStatus } from "@prisma/client";
+
+// Dynamic import for heavy table component
+const InvoiceTable = dynamic(
+  () => import("@/components/invoices/invoice-table").then((m) => m.InvoiceTable),
+  {
+    loading: () => (
+      <div className="space-y-4 p-4">
+        <Skeleton className="h-10 w-full" />
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 interface InvoicesPageProps {
   searchParams: Promise<{
@@ -30,49 +45,49 @@ async function InvoiceStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Tổng hóa đơn</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-slate-900">{stats.total}</p>
-          <div className="p-2 rounded bg-slate-50 text-slate-400">
-            <Receipt className="h-4 w-4" />
+          <div className="rounded bg-slate-50 p-2 text-slate-400">
+            <Receipt className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Chờ thanh toán</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-amber-600">{stats.pending}</p>
-          <div className="p-2 rounded bg-amber-50 text-amber-500">
-            <Clock className="h-4 w-4" />
+          <div className="rounded bg-amber-50 p-2 text-amber-500">
+            <Clock className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white border-rose-100">
+      <div className="enterprise-card border-rose-100 bg-white p-5">
         <p className="kpi-title mb-2 text-rose-600">Quá hạn</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="kpi-value text-rose-600">{stats.overdue}</p>
-            <p className="text-[10px] font-bold text-rose-400 uppercase tracking-tighter">
+            <p className="text-[10px] font-bold tracking-tighter text-rose-400 uppercase">
               {formatCurrency(Number(stats.overdueAmount))}
             </p>
           </div>
-          <div className="p-2 rounded bg-rose-50 text-rose-500">
-            <AlertTriangle className="h-4 w-4" />
+          <div className="rounded bg-rose-50 p-2 text-rose-500">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2 text-blue-600">Tổng phải thu</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-blue-600">
             {formatCurrency(Number(stats.totalReceivables))}
           </p>
-          <div className="p-2 rounded bg-blue-50 text-blue-500">
-            <DollarSign className="h-4 w-4" />
+          <div className="rounded bg-blue-50 p-2 text-blue-500">
+            <DollarSign className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -98,7 +113,7 @@ async function InvoiceList({
       <InvoiceTable invoices={result.data} />
 
       {result.pagination.totalPages > 1 && (
-        <div className="p-4 border-t bg-slate-50/30">
+        <div className="border-t bg-slate-50/30 p-4">
           <Pagination
             page={result.pagination.page}
             limit={result.pagination.limit}
@@ -120,10 +135,10 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
+      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Theo dõi Hóa đơn</h1>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-muted-foreground text-sm font-medium">
             Quản lý hóa đơn VAT từ SmartVAS
           </p>
         </div>
@@ -133,8 +148,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         fallback={
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="enterprise-card p-5 bg-white">
-                <Skeleton className="h-4 w-24 mb-3" />
+              <div key={i} className="enterprise-card bg-white p-5">
+                <Skeleton className="mb-3 h-4 w-24" />
                 <Skeleton className="h-8 w-16" />
               </div>
             ))}
@@ -145,25 +160,25 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </Suspense>
 
       {/* Filters Navigation */}
-      <div className="flex items-center gap-1 p-1 border rounded-lg bg-slate-50/50 w-fit max-w-full overflow-x-auto scrollbar-hide">
+      <div className="scrollbar-hide flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border bg-slate-50/50 p-1">
         <Link
           href="/invoices"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             !status && !overdueOnly
-              ? "bg-white text-primary shadow-sm border border-primary/10"
+              ? "text-primary border-primary/10 border bg-white shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
           Tất cả
         </Link>
-        <div className="w-px h-3 bg-slate-200 mx-1" />
+        <div className="mx-1 h-3 w-px bg-slate-200" />
         <Link
           href="/invoices?status=SENT"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "SENT"
-              ? "bg-white text-primary shadow-sm border border-primary/10"
+              ? "text-primary border-primary/10 border bg-white shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -172,9 +187,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <Link
           href="/invoices?status=PARTIAL"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "PARTIAL"
-              ? "bg-white text-primary shadow-sm border border-primary/10"
+              ? "text-primary border-primary/10 border bg-white shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -183,9 +198,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <Link
           href="/invoices?overdueOnly=true"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             overdueOnly
-              ? "bg-white text-rose-600 shadow-sm border border-rose-100"
+              ? "border border-rose-100 bg-white text-rose-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -194,9 +209,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <Link
           href="/invoices?status=PAID"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "PAID"
-              ? "bg-white text-emerald-600 shadow-sm border border-emerald-100"
+              ? "border border-emerald-100 bg-white text-emerald-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -205,9 +220,9 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <Link
           href="/invoices?status=DRAFT"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "DRAFT"
-              ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -217,7 +232,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 
       <Suspense
         fallback={
-          <div className="enterprise-card bg-white p-4 space-y-4">
+          <div className="enterprise-card space-y-4 bg-white p-4">
             <Skeleton className="h-10 w-full" />
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-14 w-full" />

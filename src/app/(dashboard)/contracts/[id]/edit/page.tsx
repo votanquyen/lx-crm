@@ -27,7 +27,7 @@ export default async function EditContractPage({ params }: PageProps) {
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
               <Link href={`/contracts/${id}`}>
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </Link>
             </Button>
             <div>
@@ -37,7 +37,7 @@ export default async function EditContractPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-          <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
+          <div className="bg-destructive/10 text-destructive rounded-lg p-4">
             Hợp đồng này đang ở trạng thái &quot;{contractRaw.status}&quot; nên không thể chỉnh sửa.
             Vui lòng liên hệ quản trị viên nếu cần thay đổi.
           </div>
@@ -90,7 +90,7 @@ export default async function EditContractPage({ params }: PageProps) {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href={`/contracts/${id}`}>
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
           <div>
@@ -99,11 +99,7 @@ export default async function EditContractPage({ params }: PageProps) {
           </div>
         </div>
 
-        <ContractForm
-          customers={customers}
-          plantTypes={plantTypes}
-          contract={contract}
-        />
+        <ContractForm customers={customers} plantTypes={plantTypes} contract={contract} />
       </div>
     );
   } catch {

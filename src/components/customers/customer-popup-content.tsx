@@ -26,17 +26,17 @@ export function CustomerPopupContent({
   plantCount,
 }: CustomerPopupProps) {
   return (
-    <div className="p-3 space-y-3 min-w-[280px]">
+    <div className="min-w-[280px] space-y-3 p-3">
       {/* Header */}
       <div>
-        <h3 className="font-semibold text-sm">{companyName}</h3>
-        <p className="text-xs text-muted-foreground">{code}</p>
+        <h3 className="text-sm font-semibold">{companyName}</h3>
+        <p className="text-muted-foreground text-xs">{code}</p>
       </div>
 
       {/* Details */}
       <div className="space-y-1.5 text-xs">
         <div className="flex items-start gap-2">
-          <MapPin className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
+          <MapPin className="text-muted-foreground mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
           <span>
             {address}
             {district && `, ${district}`}
@@ -44,21 +44,21 @@ export function CustomerPopupContent({
         </div>
         {contactPhone && (
           <div className="flex items-center gap-2">
-            <Phone className="h-3 w-3 text-muted-foreground" />
+            <Phone className="text-muted-foreground h-3 w-3" aria-hidden="true" />
             <span>{contactPhone}</span>
           </div>
         )}
         <div className="flex items-center gap-2">
-          <TreeDeciduous className="h-3 w-3 text-muted-foreground" />
+          <TreeDeciduous className="text-muted-foreground h-3 w-3" aria-hidden="true" />
           <span>{plantCount} cây</span>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t">
+      <div className="flex gap-2 border-t pt-2">
         <Button size="sm" variant="outline" className="flex-1 text-xs" asChild>
           <Link href={`/customers/${id}`}>
-            <Building2 className="h-3 w-3 mr-1" />
+            <Building2 className="mr-1 h-3 w-3" aria-hidden="true" />
             Chi tiết
           </Link>
         </Button>

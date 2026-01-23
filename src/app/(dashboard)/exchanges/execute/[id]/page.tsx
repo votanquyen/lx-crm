@@ -10,10 +10,7 @@ import { ArrowLeft, Calendar, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScheduleTracker } from "@/components/exchanges/schedule-tracker";
-import {
-  getScheduleForExecution,
-  startScheduleExecution,
-} from "@/actions/daily-schedules";
+import { getScheduleForExecution, startScheduleExecution } from "@/actions/daily-schedules";
 
 interface ExecutePageProps {
   params: Promise<{
@@ -35,13 +32,13 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
         <div className="flex items-center gap-4">
           <Button variant="outline" asChild>
             <a href="/exchanges/daily-schedule">
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
               Quay lại
             </a>
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Thực hiện lịch trình</h1>
-            <p className="text-gray-600 mt-1">
+            <p className="mt-1 text-gray-600">
               {format(new Date(schedule.scheduleDate), "EEEE, dd MMMM yyyy", {
                 locale: vi,
               })}
@@ -54,10 +51,10 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
             {schedule.status === "APPROVED"
               ? "Đã duyệt"
               : schedule.status === "IN_PROGRESS"
-              ? "Đang thực hiện"
-              : schedule.status === "COMPLETED"
-              ? "Hoàn thành"
-              : schedule.status}
+                ? "Đang thực hiện"
+                : schedule.status === "COMPLETED"
+                  ? "Hoàn thành"
+                  : schedule.status}
           </div>
         </div>
       </div>
@@ -66,7 +63,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5" aria-hidden="true" />
             Thông tin lịch trình
           </CardTitle>
         </CardHeader>
@@ -81,9 +78,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
           </div>
           <div>
             <div className="text-sm text-gray-600">Thời gian dự kiến</div>
-            <div className="text-2xl font-bold">
-              {schedule.estimatedDurationMins || "---"} phút
-            </div>
+            <div className="text-2xl font-bold">{schedule.estimatedDurationMins || "---"} phút</div>
           </div>
         </CardContent>
       </Card>
@@ -100,7 +95,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
               }}
             >
               <Button type="submit" size="lg" className="w-full">
-                <PlayCircle className="h-5 w-5 mr-2" />
+                <PlayCircle className="mr-2 h-5 w-5" aria-hidden="true" />
                 Bắt đầu thực hiện lịch trình
               </Button>
             </form>
@@ -109,26 +104,20 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
       )}
 
       {/* Execution Tracker */}
-      {schedule.status === "IN_PROGRESS" && (
-        <ScheduleTracker schedule={schedule} />
-      )}
+      {schedule.status === "IN_PROGRESS" && <ScheduleTracker schedule={schedule} />}
 
       {/* Completed Summary */}
       {schedule.status === "COMPLETED" && (
-        <Card className="bg-green-50 border-green-500">
+        <Card className="border-green-500 bg-green-50">
           <CardHeader>
-            <CardTitle className="text-green-700">
-              Lịch trình đã hoàn thành
-            </CardTitle>
+            <CardTitle className="text-green-700">Lịch trình đã hoàn thành</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-sm text-gray-600">Thời gian thực hiện</div>
                 <div className="text-xl font-bold">
-                  {schedule.actualDurationMins
-                    ? `${schedule.actualDurationMins} phút`
-                    : "---"}
+                  {schedule.actualDurationMins ? `${schedule.actualDurationMins} phút` : "---"}
                 </div>
               </div>
               <div>
@@ -142,28 +131,24 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2">Chi tiết các điểm dừng:</h3>
+              <h3 className="mb-2 font-semibold">Chi tiết các điểm dừng:</h3>
               <div className="space-y-2">
                 {schedule.exchanges.map((stop) => (
                   <div
                     key={stop.id}
-                    className="flex items-center justify-between py-2 px-3 bg-white rounded"
+                    className="flex items-center justify-between rounded bg-white px-3 py-2"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
                         {stop.stopOrder}
                       </div>
                       <div>
-                        <div className="font-medium">
-                          {stop.customer.companyName}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {stop.customer.address}
-                        </div>
+                        <div className="font-medium">{stop.customer.companyName}</div>
+                        <div className="text-xs text-gray-600">{stop.customer.address}</div>
                       </div>
                     </div>
                     <div
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
+                      className={`rounded px-2 py-1 text-xs font-semibold ${
                         stop.status === "COMPLETED"
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
@@ -188,7 +173,7 @@ export default async function ExecutePage({ params }: ExecutePageProps) {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-96">
+        <div className="flex h-96 items-center justify-center">
           <p className="text-gray-400">Đang tải lịch trình...</p>
         </div>
       }

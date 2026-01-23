@@ -105,7 +105,10 @@ type ContractDetail = {
   previousContractId?: string | null;
 };
 
-const statusConfig: Record<ContractStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  ContractStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   NEGOTIATING: { label: "Đang đàm phán", variant: "outline" },
@@ -116,7 +119,10 @@ const statusConfig: Record<ContractStatus, { label: string; variant: "default" |
   CANCELLED: { label: "Đã hủy", variant: "destructive" },
 };
 
-const invoiceStatusConfig: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const invoiceStatusConfig: Record<
+  InvoiceStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   DRAFT: { label: "Nháp", variant: "secondary" },
   SENT: { label: "Đã gửi", variant: "outline" },
   PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
@@ -183,14 +189,12 @@ export function ContractDetail({ contract }: ContractDetailProps) {
             <Badge variant={status.variant}>{status.label}</Badge>
             {isExpiringSoon && (
               <Badge variant="destructive">
-                <AlertTriangle className="mr-1 h-3 w-3" />
+                <AlertTriangle className="mr-1 h-3 w-3" aria-hidden="true" />
                 Còn {daysRemaining} ngày
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground mt-1">
-            Khách hàng: {contract.customer.companyName}
-          </p>
+          <p className="text-muted-foreground mt-1">Khách hàng: {contract.customer.companyName}</p>
         </div>
 
         <div className="flex gap-2">
@@ -198,9 +202,9 @@ export function ContractDetail({ contract }: ContractDetailProps) {
             <>
               <Button onClick={handleActivate} disabled={isPending}>
                 {isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <CheckCircle className="mr-2 h-4 w-4" />
+                  <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                 )}
                 Kích hoạt
               </Button>
@@ -212,7 +216,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           {["ACTIVE", "EXPIRED"].includes(contract.status) && !contract.renewedTo && (
             <Button variant="outline" asChild>
               <Link href={`/contracts/${contract.id}/renew`}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
                 Gia hạn
               </Link>
             </Button>
@@ -220,14 +224,14 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           {contract.status === "ACTIVE" && (
             <Button variant="outline" asChild>
               <Link href={`/invoices?contractId=${contract.id}`}>
-                <Receipt className="mr-2 h-4 w-4" />
+                <Receipt className="mr-2 h-4 w-4" aria-hidden="true" />
                 Xem hóa đơn
               </Link>
             </Button>
           )}
           {contract.status !== "CANCELLED" && (
             <Button variant="destructive" onClick={() => setShowCancelDialog(true)}>
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Hủy hợp đồng
             </Button>
           )}
@@ -236,7 +240,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
 
       {/* Renewal links */}
       {(contract.renewedFrom || contract.renewedTo) && (
-        <div className="flex gap-4 p-4 bg-muted rounded-lg">
+        <div className="bg-muted flex gap-4 rounded-lg p-4">
           {contract.renewedFrom && (
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Gia hạn từ:</span>
@@ -267,7 +271,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+              <Building2 className="h-5 w-5" aria-hidden="true" />
               Thông tin khách hàng
             </CardTitle>
           </CardHeader>
@@ -279,7 +283,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
               >
                 {contract.customer.companyName}
               </Link>
-              <p className="text-sm text-muted-foreground">{contract.customer.code}</p>
+              <p className="text-muted-foreground text-sm">{contract.customer.code}</p>
             </div>
             <p className="text-sm">{contract.customer.address}</p>
             {contract.customer.contactName && (
@@ -288,13 +292,13 @@ export function ContractDetail({ contract }: ContractDetailProps) {
             <div className="flex flex-wrap gap-4">
               {contract.customer.contactPhone && (
                 <div className="flex items-center gap-1 text-sm">
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-4 w-4" aria-hidden="true" />
                   {contract.customer.contactPhone}
                 </div>
               )}
               {contract.customer.contactEmail && (
                 <div className="flex items-center gap-1 text-sm">
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4" aria-hidden="true" />
                   {contract.customer.contactEmail}
                 </div>
               )}
@@ -306,45 +310,48 @@ export function ContractDetail({ contract }: ContractDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <FileText className="h-5 w-5" aria-hidden="true" />
               Thông tin hợp đồng
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Ngày bắt đầu</p>
-                <p className="font-medium flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
+                <p className="text-muted-foreground text-sm">Ngày bắt đầu</p>
+                <p className="flex items-center gap-1 font-medium">
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
                   {format(new Date(contract.startDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Ngày kết thúc</p>
-                <p className="font-medium flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
+                <p className="text-muted-foreground text-sm">Ngày kết thúc</p>
+                <p className="flex items-center gap-1 font-medium">
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
                   {format(new Date(contract.endDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Giá trị/tháng</p>
-                <p className="text-lg font-bold text-primary flex items-center gap-1">
-                  <DollarSign className="h-5 w-5" />
-                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
+                <p className="text-muted-foreground text-sm">Giá trị/tháng</p>
+                <p className="text-primary flex items-center gap-1 text-lg font-bold">
+                  <DollarSign className="h-5 w-5" aria-hidden="true" />
+                  {formatCurrency(
+                    contract.monthlyAmount ??
+                      contract.monthlyFee ??
+                      contract.totalMonthlyAmount ??
+                      0
+                  )}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Tiền đặt cọc</p>
-                <p className="font-medium">
-                  {formatCurrency(contract.depositAmount ?? 0)}
-                </p>
+                <p className="text-muted-foreground text-sm">Tiền đặt cọc</p>
+                <p className="font-medium">{formatCurrency(contract.depositAmount ?? 0)}</p>
               </div>
             </div>
             {contract.paymentTerms && (
               <div>
-                <p className="text-sm text-muted-foreground">Điều khoản thanh toán</p>
+                <p className="text-muted-foreground text-sm">Điều khoản thanh toán</p>
                 <p className="text-sm">{contract.paymentTerms}</p>
               </div>
             )}
@@ -374,7 +381,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                   <TableCell>
                     <div>
                       <p className="font-medium">{item.plantType?.name ?? "N/A"}</p>
-                      <p className="text-sm text-muted-foreground">{item.plantType?.code ?? "-"}</p>
+                      <p className="text-muted-foreground text-sm">{item.plantType?.code ?? "-"}</p>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
@@ -382,7 +389,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                   <TableCell className="text-right font-medium">
                     {formatCurrency(item.totalPrice)}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {item.notes || "-"}
                   </TableCell>
                 </TableRow>
@@ -391,8 +398,13 @@ export function ContractDetail({ contract }: ContractDetailProps) {
                 <TableCell colSpan={3} className="text-right font-semibold">
                   Tổng cộng:
                 </TableCell>
-                <TableCell className="text-right text-lg font-bold text-primary">
-                  {formatCurrency(contract.monthlyAmount ?? contract.monthlyFee ?? contract.totalMonthlyAmount ?? 0)}
+                <TableCell className="text-primary text-right text-lg font-bold">
+                  {formatCurrency(
+                    contract.monthlyAmount ??
+                      contract.monthlyFee ??
+                      contract.totalMonthlyAmount ??
+                      0
+                  )}
                 </TableCell>
                 <TableCell />
               </TableRow>
@@ -476,7 +488,8 @@ export function ContractDetail({ contract }: ContractDetailProps) {
           <DialogHeader>
             <DialogTitle>Hủy hợp đồng</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn hủy hợp đồng {contract.contractNumber}? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn hủy hợp đồng {contract.contractNumber}? Hành động này không thể
+              hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -492,7 +505,7 @@ export function ContractDetail({ contract }: ContractDetailProps) {
               Không
             </Button>
             <Button variant="destructive" onClick={handleCancel} disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               Hủy hợp đồng
             </Button>
           </DialogFooter>

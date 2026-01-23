@@ -37,17 +37,11 @@ interface ApiKeyCardProps {
  * - Save button
  * - Help link to provider dashboard
  */
-export function ApiKeyCard({
-  provider,
-  currentValue,
-  isConfigured,
-}: ApiKeyCardProps) {
+export function ApiKeyCard({ provider, currentValue, isConfigured }: ApiKeyCardProps) {
   const [value, setValue] = useState(currentValue ?? "");
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [testResult, setTestResult] = useState<"success" | "error" | null>(
-    null
-  );
+  const [testResult, setTestResult] = useState<"success" | "error" | null>(null);
 
   // Handle test connection - calls testApiKey server action
   const handleTest = useCallback(async () => {
@@ -120,40 +114,30 @@ export function ApiKeyCard({
       <CardContent className="space-y-4">
         {/* Provider description */}
         {provider.description && (
-          <p className="text-sm text-muted-foreground">
-            {provider.description}
-          </p>
+          <p className="text-muted-foreground text-sm">{provider.description}</p>
         )}
 
         {/* API Key input */}
         <div className="space-y-2">
           <label className="text-sm font-medium">API Key</label>
-          <ApiKeyInput
-            value={value}
-            onChange={setValue}
-            placeholder="Nhập API key..."
-          />
+          <ApiKeyInput value={value} onChange={setValue} placeholder="Nhập API key..." />
         </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleTest}
-            disabled={isTesting || !isConfigured}
-          >
+          <Button variant="outline" onClick={handleTest} disabled={isTesting || !isConfigured}>
             {isTesting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
             ) : testResult === "success" ? (
-              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+              <CheckCircle className="mr-2 h-4 w-4 text-green-500" aria-hidden="true" />
             ) : testResult === "error" ? (
-              <XCircle className="mr-2 h-4 w-4 text-red-500" />
+              <XCircle className="mr-2 h-4 w-4 text-red-500" aria-hidden="true" />
             ) : null}
             Kiểm tra kết nối
           </Button>
 
           <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
             Lưu
           </Button>
         </div>
@@ -165,7 +149,7 @@ export function ApiKeyCard({
           rel="noopener noreferrer"
           className="inline-flex items-center text-sm text-blue-600 hover:underline"
         >
-          <ExternalLink className="mr-1 h-3 w-3" />
+          <ExternalLink className="mr-1 h-3 w-3" aria-hidden="true" />
           Lấy API key tại {getHostname(provider.helpUrl)}
         </a>
       </CardContent>

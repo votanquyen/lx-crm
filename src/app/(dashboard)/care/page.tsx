@@ -23,48 +23,52 @@ async function CareStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Hôm nay</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="kpi-value text-slate-900">{stats.todayCount}</p>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Lịch dự kiến</p>
+            <p className="text-muted-foreground text-[10px] font-bold tracking-tight uppercase">
+              Lịch dự kiến
+            </p>
           </div>
-          <div className="p-2 rounded bg-slate-50 text-slate-400">
-            <Calendar className="h-4 w-4" />
+          <div className="rounded bg-slate-50 p-2 text-slate-400">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Đang thực hiện</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-blue-600">{stats.inProgress}</p>
-          <div className="p-2 rounded bg-blue-50 text-blue-500">
-            <Clock className="h-4 w-4" />
+          <div className="rounded bg-blue-50 p-2 text-blue-500">
+            <Clock className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Đã hoàn thành</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-emerald-600">{stats.completed}</p>
-          <div className="p-2 rounded bg-emerald-50 text-emerald-500">
-            <CheckCircle className="h-4 w-4" />
+          <div className="rounded bg-emerald-50 p-2 text-emerald-500">
+            <CheckCircle className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2">Hiệu suất</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="kpi-value text-slate-900">{stats.completionRate}%</p>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Tỷ lệ hoàn thành</p>
+            <p className="text-muted-foreground text-[10px] font-bold tracking-tight uppercase">
+              Tỷ lệ hoàn thành
+            </p>
           </div>
-          <div className="p-2 rounded bg-slate-50 text-slate-400">
-            <Users className="h-4 w-4" />
+          <div className="rounded bg-slate-50 p-2 text-slate-400">
+            <Users className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -96,7 +100,7 @@ async function CareList({
       <CareScheduleList schedules={result.data} />
 
       {result.pagination.totalPages > 1 && (
-        <div className="p-4 border-t bg-slate-50/30">
+        <div className="border-t bg-slate-50/30 p-4">
           <Pagination
             page={result.pagination.page}
             limit={result.pagination.limit}
@@ -118,16 +122,16 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
+      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Lịch chăm sóc</h1>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-muted-foreground text-sm font-medium">
             Điều phối nhân sự và theo dõi dịch vụ tại hiện trường
           </p>
         </div>
-        <Button asChild className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-4">
+        <Button asChild className="bg-primary hover:bg-primary/90 h-10 px-4 font-bold text-white">
           <Link href="/care/new" className="gap-2">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Tạo lịch chăm sóc
           </Link>
         </Button>
@@ -137,8 +141,8 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         fallback={
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="enterprise-card p-5 bg-white">
-                <Skeleton className="h-4 w-24 mb-3" />
+              <div key={i} className="enterprise-card bg-white p-5">
+                <Skeleton className="mb-3 h-4 w-24" />
                 <Skeleton className="h-8 w-16" />
               </div>
             ))}
@@ -149,25 +153,25 @@ export default async function CarePage({ searchParams }: CarePageProps) {
       </Suspense>
 
       {/* Filters Navigation */}
-      <div className="flex items-center gap-1 p-1 border rounded-lg bg-slate-50/50 w-fit max-w-full overflow-x-auto scrollbar-hide">
+      <div className="scrollbar-hide flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border bg-slate-50/50 p-1">
         <Link
           href="/care"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             !status
-              ? "bg-white text-primary shadow-sm border border-primary/10"
+              ? "text-primary border-primary/10 border bg-white shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
           Tất cả
         </Link>
-        <div className="w-px h-3 bg-slate-200 mx-1" />
+        <div className="mx-1 h-3 w-px bg-slate-200" />
         <Link
           href="/care?status=SCHEDULED"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "SCHEDULED"
-              ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -176,9 +180,9 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         <Link
           href="/care?status=IN_PROGRESS"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "IN_PROGRESS"
-              ? "bg-white text-blue-600 shadow-sm border border-blue-100"
+              ? "border border-blue-100 bg-white text-blue-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -187,9 +191,9 @@ export default async function CarePage({ searchParams }: CarePageProps) {
         <Link
           href="/care?status=COMPLETED"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "COMPLETED"
-              ? "bg-white text-emerald-600 shadow-sm border border-emerald-100"
+              ? "border border-emerald-100 bg-white text-emerald-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -199,7 +203,7 @@ export default async function CarePage({ searchParams }: CarePageProps) {
 
       <Suspense
         fallback={
-          <div className="enterprise-card bg-white p-4 space-y-4">
+          <div className="enterprise-card space-y-4 bg-white p-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-20 w-full" />
             ))}

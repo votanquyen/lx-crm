@@ -30,7 +30,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon">
             <Link href="/plant-types">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
           <div>
@@ -43,7 +43,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
         </div>
         <Button asChild>
           <Link href={`/plant-types/${id}/edit`}>
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
             Chỉnh sửa
           </Link>
         </Button>
@@ -51,7 +51,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Main Information */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="space-y-6 md:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Thông tin chi tiết</CardTitle>
@@ -59,14 +59,14 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
             <CardContent className="space-y-4">
               {plantType.category && (
                 <div>
-                  <span className="text-sm text-muted-foreground">Danh mục</span>
+                  <span className="text-muted-foreground text-sm">Danh mục</span>
                   <p className="font-medium">{plantType.category}</p>
                 </div>
               )}
 
               {plantType.description && (
                 <div>
-                  <span className="text-sm text-muted-foreground">Mô tả</span>
+                  <span className="text-muted-foreground text-sm">Mô tả</span>
                   <p className="text-sm">{plantType.description}</p>
                 </div>
               )}
@@ -75,17 +75,17 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
 
               {/* Specifications */}
               <div>
-                <h4 className="font-semibold mb-3">Thông số kỹ thuật</h4>
+                <h4 className="mb-3 font-semibold">Thông số kỹ thuật</h4>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {plantType.sizeSpec && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Kích thước</span>
+                      <span className="text-muted-foreground text-sm">Kích thước</span>
                       <p className="text-sm">{plantType.sizeSpec}</p>
                     </div>
                   )}
                   {(plantType.heightMin || plantType.heightMax) && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Chiều cao</span>
+                      <span className="text-muted-foreground text-sm">Chiều cao</span>
                       <p className="text-sm">
                         {plantType.heightMin && `${plantType.heightMin}cm`}
                         {plantType.heightMin && plantType.heightMax && " - "}
@@ -95,7 +95,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
                   )}
                   {plantType.potDiameter && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Đường kính chậu</span>
+                      <span className="text-muted-foreground text-sm">Đường kính chậu</span>
                       <p className="text-sm">{plantType.potDiameter}cm</p>
                     </div>
                   )}
@@ -106,34 +106,34 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
 
               {/* Care Instructions */}
               <div>
-                <h4 className="font-semibold mb-3">Hướng dẫn chăm sóc</h4>
+                <h4 className="mb-3 font-semibold">Hướng dẫn chăm sóc</h4>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {plantType.careLevel && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Độ khó</span>
+                      <span className="text-muted-foreground text-sm">Độ khó</span>
                       <p className="text-sm">{plantType.careLevel}</p>
                     </div>
                   )}
                   <div>
-                    <span className="text-sm text-muted-foreground">Tuổi thọ TB</span>
+                    <span className="text-muted-foreground text-sm">Tuổi thọ TB</span>
                     <p className="text-sm">{plantType.avgLifespanDays} ngày</p>
                   </div>
                   {plantType.wateringFrequency && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Tưới nước</span>
+                      <span className="text-muted-foreground text-sm">Tưới nước</span>
                       <p className="text-sm">{plantType.wateringFrequency}</p>
                     </div>
                   )}
                   {plantType.lightRequirement && (
                     <div>
-                      <span className="text-sm text-muted-foreground">Ánh sáng</span>
+                      <span className="text-muted-foreground text-sm">Ánh sáng</span>
                       <p className="text-sm">{plantType.lightRequirement}</p>
                     </div>
                   )}
                 </div>
                 {plantType.careInstructions && (
                   <div className="mt-3">
-                    <span className="text-sm text-muted-foreground">Chi tiết</span>
+                    <span className="text-muted-foreground text-sm">Chi tiết</span>
                     <p className="text-sm whitespace-pre-wrap">{plantType.careInstructions}</p>
                   </div>
                 )}
@@ -161,20 +161,22 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
                         >
                           {item.contract.contractNumber}
                         </Link>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {item.contract.customer.companyName}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">{item.quantity} cây</p>
-                        <Badge variant={item.contract.status === "ACTIVE" ? "default" : "secondary"}>
+                        <Badge
+                          variant={item.contract.status === "ACTIVE" ? "default" : "secondary"}
+                        >
                           {item.contract.status}
                         </Badge>
                       </div>
                     </div>
                   ))}
                   {plantType._count.contractItems > 5 && (
-                    <p className="text-sm text-center text-muted-foreground">
+                    <p className="text-muted-foreground text-center text-sm">
                       Và {plantType._count.contractItems - 5} hợp đồng khác...
                     </p>
                   )}
@@ -190,32 +192,32 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4" aria-hidden="true" />
                 Giá cả
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <span className="text-sm text-muted-foreground">Giá thuê/tháng</span>
+                <span className="text-muted-foreground text-sm">Giá thuê/tháng</span>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrencyDecimal(plantType.rentalPrice)}
                 </p>
               </div>
               {plantType.depositPrice && (
                 <div>
-                  <span className="text-sm text-muted-foreground">Tiền cọc</span>
+                  <span className="text-muted-foreground text-sm">Tiền cọc</span>
                   <p className="font-medium">{formatCurrencyDecimal(plantType.depositPrice)}</p>
                 </div>
               )}
               {plantType.salePrice && (
                 <div>
-                  <span className="text-sm text-muted-foreground">Giá bán</span>
+                  <span className="text-muted-foreground text-sm">Giá bán</span>
                   <p className="font-medium">{formatCurrencyDecimal(plantType.salePrice)}</p>
                 </div>
               )}
               {plantType.replacementPrice && (
                 <div>
-                  <span className="text-sm text-muted-foreground">Giá thay thế</span>
+                  <span className="text-muted-foreground text-sm">Giá thay thế</span>
                   <p className="font-medium">{formatCurrencyDecimal(plantType.replacementPrice)}</p>
                 </div>
               )}
@@ -227,18 +229,18 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
+                  <Package className="h-4 w-4" aria-hidden="true" />
                   Tồn kho
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-sm text-muted-foreground">Tổng</span>
+                    <span className="text-muted-foreground text-sm">Tổng</span>
                     <p className="text-2xl font-bold">{plantType.inventory.totalStock}</p>
                   </div>
                   <div>
-                    <span className="text-sm text-muted-foreground">Có sẵn</span>
+                    <span className="text-muted-foreground text-sm">Có sẵn</span>
                     <p className="text-2xl font-bold text-green-600">
                       {plantType.inventory.availableStock}
                     </p>
@@ -276,7 +278,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
                     <span className="font-medium">{plantType.inventory.reorderPoint}</span>
                   </div>
                 </div>
-                <Button asChild variant="outline" size="sm" className="w-full mt-2">
+                <Button asChild variant="outline" size="sm" className="mt-2 w-full">
                   <Link href={`/plant-types/${id}/inventory`}>Quản lý tồn kho</Link>
                 </Button>
               </CardContent>

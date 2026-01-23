@@ -19,8 +19,8 @@ export default function DashboardError({ error, reset }: ErrorProps) {
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
-          <div className="rounded-full bg-destructive/10 p-6">
-            <AlertCircle className="h-12 w-12 text-destructive" />
+          <div className="bg-destructive/10 rounded-full p-6">
+            <AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
           </div>
         </div>
         <div className="space-y-2">
@@ -33,7 +33,7 @@ export default function DashboardError({ error, reset }: ErrorProps) {
               <summary className="cursor-pointer text-sm font-medium">
                 Chi tiết lỗi (dev only)
               </summary>
-              <pre className="mt-2 overflow-auto rounded-md bg-muted p-4 text-xs">
+              <pre className="bg-muted mt-2 overflow-auto rounded-md p-4 text-xs">
                 {error.message}
                 {error.stack && `\n\n${error.stack}`}
                 {error.digest && `\n\nDigest: ${error.digest}`}
@@ -41,13 +41,13 @@ export default function DashboardError({ error, reset }: ErrorProps) {
             </details>
           )}
         </div>
-        <div className="flex gap-2 justify-center">
+        <div className="flex justify-center gap-2">
           <Button onClick={reset} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Thử lại
           </Button>
-          <Button variant="outline" onClick={() => window.location.href = "/"} className="gap-2">
-            <Home className="h-4 w-4" />
+          <Button variant="outline" onClick={() => (window.location.href = "/")} className="gap-2">
+            <Home className="h-4 w-4" aria-hidden="true" />
             Dashboard
           </Button>
         </div>

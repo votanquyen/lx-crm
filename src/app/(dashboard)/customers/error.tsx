@@ -11,10 +11,10 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-      <AlertTriangle className="h-12 w-12 text-destructive" />
+    <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4">
+      <AlertTriangle className="text-destructive h-12 w-12" aria-hidden="true" />
       <h2 className="text-xl font-semibold">Co loi xay ra</h2>
-      <p className="text-muted-foreground text-center max-w-md">
+      <p className="text-muted-foreground max-w-md text-center">
         {error.message || "Da xay ra loi khong mong muon. Vui long thu lai."}
       </p>
       <Button onClick={reset}>Thu lai</Button>

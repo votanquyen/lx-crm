@@ -79,8 +79,10 @@ function createCustomerIcon(hasExchange: boolean): L.DivIcon {
 // Exchange request marker with priority indicator
 function createExchangeIcon(priorityScore: number): L.DivIcon {
   let color = "#22c55e"; // green - low
-  if (priorityScore >= 80) color = "#dc2626"; // red - urgent
-  else if (priorityScore >= 60) color = "#f59e0b"; // amber - high
+  if (priorityScore >= 80)
+    color = "#dc2626"; // red - urgent
+  else if (priorityScore >= 60)
+    color = "#f59e0b"; // amber - high
   else if (priorityScore >= 40) color = "#3b82f6"; // blue - medium
 
   return L.divIcon({
@@ -172,37 +174,39 @@ export function CustomerMapClient({
             icon={createCustomerIcon(customersWithExchanges.has(customer.id))}
           >
             <Popup minWidth={280} maxWidth={320}>
-              <div className="p-2 space-y-3">
+              <div className="space-y-3 p-2">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-semibold text-sm">{customer.companyName}</div>
-                    <div className="text-xs text-muted-foreground">{customer.code}</div>
+                    <div className="text-sm font-semibold">{customer.companyName}</div>
+                    <div className="text-muted-foreground text-xs">{customer.code}</div>
                   </div>
                 </div>
 
                 {/* Details */}
                 <div className="space-y-1 text-xs">
                   <div className="flex items-start gap-2">
-                    <MapPin className="h-3 w-3 mt-0.5 text-muted-foreground shrink-0" />
-                    <span>{customer.address}, {customer.district}</span>
+                    <MapPin className="text-muted-foreground mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span>
+                      {customer.address}, {customer.district}
+                    </span>
                   </div>
                   {customer.contactPhone && (
                     <div className="flex items-center gap-2">
-                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <Phone className="text-muted-foreground h-3 w-3" aria-hidden="true" />
                       <span>{customer.contactPhone}</span>
                     </div>
                   )}
                   {customer.plantCount !== undefined && (
                     <div className="flex items-center gap-2">
-                      <TreeDeciduous className="h-3 w-3 text-muted-foreground" />
+                      <TreeDeciduous className="text-muted-foreground h-3 w-3" aria-hidden="true" />
                       <span>{customer.plantCount} cây</span>
                     </div>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-2 border-t">
+                <div className="flex gap-2 border-t pt-2">
                   {onCustomerClick && (
                     <Button
                       size="sm"
@@ -210,7 +214,7 @@ export function CustomerMapClient({
                       className="flex-1 text-xs"
                       onClick={() => onCustomerClick(customer.id)}
                     >
-                      <Building2 className="h-3 w-3 mr-1" />
+                      <Building2 className="mr-1 h-3 w-3" aria-hidden="true" />
                       Chi tiết
                     </Button>
                   )}
@@ -220,7 +224,7 @@ export function CustomerMapClient({
                       className="flex-1 text-xs"
                       onClick={() => onCreateExchange(customer.id)}
                     >
-                      <Plus className="h-3 w-3 mr-1" />
+                      <Plus className="mr-1 h-3 w-3" aria-hidden="true" />
                       Đổi cây
                     </Button>
                   )}
@@ -241,8 +245,8 @@ export function CustomerMapClient({
           >
             <Popup>
               <div className="p-2">
-                <div className="font-semibold text-sm">{exchange.customerName}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-sm font-semibold">{exchange.customerName}</div>
+                <div className="text-muted-foreground text-xs">
                   Ưu tiên: {exchange.priorityScore} | {exchange.status}
                 </div>
               </div>

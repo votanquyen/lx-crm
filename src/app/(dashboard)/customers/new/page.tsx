@@ -12,14 +12,12 @@ export default function NewCustomerPage() {
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/customers">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Thêm khách hàng mới</h1>
-          <p className="text-muted-foreground">
-            Điền thông tin để tạo khách hàng mới
-          </p>
+          <p className="text-muted-foreground">Điền thông tin để tạo khách hàng mới</p>
         </div>
       </div>
 

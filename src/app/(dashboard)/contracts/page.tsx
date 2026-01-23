@@ -22,50 +22,54 @@ async function ContractStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <div className="enterprise-card p-5 bg-white">
+      <div className="enterprise-card bg-white p-5">
         <p className="kpi-title mb-2 text-slate-500">Tổng hợp đồng</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-slate-900">{stats.total}</p>
-          <div className="p-2 rounded bg-slate-50 text-slate-400">
-            <FileText className="h-4 w-4" />
+          <div className="rounded bg-slate-50 p-2 text-slate-400">
+            <FileText className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white border-emerald-100">
+      <div className="enterprise-card border-emerald-100 bg-white p-5">
         <p className="kpi-title mb-2 text-emerald-600">Đang hoạt động</p>
         <div className="flex items-center justify-between">
           <p className="kpi-value text-emerald-600">{stats.active}</p>
-          <div className="p-2 rounded bg-emerald-50 text-emerald-500">
-            <CheckCircle className="h-4 w-4" />
+          <div className="rounded bg-emerald-50 p-2 text-emerald-500">
+            <CheckCircle className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white border-amber-100">
+      <div className="enterprise-card border-amber-100 bg-white p-5">
         <p className="kpi-title mb-2 text-amber-600">Sắp hết hạn</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="kpi-value text-amber-600">{stats.expiringSoon}</p>
-            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-tight">Trong 30 ngày</p>
+            <p className="text-[10px] font-bold tracking-tight text-amber-400 uppercase">
+              Trong 30 ngày
+            </p>
           </div>
-          <div className="p-2 rounded bg-amber-50 text-amber-500">
-            <AlertTriangle className="h-4 w-4" />
+          <div className="rounded bg-amber-50 p-2 text-amber-500">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card p-5 bg-white border-blue-100">
+      <div className="enterprise-card border-blue-100 bg-white p-5">
         <p className="kpi-title mb-2 text-blue-600">Doanh thu (MRR)</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="kpi-value text-blue-600">
               {formatCurrency(Number(stats.monthlyRecurring))}
             </p>
-            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-tight">Thu hàng tháng</p>
+            <p className="text-[10px] font-bold tracking-tight text-blue-400 uppercase">
+              Thu hàng tháng
+            </p>
           </div>
-          <div className="p-2 rounded bg-blue-50 text-blue-500">
-            <DollarSign className="h-4 w-4" />
+          <div className="rounded bg-blue-50 p-2 text-blue-500">
+            <DollarSign className="h-4 w-4" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -89,7 +93,7 @@ async function ContractList({
       <ContractTable contracts={result.data} />
 
       {result.pagination.totalPages > 1 && (
-        <div className="p-4 border-t bg-slate-50/30">
+        <div className="border-t bg-slate-50/30 p-4">
           <Pagination
             page={result.pagination.page}
             limit={result.pagination.limit}
@@ -102,7 +106,11 @@ async function ContractList({
   );
 }
 
-export default async function ContractsPage({ searchParams }: { searchParams: Promise<{ page?: string; status?: ContractStatus; search?: string }> }) {
+export default async function ContractsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; status?: ContractStatus; search?: string }>;
+}) {
   const params = await searchParams;
   const page = parseInt(params.page || "1", 10);
   const status = params.status;
@@ -110,16 +118,16 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
+      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Hợp đồng</h1>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-muted-foreground text-sm font-medium">
             Quản lý hợp đồng cung cấp và bảo dưỡng cây xanh
           </p>
         </div>
-        <Button asChild className="h-10 bg-primary hover:bg-primary/90 text-white font-bold px-4">
+        <Button asChild className="bg-primary hover:bg-primary/90 h-10 px-4 font-bold text-white">
           <Link href="/contracts/new" className="gap-2">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Tạo hợp đồng
           </Link>
         </Button>
@@ -129,8 +137,8 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         fallback={
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="enterprise-card p-5 bg-white">
-                <Skeleton className="h-4 w-24 mb-3" />
+              <div key={i} className="enterprise-card bg-white p-5">
+                <Skeleton className="mb-3 h-4 w-24" />
                 <Skeleton className="h-8 w-16" />
               </div>
             ))}
@@ -141,25 +149,25 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
       </Suspense>
 
       {/* Filters Navigation */}
-      <div className="flex items-center gap-1 p-1 border rounded-lg bg-slate-50/50 w-fit max-w-full overflow-x-auto scrollbar-hide">
+      <div className="scrollbar-hide flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border bg-slate-50/50 p-1">
         <Link
           href="/contracts"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             !status
-              ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
           Tất cả
         </Link>
-        <div className="w-px h-3 bg-slate-200 mx-1" />
+        <div className="mx-1 h-3 w-px bg-slate-200" />
         <Link
           href="/contracts?status=ACTIVE"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "ACTIVE"
-              ? "bg-white text-emerald-600 shadow-sm border border-emerald-100"
+              ? "border border-emerald-100 bg-white text-emerald-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -168,9 +176,9 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         <Link
           href="/contracts?status=DRAFT"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "DRAFT"
-              ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -179,9 +187,9 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
         <Link
           href="/contracts?status=EXPIRED"
           className={cn(
-            "px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
             status === "EXPIRED"
-              ? "bg-white text-rose-600 shadow-sm border border-rose-100"
+              ? "border border-rose-100 bg-white text-rose-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
           )}
         >
@@ -191,7 +199,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
 
       <Suspense
         fallback={
-          <div className="enterprise-card bg-white p-4 space-y-4">
+          <div className="enterprise-card space-y-4 bg-white p-4">
             <Skeleton className="h-10 w-full" />
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />

@@ -18,9 +18,6 @@ import {
   FileSpreadsheet,
   CreditCard,
   ClipboardList,
-  CalendarCheck,
-  CalendarClock,
-  Upload,
   UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,7 +51,6 @@ const navItems: NavItem[] = [
 
   // 4. Admin / System
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },
-  { title: "Nhập dữ liệu", href: "/admin/data-import", icon: Upload },
   { title: "Quản lý user", href: "/admin/users", icon: UserCog },
 ];
 
@@ -70,7 +66,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen border-r bg-card transition-all duration-300",
+          "bg-card fixed top-0 left-0 z-40 h-screen border-r transition-all duration-300",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -117,16 +113,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-md transition-all mx-auto mb-1",
+                          "mx-auto mb-1 flex h-10 w-10 items-center justify-center rounded-md transition-all",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-slate-100"
                         )}
                       >
-                        <Icon className="h-5 w-5" />
+                        <Icon className="h-5 w-5" aria-hidden="true" />
                       </Link>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="font-medium">{item.title}</TooltipContent>
+                    <TooltipContent side="right" className="font-medium">
+                      {item.title}
+                    </TooltipContent>
                   </Tooltip>
                 );
               }
@@ -136,16 +134,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all mb-0.5",
+                    "mb-0.5 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-slate-100"
                   )}
                 >
                   <Icon className="h-4.5 w-4.5" />
                   <span>{item.title}</span>
                   {item.badge && (
-                    <span className="ml-auto rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                    <span className="bg-primary-foreground/20 ml-auto rounded-full px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                       {item.badge}
                     </span>
                   )}
@@ -156,18 +154,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </ScrollArea>
 
         {/* Toggle Button */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+        <div className="absolute right-0 bottom-4 left-0 flex justify-center">
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggle}
             className="h-8 w-8 rounded-full border"
           >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
           </Button>
         </div>
       </aside>

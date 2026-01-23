@@ -42,7 +42,7 @@ export function DashboardStickyNote({ initialNotes }: DashboardStickyNoteProps) 
 
         if (result.success) {
           setAiResponse(result.data.aiResponse);
-          setNotes(prev => [result.data.note as NoteWithCustomer, ...prev.slice(0, 9)]);
+          setNotes((prev) => [result.data.note as NoteWithCustomer, ...prev.slice(0, 9)]);
           setContent("");
           toast.success("Đã lưu ghi chú");
         } else {
@@ -67,7 +67,7 @@ export function DashboardStickyNote({ initialNotes }: DashboardStickyNoteProps) 
     <Card className="border-amber-200 bg-amber-50/30">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-amber-700">
-          <StickyNote className="h-5 w-5" />
+          <StickyNote className="h-5 w-5" aria-hidden="true" />
           Ghi chú nhanh
         </CardTitle>
       </CardHeader>
@@ -84,15 +84,11 @@ export function DashboardStickyNote({ initialNotes }: DashboardStickyNoteProps) 
             className="min-h-[80px] resize-none bg-white"
           />
           <div className="flex justify-end">
-            <Button
-              onClick={handleSubmit}
-              disabled={isPending || !content.trim()}
-              size="sm"
-            >
+            <Button onClick={handleSubmit} disabled={isPending || !content.trim()} size="sm">
               {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="mr-2 h-4 w-4" aria-hidden="true" />
               )}
               Gửi
             </Button>
@@ -102,8 +98,8 @@ export function DashboardStickyNote({ initialNotes }: DashboardStickyNoteProps) 
         {/* AI Response (loading) */}
         {isPending && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Sparkles className="h-4 w-4 animate-pulse" />
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <Sparkles className="h-4 w-4 animate-pulse" aria-hidden="true" />
               Đang phân tích...
             </div>
             <Skeleton className="h-20 w-full" />
@@ -112,10 +108,7 @@ export function DashboardStickyNote({ initialNotes }: DashboardStickyNoteProps) 
 
         {/* AI Response (result) */}
         {aiResponse && !isPending && (
-          <AIResponsePanel
-            response={aiResponse}
-            onDismiss={() => setAiResponse(null)}
-          />
+          <AIResponsePanel response={aiResponse} onDismiss={() => setAiResponse(null)} />
         )}
 
         {/* Recent Notes */}

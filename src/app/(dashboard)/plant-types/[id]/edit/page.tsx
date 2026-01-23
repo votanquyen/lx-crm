@@ -27,12 +27,14 @@ export default async function EditPlantTypePage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href={`/plant-types/${id}`}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa loại cây</h1>
-          <p className="text-muted-foreground">{plantType.name} ({plantType.code})</p>
+          <p className="text-muted-foreground">
+            {plantType.name} ({plantType.code})
+          </p>
         </div>
       </div>
 

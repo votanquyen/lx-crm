@@ -23,9 +23,7 @@ async function ScheduleStats() {
     <div className="grid gap-4 md:grid-cols-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Tổng lịch trình
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">Tổng lịch trình</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.total}</div>
@@ -34,9 +32,7 @@ async function ScheduleStats() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Bản nháp
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">Bản nháp</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-gray-600">{stats.draft}</div>
@@ -45,9 +41,7 @@ async function ScheduleStats() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Đã duyệt
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">Đã duyệt</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">{stats.approved}</div>
@@ -56,9 +50,7 @@ async function ScheduleStats() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-gray-600">
-            Hoàn thành
-          </CardTitle>
+          <CardTitle className="text-sm font-medium text-gray-600">Hoàn thành</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
@@ -96,14 +88,12 @@ export default async function DailySchedulePage({ searchParams }: DailyScheduleP
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Lịch trình hàng ngày</h1>
-          <p className="text-gray-600 mt-1">
-            Tạo và quản lý lộ trình đổi cây theo ngày
-          </p>
+          <p className="mt-1 text-gray-600">Tạo và quản lý lộ trình đổi cây theo ngày</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
             <a href="/exchanges">
-              <Calendar className="h-4 w-4 mr-2" />
+              <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
               Xem tất cả yêu cầu
             </a>
           </Button>
@@ -117,10 +107,10 @@ export default async function DailySchedulePage({ searchParams }: DailyScheduleP
             {[...Array(4)].map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-2">
-                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
                 </CardHeader>
                 <CardContent>
-                  <div className="h-8 w-16 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
                 </CardContent>
               </Card>
             ))}
@@ -133,7 +123,7 @@ export default async function DailySchedulePage({ searchParams }: DailyScheduleP
       {/* Schedule Builder */}
       <Suspense
         fallback={
-          <div className="bg-gray-100 rounded-lg h-96 animate-pulse flex items-center justify-center">
+          <div className="flex h-96 animate-pulse items-center justify-center rounded-lg bg-gray-100">
             <p className="text-gray-400">Đang tải lịch trình...</p>
           </div>
         }

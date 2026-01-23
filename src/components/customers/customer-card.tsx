@@ -4,15 +4,7 @@
  */
 import { memo } from "react";
 import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Leaf,
-  FileText,
-  StickyNote,
-  Building2,
-} from "lucide-react";
+import { MapPin, Phone, Mail, Leaf, FileText, StickyNote, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -37,7 +29,10 @@ interface CustomerCardProps {
   };
 }
 
-const statusConfig: Record<CustomerStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+const statusConfig: Record<
+  CustomerStatus,
+  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+> = {
   LEAD: { label: "Tiềm năng", variant: "secondary" },
   ACTIVE: { label: "Hoạt động", variant: "default" },
   INACTIVE: { label: "Ngưng", variant: "outline" },
@@ -48,18 +43,18 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
   const status = statusConfig[customer.status];
 
   return (
-    <div className="group flex items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50">
+    <div className="group bg-card hover:bg-accent/50 flex items-center gap-4 rounded-lg border p-4 transition-colors">
       {/* Customer icon */}
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
-        <Building2 className="h-5 w-5" />
+      <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full">
+        <Building2 className="h-5 w-5" aria-hidden="true" />
       </div>
 
       {/* Main info */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <Link
             href={`/customers/${customer.id}`}
-            className="font-medium text-foreground hover:underline truncate"
+            className="text-foreground truncate font-medium hover:underline"
           >
             {customer.companyName}
           </Link>
@@ -71,13 +66,11 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
           </Badge>
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span className="flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            <span className="truncate max-w-[200px]">{customer.address}</span>
-            {customer.district && (
-              <span className="text-xs">({customer.district})</span>
-            )}
+            <span className="max-w-[200px] truncate">{customer.address}</span>
+            {customer.district && <span className="text-xs">({customer.district})</span>}
           </span>
           {customer.contactPhone && (
             <span className="flex items-center gap-1">
@@ -88,7 +81,7 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
           {customer.contactEmail && (
             <span className="flex items-center gap-1">
               <Mail className="h-3.5 w-3.5" />
-              <span className="truncate max-w-[150px]">{customer.contactEmail}</span>
+              <span className="max-w-[150px] truncate">{customer.contactEmail}</span>
             </span>
           )}
         </div>
@@ -96,12 +89,12 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
 
       {/* Stats */}
       {customer._count && (
-        <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="text-muted-foreground hidden items-center gap-4 text-sm md:flex">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="flex items-center gap-1">
-                  <Leaf className="h-4 w-4" />
+                  <Leaf className="h-4 w-4" aria-hidden="true" />
                   {customer._count.customerPlants}
                 </span>
               </TooltipTrigger>
@@ -115,7 +108,7 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4" aria-hidden="true" />
                   {customer._count.contracts}
                 </span>
               </TooltipTrigger>
@@ -130,7 +123,7 @@ function CustomerCardComponent({ customer }: CustomerCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="flex items-center gap-1 text-amber-500">
-                    <StickyNote className="h-4 w-4" />
+                    <StickyNote className="h-4 w-4" aria-hidden="true" />
                     {customer._count.stickyNotes}
                   </span>
                 </TooltipTrigger>
