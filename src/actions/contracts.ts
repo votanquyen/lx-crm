@@ -47,7 +47,11 @@ async function generateContractNumber(): Promise<string> {
 }
 
 /**
- * Get paginated list of contracts with filters
+ * Retrieves paginated list of contracts with optional filters.
+ *
+ * @param params - Search parameters including page, limit, search, status, customerId, expiringDays
+ * @returns Paginated contract list with customer and item details, Decimal fields serialized to numbers
+ * @throws {AppError} If authentication fails
  */
 export async function getContracts(params: ContractSearchParams) {
   await requireAuth();
@@ -136,8 +140,11 @@ export async function getContracts(params: ContractSearchParams) {
 }
 
 /**
- * Get a single contract by ID with full details
- * Returns serialized Decimal fields for client components
+ * Retrieves a single contract with full details including customer, items, and recent invoices.
+ *
+ * @param id - Contract UUID
+ * @returns Contract with customer info, items with plant types, and last 10 invoices
+ * @throws {NotFoundError} If contract does not exist
  */
 export async function getContractById(id: string) {
   await requireAuth();
@@ -208,7 +215,12 @@ export async function getContractById(id: string) {
 }
 
 /**
- * Create a new contract
+ * Creates a new contract in DRAFT status with auto-generated contract number.
+ *
+ * @param input - Contract data with customerId, dates, items, deposit, payment terms
+ * @returns Created contract with customer and item details
+ * @throws {NotFoundError} If customer does not exist
+ * @throws {AppError} If customer is terminated, dates invalid, or plant types not found
  */
 export const createContract = createAction(createContractSchema, async (input) => {
   const session = await requireAuth();
@@ -314,7 +326,12 @@ export const createContract = createAction(createContractSchema, async (input) =
 });
 
 /**
- * Update contract (only DRAFT contracts can be updated)
+ * Updates a contract. Only DRAFT status contracts can be modified.
+ *
+ * @param input - Update data with contract id, optional dates, items, deposit, payment terms
+ * @returns Updated contract with customer and item details
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract not in DRAFT status, dates invalid, or plant types not found
  */
 export const updateContract = createAction(updateContractSchema, async (input) => {
   const session = await requireAuth();
@@ -438,8 +455,13 @@ export const updateContract = createAction(updateContractSchema, async (input) =
 });
 
 /**
- * Activate a contract (DRAFT/PENDING -> ACTIVE)
- * Requires ADMIN or MANAGER role
+ * Activates a contract, creating customer plants and updating inventory.
+ * Transitions DRAFT/PENDING to ACTIVE status. Requires ADMIN or MANAGER role.
+ *
+ * @param id - Contract UUID
+ * @returns Activated contract
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If status not DRAFT/PENDING, or insufficient inventory stock
  */
 export const activateContract = createSimpleAction(async (id: string) => {
   // Validate ID format and require role
@@ -537,8 +559,13 @@ export const activateContract = createSimpleAction(async (id: string) => {
 });
 
 /**
- * Cancel a contract
- * Requires ADMIN or MANAGER role
+ * Cancels a contract and returns inventory if previously active.
+ * Requires ADMIN or MANAGER role.
+ *
+ * @param data - Object with contract id and optional cancellation reason
+ * @returns Cancelled contract
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract already cancelled
  */
 export const cancelContract = createSimpleAction(async (data: { id: string; reason?: string }) => {
   uuidSchema.parse(data.id);
@@ -616,8 +643,14 @@ export const cancelContract = createSimpleAction(async (data: { id: string; reas
 });
 
 /**
- * Renew a contract (creates new contract linked to old)
- * Requires ADMIN or MANAGER role
+ * Renews a contract by creating a new DRAFT contract linked to the original.
+ * Original contract is terminated. Requires ADMIN or MANAGER role.
+ *
+ * @param data - Object with contract id, new dates, and optional item adjustments
+ * @returns New contract in DRAFT status
+ * @throws {NotFoundError} If contract does not exist
+ * @throws {AppError} If contract not ACTIVE/EXPIRED, or dates invalid
+ * @throws {ConflictError} If contract was already renewed
  */
 export const renewContract = createSimpleAction(
   async (data: {

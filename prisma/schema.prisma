@@ -129,6 +129,17 @@ enum StorageType {
   GDRIVE // Google Drive
 }
 
+enum ExpenseCategory {
+  PURCHASE_PLANT   // Mua cây mới
+  PURCHASE_POT     // Mua chậu
+  MATERIALS        // Phân bón, đất, thuốc
+  LOGISTICS        // Xăng xe, vận chuyển
+  STAFF_COST       // Lương, phụ cấp
+  OFFICE_UTILITIES // Điện, nước, mặt bằng
+  MARKETING        // Quảng cáo
+  OTHER            // Khác
+}
+
 enum PlantStatus {
   ACTIVE   // Đang hoạt động
   REMOVED  // Đã gỡ bỏ
@@ -438,6 +449,8 @@ model Customer {
   @@index([district])
   @@index([careWeekday])
   @@index([taxCode])
+  // Composite indexes for common queries
+  @@index([district, status]) // Geographic reports
   @@map("customers")
 }
 
@@ -791,6 +804,33 @@ model MonthlyStatement {
   @@map("monthly_statements")
 }
 
+// ============================================================
+// EXPENSE INVOICE (Hóa đơn đầu vào - Chi phí)
+// ============================================================
+
+model ExpenseInvoice {
+  id            String           @id @default(cuid())
+  companyName   String           // Tên NCC (nhập tự do)
+  invoiceNumber String?          // Số hóa đơn
+  invoiceDate   DateTime         @db.Date
+  amount        Decimal          @db.Decimal(12, 0)
+  category      ExpenseCategory?
+  description   String?          @db.Text
+  quarter       Int              // 1-4
+  year          Int
+
+  // Audit
+  createdById String
+  createdBy   User     @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([year, quarter])
+  @@index([companyName])
+  @@index([category])
+  @@map("expense_invoices")
+}
+
 model InvoiceItem {
   id        String @id @default(cuid())
   invoiceId String
@@ -852,6 +892,9 @@ model Payment {
   @@index([invoiceId])
   @@index([paymentDate])
   @@index([paymentMethod])
+  // Composite indexes for common queries
+  @@index([paymentDate, paymentMethod]) // Payment analytics
+  @@index([invoiceId, isVerified])      // Invoice reconciliation
   @@map("payments")
 }
 

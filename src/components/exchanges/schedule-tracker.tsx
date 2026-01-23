@@ -71,6 +71,14 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    // File size validation (max 5MB per file)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    const oversizedFiles = Array.from(files).filter((f) => f.size > MAX_FILE_SIZE);
+    if (oversizedFiles.length > 0) {
+      toast.error(`${oversizedFiles.length} file quá lớn (tối đa 5MB/file)`);
+      return;
+    }
+
     setIsUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {

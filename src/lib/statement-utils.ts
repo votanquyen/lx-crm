@@ -140,7 +140,7 @@ export function formatMonthLabel(month: number): string {
 
 /**
  * Get month short label
- * @example getMonthShort(7) => "T7"
+ * @example getMonthShort(7) => "Tháng 7"
  */
 export function getMonthShort(month: number): string {
   return `Tháng ${month}`;

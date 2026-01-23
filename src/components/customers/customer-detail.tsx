@@ -12,20 +12,80 @@ import { CustomerTimeline } from "./customer-timeline";
 import type { getCustomerNotes } from "@/actions/sticky-notes";
 import type { CustomerStatus, InvoiceStatus } from "@prisma/client";
 
-// Prisma Decimal-like type for compatibility
-type DecimalLike = { toString(): string } | number | string;
-// Accept both Date and string for serialization compatibility
-type DateOrString = Date | string;
+/** Numeric type compatible with Prisma Decimal */
+type NumericValue = number | string | { toString(): string };
+
+interface Payment {
+  id: string;
+  amount: NumericValue;
+  paymentDate: Date;
+  method: PaymentMethod;
+  reference: string | null;
+  notes: string | null;
+}
 
 interface CustomerInvoice {
   id: string;
   invoiceNumber: string;
   status: InvoiceStatus;
-  issueDate: DateOrString;
-  dueDate: DateOrString;
-  totalAmount: DecimalLike;
-  paidAmount: DecimalLike;
-  outstandingAmount: DecimalLike;
+  issueDate: Date;
+  dueDate: Date;
+  totalAmount: NumericValue;
+  paidAmount: NumericValue;
+  outstandingAmount: NumericValue;
+  payments: Payment[];
+}
+
+interface ContractItem {
+  id: string;
+  quantity: number;
+  plantType: { name: string };
+}
+
+interface Contract {
+  id: string;
+  contractNumber: string;
+  status: ContractStatus;
+  startDate: Date;
+  endDate: Date;
+  monthlyFee: NumericValue;
+  items: ContractItem[];
+  createdBy: { id: string; name: string | null; email: string } | null;
+}
+
+interface CustomerPlant {
+  id: string;
+  quantity: number;
+  location: string | null;
+  position: string | null;
+  condition: PlantCondition;
+  status: PlantStatus;
+  installedAt: Date;
+  lastExchanged: Date | null;
+  plantType: {
+    name: string;
+    scientificName: string | null;
+  };
+}
+
+interface StickyNote {
+  id: string;
+  title: string;
+  content: string;
+  category: NoteCategory;
+  status: NoteStatus;
+  priority: number;
+  createdAt: Date;
+  createdBy: { id: string; name: string | null } | null;
+}
+
+interface MonthlyStatement {
+  id: string;
+  month: number;
+  year: number;
+  needsConfirmation: boolean;
+  confirmedAt: Date | null;
+  total: NumericValue;
 }
 
 interface CustomerDetailProps {
@@ -43,11 +103,13 @@ interface CustomerDetailProps {
     status: CustomerStatus;
     latitude: number | null;
     longitude: number | null;
-    aiNotes?: string | null;
-    createdAt: DateOrString;
-    updatedAt: DateOrString;
-    createdBy?: { id: string; name: string | null; email: string } | null;
+    createdAt: Date;
+    updatedAt: Date;
+    contracts: Contract[];
+    customerPlants: CustomerPlant[];
     invoices: CustomerInvoice[];
+    stickyNotes: StickyNote[];
+    monthlyStatements: MonthlyStatement[];
     _count: {
       customerPlants: number;
       stickyNotes: number;
@@ -190,6 +252,10 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
             careSchedulesCount={customer._count.careSchedules}
             exchangeRequestsCount={customer._count.exchangeRequests}
           />
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <CustomerPayments invoices={customer.invoices} />
         </TabsContent>
 
         <TabsContent value="notes">

@@ -272,7 +272,16 @@ export const updateMonthlyStatement = createAction(
       throw new ForbiddenError("Bạn không có quyền sửa bảng kê");
     }
 
-    const { id, contactName, plants, notes, internalNotes } = input;
+    const {
+      id,
+      contactName,
+      periodStart,
+      periodEnd,
+      plants,
+      vatRate = 8,
+      notes,
+      internalNotes,
+    } = input;
 
     // Check if exists and not confirmed
     const existing = await prisma.monthlyStatement.findUnique({
@@ -290,16 +299,19 @@ export const updateMonthlyStatement = createAction(
       );
     }
 
-    // Recalculate amounts
-    const { subtotal, vatAmount, total } = recalculateStatementAmounts(plants);
+    // Recalculate amounts with custom VAT rate
+    const { subtotal, vatAmount, total } = recalculateStatementAmounts(plants, vatRate);
 
     // Update
     const updated = await prisma.monthlyStatement.update({
       where: { id },
       data: {
         contactName,
+        ...(periodStart && { periodStart: new Date(periodStart) }),
+        ...(periodEnd && { periodEnd: new Date(periodEnd) }),
         plants: plants as unknown as Prisma.InputJsonValue,
         subtotal,
+        vatRate,
         vatAmount,
         total,
         notes,
@@ -613,6 +625,7 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       code: true,
       companyName: true,
       shortName: true,
+      address: true,
       district: true,
       address: true,
       contactName: true,

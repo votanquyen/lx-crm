@@ -56,7 +56,11 @@ async function generateInvoiceNumber(): Promise<string> {
 }
 
 /**
- * Get paginated list of invoices
+ * Retrieves paginated list of invoices with filtering options.
+ *
+ * @param params - Search parameters including page, limit, search, status, customerId, overdueOnly, dateFrom, dateTo
+ * @returns Paginated invoice list with customer/contract relations and Decimal fields serialized to numbers
+ * @throws {AppError} If user is not authenticated
  */
 export async function getInvoices(params: InvoiceSearchParams) {
   await requireAuth();
@@ -142,8 +146,11 @@ export async function getInvoices(params: InvoiceSearchParams) {
 }
 
 /**
- * Get a single invoice by ID with full details
- * Returns serialized Decimal fields for client components
+ * Retrieves a single invoice by ID with full details including items and payments.
+ *
+ * @param id - Invoice UUID
+ * @returns Invoice with customer, contract, items, and payments; Decimal fields serialized to numbers
+ * @throws {NotFoundError} If invoice does not exist
  */
 export async function getInvoiceById(id: string) {
   await requireAuth();
@@ -198,7 +205,12 @@ export async function getInvoiceById(id: string) {
 }
 
 /**
- * Create a new invoice
+ * Creates a new invoice with line items.
+ *
+ * @param input - Invoice data: customerId, contractId (optional), items[], issueDate, dueDate, notes
+ * @returns Created invoice with customer relation and items
+ * @throws {NotFoundError} If customer or contract does not exist
+ * @throws {AppError} If contract does not belong to customer, or rate limit exceeded
  */
 export const createInvoice = createAction(createInvoiceSchema, async (input) => {
   const session = await requireAuth();
@@ -402,8 +414,12 @@ export const sendInvoice = createSimpleAction(async (id: string) => {
 });
 
 /**
- * Cancel invoice
- * Requires ADMIN or MANAGER role (status change is a sensitive operation)
+ * Cancels an invoice. Requires ADMIN or MANAGER role.
+ *
+ * @param id - Invoice UUID to cancel
+ * @returns Updated invoice with CANCELLED status
+ * @throws {NotFoundError} If invoice does not exist
+ * @throws {AppError} If invoice has payments or is already cancelled
  */
 export const cancelInvoice = createSimpleAction(async (id: string) => {
   const session = await requireManager(); // Status change requires manager+

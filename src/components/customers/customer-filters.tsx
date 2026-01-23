@@ -1,6 +1,6 @@
 /**
  * Customer Filters Component
- * Filter dropdowns for status, tier, district
+ * Filter dropdowns for status, district
  */
 "use client";
 

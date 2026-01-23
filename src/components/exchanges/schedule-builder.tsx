@@ -1,7 +1,7 @@
 /**
  * Schedule Builder Component
  * Drag-and-drop interface for building daily routes
- * Using @hello-pangea/dnd for simple drag-and-drop
+ * Using @hello-pangea/dnd (react-beautiful-dnd fork with React 19 support)
  */
 "use client";
 
@@ -24,7 +24,8 @@ interface ScheduleBuilderProps {
 
 export function ScheduleBuilder({
   initialStops,
-  scheduleId: _scheduleId,
+  // scheduleId reserved for future use (e.g., optimistic updates)
+  scheduleId: _,
   onOptimize,
   onSave,
   isOptimizing,
@@ -41,13 +42,14 @@ export function ScheduleBuilder({
 
     if (sourceIndex === destIndex) return;
 
-    const newStops = Array.from(stops);
-    const [removed] = newStops.splice(sourceIndex, 1);
+    const reordered = Array.from(stops);
+    const [removed] = reordered.splice(sourceIndex, 1);
     if (removed) {
-      newStops.splice(destIndex, 0, removed);
-      setStops(newStops);
-      setHasChanges(true);
+      reordered.splice(destIndex, 0, removed);
     }
+
+    setStops(reordered);
+    setHasChanges(true);
   };
 
   const handleSave = async () => {
@@ -130,11 +132,7 @@ export function ScheduleBuilder({
                 stops.map((stop, index) => (
                   <Draggable key={stop.id} draggableId={stop.id} index={index}>
                     {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        style={provided.draggableProps.style}
-                      >
+                      <div ref={provided.innerRef} {...provided.draggableProps}>
                         <StopCard
                           stop={{ ...stop, stopOrder: index + 1 }}
                           isDragging={snapshot.isDragging}

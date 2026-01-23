@@ -1,4 +1,4 @@
-import { PrismaClient, CustomerStatus, ContractStatus, CustomerTier } from "@prisma/client";
+import { PrismaClient, CustomerStatus, ContractStatus } from "@prisma/client";
 import { seedPlantTypes } from "./seeds/plant-types";
 import { seedInvoices } from "./seeds/invoices";
 import { seedPayments } from "./seeds/payments";
@@ -60,7 +60,6 @@ async function main() {
         contactEmail: "contact@abc.vn",
         taxCode: "0123456789",
         status: CustomerStatus.ACTIVE,
-        tier: CustomerTier.PREMIUM,
         latitude: 10.7769,
         longitude: 106.7009,
       },
@@ -80,7 +79,6 @@ async function main() {
         contactPhone: "0912345678",
         contactEmail: "info@xyz.vn",
         status: CustomerStatus.ACTIVE,
-        tier: CustomerTier.STANDARD,
         latitude: 10.7831,
         longitude: 106.6878,
       },
@@ -100,7 +98,6 @@ async function main() {
         contactPhone: "0923456789",
         contactEmail: "hello@greengarden.vn",
         status: CustomerStatus.ACTIVE,
-        tier: CustomerTier.VIP,
         latitude: 10.7825,
         longitude: 106.6936,
       },

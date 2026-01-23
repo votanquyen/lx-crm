@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Clock, DollarSign } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format";
 
 interface AgingBucket {
   range: string;
@@ -38,14 +39,6 @@ interface InvoiceAgingProps {
 }
 
 export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const getAgingColor = (range: string) => {
     if (range.includes("0-30")) return "bg-green-100 text-green-800";
     if (range.includes("31-60")) return "bg-yellow-100 text-yellow-800";

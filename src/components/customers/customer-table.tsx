@@ -328,4 +328,4 @@ export function CustomerTable({ customers, pagination }: CustomerTableProps) {
       />
     </>
   );
-}
+});

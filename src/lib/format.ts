@@ -3,15 +3,15 @@
  * Single source of truth for all formatting functions
  */
 
-// Prisma Decimal-like type for compatibility
-type DecimalLike = { toString(): string } | number | string;
+/** Represents a value that can be converted to a number (for Prisma Decimal compatibility) */
+type NumericValue = number | string | { toString(): string };
 
 /**
  * Format number as Vietnamese currency
  * Supports number, string, or Prisma Decimal
  */
 export function formatCurrency(
-  value: DecimalLike,
+  value: NumericValue,
   options?: { compact?: boolean; style?: "currency" | "decimal" }
 ): string {
   const num = typeof value === "object" ? Number(value.toString()) : Number(value);
@@ -30,7 +30,7 @@ export function formatCurrency(
  * Format currency as numeric string only (no currency symbol)
  * For Excel/CSV exports
  */
-export function formatCurrencyNumeric(value: DecimalLike): string {
+export function formatCurrencyNumeric(value: NumericValue): string {
   return formatCurrency(value, { style: "decimal" });
 }
 
@@ -51,8 +51,8 @@ export function formatCurrencyForExcel(amount: DecimalLike): string {
 /**
  * Format number with Vietnamese locale
  */
-export function formatNumber(value: DecimalLike): string {
-  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
+export function formatNumber(value: NumericValue): string {
+  const num = typeof value === "object" ? Number(value) : Number(value);
   return new Intl.NumberFormat("vi-VN").format(num);
 }
 
@@ -103,8 +103,8 @@ export function formatPhone(phone: string): string {
  * @param value - Decimal value (0-100)
  * @returns Formatted percentage (e.g., "8,5%")
  */
-export function formatPercentage(value: DecimalLike): string {
-  const num = typeof value === "object" ? Number(value.toString()) : Number(value);
+export function formatPercentage(value: NumericValue): string {
+  const num = typeof value === "object" ? Number(value) : Number(value);
   return new Intl.NumberFormat("vi-VN", {
     style: "percent",
     minimumFractionDigits: 0,

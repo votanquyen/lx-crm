@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { activateContract, cancelContract } from "@/actions/contracts";
+import { formatCurrency } from "@/lib/format";
 import type { ContractStatus, InvoiceStatus } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility
@@ -143,13 +144,6 @@ export function ContractDetail({ contract }: ContractDetailProps) {
   const [cancelReason, setCancelReason] = useState("");
 
   const status = statusConfig[contract.status];
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(value);
-  };
 
   const getDaysRemaining = () => {
     const now = new Date();

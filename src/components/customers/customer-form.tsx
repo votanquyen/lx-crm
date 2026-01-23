@@ -246,7 +246,7 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
                 <SelectValue placeholder="Chọn quận/huyện" />
               </SelectTrigger>
               <SelectContent>
-                {DISTRICTS.map((d) => (
+                {HCM_DISTRICTS.map((d) => (
                   <SelectItem key={d} value={d}>
                     {d}
                   </SelectItem>

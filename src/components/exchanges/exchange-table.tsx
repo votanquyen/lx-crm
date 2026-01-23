@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -260,4 +261,4 @@ export function ExchangeTable({ requests, onApprove, onCancel, onComplete }: Exc
       </div>
     </div>
   );
-}
+});

@@ -410,18 +410,22 @@ export async function getScheduleStats() {
 
 /**
  * Start schedule execution
+ * Authorization check moved to WHERE clause for efficiency
  */
 export const startScheduleExecution = createSimpleAction(async (scheduleId: string) => {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const schedule = await prisma.dailySchedule.findUnique({
-    where: { id: scheduleId },
+  // Find schedule with authorization in WHERE clause
+  // Only creator or approver can execute
+  const schedule = await prisma.dailySchedule.findFirst({
+    where: {
+      id: scheduleId,
+      OR: [{ createdById: session.user.id }, { approvedById: session.user.id }],
+    },
     select: {
       id: true,
       status: true,
-      createdById: true,
-      approvedById: true,
     },
   });
 
@@ -490,21 +494,23 @@ const completeStopSchema = z.object({
 
 /**
  * Complete a stop
+ * Authorization check moved to WHERE clause for efficiency
  */
 export const completeStop = createAction(completeStopSchema, async (input) => {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const stop = await prisma.scheduledExchange.findUnique({
-    where: { id: input.stopId },
+  // Find stop with authorization in WHERE clause via schedule relation
+  const stop = await prisma.scheduledExchange.findFirst({
+    where: {
+      id: input.stopId,
+      schedule: {
+        OR: [{ createdById: session.user.id }, { approvedById: session.user.id }],
+      },
+    },
     include: {
       schedule: {
-        select: {
-          id: true,
-          status: true,
-          createdById: true,
-          approvedById: true,
-        },
+        select: { id: true, status: true },
       },
     },
   });
@@ -568,21 +574,23 @@ const skipStopSchema = z.object({
 
 /**
  * Skip a stop
+ * Authorization check moved to WHERE clause for efficiency
  */
 export const skipStop = createAction(skipStopSchema, async (input) => {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const stop = await prisma.scheduledExchange.findUnique({
-    where: { id: input.stopId },
+  // Find stop with authorization in WHERE clause via schedule relation
+  const stop = await prisma.scheduledExchange.findFirst({
+    where: {
+      id: input.stopId,
+      schedule: {
+        OR: [{ createdById: session.user.id }, { approvedById: session.user.id }],
+      },
+    },
     include: {
       schedule: {
-        select: {
-          id: true,
-          status: true,
-          createdById: true,
-          approvedById: true,
-        },
+        select: { id: true, status: true },
       },
     },
   });
@@ -612,19 +620,22 @@ export const skipStop = createAction(skipStopSchema, async (input) => {
 
 /**
  * Complete entire schedule
+ * Authorization check moved to WHERE clause for efficiency
  */
 export const completeSchedule = createSimpleAction(async (scheduleId: string) => {
   const session = await auth();
   if (!session?.user) throw new AppError("Unauthorized", "UNAUTHORIZED", 401);
 
-  const schedule = await prisma.dailySchedule.findUnique({
-    where: { id: scheduleId },
+  // Find schedule with authorization in WHERE clause
+  const schedule = await prisma.dailySchedule.findFirst({
+    where: {
+      id: scheduleId,
+      OR: [{ createdById: session.user.id }, { approvedById: session.user.id }],
+    },
     select: {
       id: true,
       status: true,
       startedAt: true,
-      createdById: true,
-      approvedById: true,
       exchanges: true,
     },
   });

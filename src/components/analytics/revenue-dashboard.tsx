@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
+import { formatCurrency } from "@/lib/format";
 
 interface RevenueData {
   totalRevenue: number;
@@ -35,14 +36,6 @@ interface RevenueDashboardProps {
 }
 
 export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const isGrowthPositive = overview.revenueGrowth >= 0;
 
   return (

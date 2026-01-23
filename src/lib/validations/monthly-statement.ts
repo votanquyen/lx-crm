@@ -25,7 +25,14 @@ export const createMonthlyStatementSchema = z.object({
 export const updateMonthlyStatementSchema = z.object({
   id: z.string().min(1, "ID bảng kê không hợp lệ"),
   contactName: z.string().optional(),
+  // Period dates (Đợt)
+  periodStart: z.string().datetime().optional(),
+  periodEnd: z.string().datetime().optional(),
+  // Plants
   plants: z.array(plantItemSchema),
+  // VAT rate (fixed options: 5, 8, 10)
+  vatRate: z.union([z.literal(5), z.literal(8), z.literal(10)]).default(8),
+  // Notes
   notes: z.string().optional(),
   internalNotes: z.string().optional(),
 });

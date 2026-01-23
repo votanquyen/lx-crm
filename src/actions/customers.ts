@@ -272,7 +272,12 @@ export async function getCustomers(params: CustomerSearchParams) {
 }
 
 /**
- * Get a single customer by ID with related data
+ * Get a single customer by ID with related data.
+ * Includes contracts, plants, invoices with payments, notes, and statements.
+ *
+ * @param id - Customer UUID
+ * @returns Customer with all related data and counts
+ * @throws {NotFoundError} If customer not found
  */
 export async function getCustomerById(id: string) {
   await requireAuth();
@@ -280,21 +285,44 @@ export async function getCustomerById(id: string) {
   const customer = await prisma.customer.findUnique({
     where: { id },
     include: {
-      // Include recent invoices for customer detail view
+      // Include all contracts with items
+      contracts: {
+        orderBy: { startDate: "desc" },
+        include: {
+          items: {
+            include: { plantType: true },
+          },
+          createdBy: { select: { id: true, name: true, email: true } },
+        },
+      },
+      // Include all plants
+      customerPlants: {
+        include: { plantType: true },
+        orderBy: { position: "asc" },
+      },
+      // Include recent invoices with payments
       invoices: {
         orderBy: { issueDate: "desc" },
         take: 50,
-        select: {
-          id: true,
-          invoiceNumber: true,
-          status: true,
-          issueDate: true,
-          dueDate: true,
-          totalAmount: true,
-          paidAmount: true,
-          outstandingAmount: true,
+        include: {
+          payments: {
+            orderBy: { paymentDate: "desc" },
+          },
         },
       },
+      // Include sticky notes
+      stickyNotes: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          createdBy: { select: { id: true, name: true } },
+        },
+      },
+      // Include latest monthly statement
+      monthlyStatements: {
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+        take: 1,
+      },
+      // Include counts for all relations
       _count: {
         select: {
           customerPlants: true,

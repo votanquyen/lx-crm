@@ -27,8 +27,7 @@ import {
 } from "@/lib/exchange/inventory-sync";
 
 /**
- * Calculate priority score with enhanced algorithm
- * Uses new priority-scoring module with age and keyword factors
+ * Calculate priority score based on priority and plant count
  */
 function calculatePriorityScore(
   priority: ExchangePriority,

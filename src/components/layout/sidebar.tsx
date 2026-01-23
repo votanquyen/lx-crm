@@ -160,6 +160,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             size="icon"
             onClick={onToggle}
             className="h-8 w-8 rounded-full border"
+            aria-label={collapsed ? "Mở rộng thanh bên" : "Thu gọn thanh bên"}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : <ChevronLeft className="h-4 w-4" aria-hidden="true" />}
           </Button>
