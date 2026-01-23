@@ -200,7 +200,7 @@ model User {
   recordedPayments      Payment[]           @relation("PaymentRecordedBy")
   preferredByCustomers  Customer[]          @relation("PreferredStaff")
   confirmedStatements   MonthlyStatement[]  @relation("StatementConfirmedBy")
-  createdExpenses       ExpenseInvoice[]    @relation("ExpenseCreatedBy")
+  deletedStatements     MonthlyStatement[]  @relation("StatementDeletedBy")
 
   @@index([email])
   @@index([role])
@@ -505,6 +505,7 @@ model CustomerPlant {
   @@index([status])
   @@index([condition])
   @@index([nextExchange])
+  @@index([customerId, status]) // Composite: active plants per customer
   @@map("customer_plants")
 }
 
@@ -688,6 +689,24 @@ model Invoice {
   reminderCount    Int       @default(0)
   lastReminderDate DateTime?
 
+  // === SmartVAS E-Invoice Integration ===
+  // External invoice data from SmartVAS.vn
+  smartvasInvoiceNumber String?   @map("smartvas_invoice_number")
+  smartvasSerialNumber  String?   @map("smartvas_serial_number")
+  smartvasIssueDate     DateTime? @map("smartvas_issue_date")
+  smartvasPdfUrl        String?   @map("smartvas_pdf_url") @db.VarChar(500)
+  smartvasXmlUrl        String?   @map("smartvas_xml_url") @db.VarChar(500)
+
+  // Customer matching (denormalized for n8n lookup)
+  customerTaxCode String? @map("customer_tax_code") @db.VarChar(20)
+
+  // Payment tracking
+  paymentDate DateTime? @map("payment_date")
+
+  // Source bảng kê reference
+  monthlyStatementId String?           @map("monthly_statement_id")
+  monthlyStatement   MonthlyStatement? @relation(fields: [monthlyStatementId], references: [id])
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -705,10 +724,10 @@ model Invoice {
   @@index([status])
   @@index([dueDate])
   @@index([issueDate])
-  // Composite indexes for common queries
-  @@index([customerId, status]) // Filter by customer + status
-  @@index([dueDate, status])    // Overdue invoices query
-  @@index([issueDate, status])  // Monthly billing reports
+  @@index([customerTaxCode])
+  @@index([smartvasInvoiceNumber])
+  @@index([smartvasInvoiceNumber, smartvasSerialNumber]) // Composite for idempotent lookup
+  @@index([monthlyStatementId])
   @@map("invoices")
 }
 
@@ -760,13 +779,19 @@ model MonthlyStatement {
   notes         String? @db.Text
   internalNotes String? @db.Text
 
+  // Soft Delete (Audit Trail)
+  deletedAt   DateTime?
+  deletedById String?
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  confirmedBy User?    @relation("StatementConfirmedBy", fields: [confirmedById], references: [id])
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  confirmedBy User?     @relation("StatementConfirmedBy", fields: [confirmedById], references: [id])
+  deletedBy   User?     @relation("StatementDeletedBy", fields: [deletedById], references: [id])
+  invoices    Invoice[] // Generated invoices from this statement
 
   @@unique([customerId, year, month])
   @@index([customerId])
@@ -774,6 +799,8 @@ model MonthlyStatement {
   @@index([needsConfirmation])
   @@index([periodStart])
   @@index([periodEnd])
+  @@index([deletedAt]) // Fast filtering for soft-deleted records
+  @@index([customerId, year, month, deletedAt]) // Composite for duplicate scans
   @@map("monthly_statements")
 }
 
@@ -1036,9 +1063,8 @@ model CareSchedule {
   @@index([staffId])
   @@index([customerId])
   @@index([status])
-  // Composite indexes for common queries
-  @@index([scheduledDate, status])   // Daily schedule view
-  @@index([customerId, scheduledDate]) // Customer care history
+  @@index([scheduledDate, status]) // Composite: daily schedule
+  @@index([staffId, scheduledDate]) // Composite: staff workload
   @@map("care_schedules")
 }
 
@@ -1049,7 +1075,7 @@ model CareSchedule {
 model StickyNote {
   id String @id @default(cuid())
 
-  customerId   String
+  customerId   String? // Optional for global dashboard notes
   createdById  String?
   assignedToId String?
 
@@ -1098,7 +1124,7 @@ model StickyNote {
   updatedAt DateTime @updatedAt
 
   // Relations
-  customer   Customer @relation(fields: [customerId], references: [id])
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
   createdBy  User?    @relation("NoteCreatedBy", fields: [createdById], references: [id])
   resolvedBy User?    @relation("NoteResolvedBy", fields: [resolvedById], references: [id])
   assignedTo User?    @relation("NoteAssignedTo", fields: [assignedToId], references: [id])
@@ -1356,6 +1382,8 @@ model ExchangeHistory {
   @@index([customerId])
   @@index([exchangeDate])
   @@index([staffId])
+  @@index([customerId, exchangeDate]) // Composite: customer history
+  @@index([staffId, exchangeDate]) // Composite: staff performance
   @@map("exchange_history")
 }
 

@@ -74,7 +74,7 @@ async function CustomerSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Khách hàng hoạt động</CardTitle>
-            <Users className="text-muted-foreground h-4 w-4" />
+            <Users className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalActive}</div>
@@ -85,7 +85,7 @@ async function CustomerSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Khách hàng mới</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <TrendingUp className="h-4 w-4 text-green-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.newThisMonth}</div>
@@ -96,7 +96,7 @@ async function CustomerSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Giá trị trọn đời TB</CardTitle>
-            <BarChart3 className="text-muted-foreground h-4 w-4" />
+            <BarChart3 className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(analytics.avgLifetimeValue)}</div>
@@ -107,7 +107,7 @@ async function CustomerSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tỷ lệ rời bỏ</CardTitle>
-            <AlertCircle className="text-muted-foreground h-4 w-4" />
+            <AlertCircle className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.churnRate}%</div>
@@ -177,7 +177,7 @@ async function ContractSection() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Hợp đồng hoạt động</CardTitle>
-          <FileText className="text-muted-foreground h-4 w-4" />
+          <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{analytics.activeCount}</div>
@@ -188,7 +188,7 @@ async function ContractSection() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Sắp hết hạn</CardTitle>
-          <AlertCircle className="h-4 w-4 text-orange-500" />
+          <AlertCircle className="h-4 w-4 text-orange-500" aria-hidden="true" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-orange-600">{analytics.expiringSoon}</div>
@@ -199,7 +199,7 @@ async function ContractSection() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Thời hạn trung bình</CardTitle>
-          <FileText className="text-muted-foreground h-4 w-4" />
+          <FileText className="text-muted-foreground h-4 w-4" aria-hidden="true" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{analytics.avgDuration}</div>
@@ -210,7 +210,7 @@ async function ContractSection() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Tỷ lệ gia hạn</CardTitle>
-          <TrendingUp className="text-muted-foreground h-4 w-4" />
+          <TrendingUp className="text-muted-foreground h-4 w-4" aria-hidden="true" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{analytics.renewalRate}%</div>
@@ -255,7 +255,7 @@ export default function AnalyticsPage() {
       {/* Revenue Section */}
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-          <BarChart3 className="h-5 w-5" />
+          <BarChart3 className="h-5 w-5" aria-hidden="true" />
           Doanh thu
         </h3>
         <Suspense fallback={<LoadingSkeleton />}>
@@ -266,7 +266,7 @@ export default function AnalyticsPage() {
       {/* Invoice Section */}
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-          <FileText className="h-5 w-5" />
+          <FileText className="h-5 w-5" aria-hidden="true" />
           Hóa đơn & Công nợ
         </h3>
         <Suspense fallback={<LoadingSkeleton />}>
@@ -277,7 +277,7 @@ export default function AnalyticsPage() {
       {/* Customer Section */}
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5" aria-hidden="true" />
           Khách hàng
         </h3>
         <Suspense fallback={<LoadingSkeleton />}>
@@ -288,7 +288,7 @@ export default function AnalyticsPage() {
       {/* Contract Section */}
       <div>
         <h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
-          <FileText className="h-5 w-5" />
+          <FileText className="h-5 w-5" aria-hidden="true" />
           Hợp đồng
         </h3>
         <Suspense fallback={<LoadingSkeleton />}>

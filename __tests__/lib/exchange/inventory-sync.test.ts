@@ -92,9 +92,7 @@ describe("inventory-sync: validateInventoryForExchange", () => {
   });
 
   it("returns Unknown name for missing plant types", async () => {
-    const plantsToInstall: PlantExchangeItem[] = [
-      { plantTypeId: "non-existent", quantity: 5 },
-    ];
+    const plantsToInstall: PlantExchangeItem[] = [{ plantTypeId: "non-existent", quantity: 5 }];
 
     vi.mocked(prisma.inventory.findMany).mockResolvedValue([]);
 
@@ -174,9 +172,7 @@ describe("inventory-sync: validateInventoryForExchange", () => {
   });
 
   it("handles exact stock match (boundary condition)", async () => {
-    const plantsToInstall: PlantExchangeItem[] = [
-      { plantTypeId: "plant-1", quantity: 10 },
-    ];
+    const plantsToInstall: PlantExchangeItem[] = [{ plantTypeId: "plant-1", quantity: 10 }];
 
     vi.mocked(prisma.inventory.findMany).mockResolvedValue([
       {
@@ -193,9 +189,7 @@ describe("inventory-sync: validateInventoryForExchange", () => {
   });
 
   it("handles zero available stock", async () => {
-    const plantsToInstall: PlantExchangeItem[] = [
-      { plantTypeId: "plant-1", quantity: 1 },
-    ];
+    const plantsToInstall: PlantExchangeItem[] = [{ plantTypeId: "plant-1", quantity: 1 }];
 
     vi.mocked(prisma.inventory.findMany).mockResolvedValue([
       {

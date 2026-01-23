@@ -54,7 +54,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Chưa thanh toán</CardTitle>
-            <Clock className="text-muted-foreground h-4 w-4" />
+            <Clock className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(analytics.outstandingAmount)}</div>
@@ -68,7 +68,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quá hạn</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -82,7 +82,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tỷ lệ thu hồi</CardTitle>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <DollarSign className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.collectionRate.toFixed(1)}%</div>
@@ -94,7 +94,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Thời gian thanh toán TB</CardTitle>
-            <Clock className="text-muted-foreground h-4 w-4" />
+            <Clock className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.avgDaysToPayment} ngày</div>
@@ -109,7 +109,7 @@ export function InvoiceAging({ analytics, aging }: InvoiceAgingProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             Báo cáo phân loại công nợ theo thời gian
           </CardTitle>
         </CardHeader>

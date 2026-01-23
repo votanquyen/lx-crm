@@ -51,9 +51,7 @@ async function getRecentCareNotes(customerId: string): Promise<string[]> {
  * Get last exchange date for a customer's plant type
  * Parses plantsData JSON to find matching plant types
  */
-async function getLastExchangeDates(
-  customerId: string
-): Promise<Map<string, Date>> {
+async function getLastExchangeDates(customerId: string): Promise<Map<string, Date>> {
   const exchanges = await prisma.exchangeRequest.findMany({
     where: {
       customerId,
@@ -158,14 +156,11 @@ export async function getCustomerPlantHealth(
   // Sort by urgency (most urgent first)
   plants.sort(
     (a, b) =>
-      getUrgencyPriority(b.recommendation.urgency) -
-      getUrgencyPriority(a.recommendation.urgency)
+      getUrgencyPriority(b.recommendation.urgency) - getUrgencyPriority(a.recommendation.urgency)
   );
 
   // Calculate summary
-  const plantsNeedingAttention = plants.filter(
-    (p) => p.recommendation.urgency !== "NONE"
-  ).length;
+  const plantsNeedingAttention = plants.filter((p) => p.recommendation.urgency !== "NONE").length;
 
   const worstPlant = plants[0];
   const worstHealthScore = worstPlant?.recommendation.healthScore ?? 100;
@@ -335,8 +330,7 @@ export async function getExchangeSuggestions(options?: {
 
   // Sort by urgency (most urgent first), then by days remaining
   suggestions.sort((a, b) => {
-    const urgencyDiff =
-      getUrgencyPriority(b.urgency) - getUrgencyPriority(a.urgency);
+    const urgencyDiff = getUrgencyPriority(b.urgency) - getUrgencyPriority(a.urgency);
     if (urgencyDiff !== 0) return urgencyDiff;
     return a.daysRemaining - b.daysRemaining;
   });

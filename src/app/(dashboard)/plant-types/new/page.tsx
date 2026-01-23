@@ -15,7 +15,7 @@ export default async function NewPlantTypePage() {
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href="/plant-types">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
         <div>

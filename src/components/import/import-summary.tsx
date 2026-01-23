@@ -4,13 +4,7 @@
  * Import Summary Component
  * Shows import results with stats and rollback option
  */
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, AlertTriangle, RotateCcw } from "lucide-react";
@@ -23,12 +17,7 @@ interface ImportSummaryProps {
   isRollingBack?: boolean;
 }
 
-export function ImportSummary({
-  result,
-  onRollback,
-  onClose,
-  isRollingBack,
-}: ImportSummaryProps) {
+export function ImportSummary({ result, onRollback, onClose, isRollingBack }: ImportSummaryProps) {
   const total = result.imported + result.merged + result.skipped + result.errors.length;
 
   return (
@@ -37,12 +26,12 @@ export function ImportSummary({
         <CardTitle className="flex items-center gap-2">
           {result.success ? (
             <>
-              <CheckCircle className="h-6 w-6 text-green-500" />
+              <CheckCircle className="h-6 w-6 text-green-500" aria-hidden="true" />
               Import thành công
             </>
           ) : (
             <>
-              <XCircle className="h-6 w-6 text-red-500" />
+              <XCircle className="h-6 w-6 text-red-500" aria-hidden="true" />
               Import thất bại
             </>
           )}
@@ -55,25 +44,25 @@ export function ImportSummary({
           <StatBox
             label="Tạo mới"
             value={result.imported}
-            icon={<CheckCircle className="h-5 w-5 text-green-500" />}
+            icon={<CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />}
             color="green"
           />
           <StatBox
             label="Merge"
             value={result.merged}
-            icon={<CheckCircle className="h-5 w-5 text-blue-500" />}
+            icon={<CheckCircle className="h-5 w-5 text-blue-500" aria-hidden="true" />}
             color="blue"
           />
           <StatBox
             label="Bỏ qua"
             value={result.skipped}
-            icon={<AlertTriangle className="h-5 w-5 text-yellow-500" />}
+            icon={<AlertTriangle className="h-5 w-5 text-yellow-500" aria-hidden="true" />}
             color="yellow"
           />
           <StatBox
             label="Lỗi"
             value={result.errors.length}
-            icon={<XCircle className="h-5 w-5 text-red-500" />}
+            icon={<XCircle className="h-5 w-5 text-red-500" aria-hidden="true" />}
             color="red"
           />
         </div>
@@ -92,10 +81,7 @@ export function ImportSummary({
                 className="bg-green-500"
                 style={{ width: `${(result.imported / total) * 100}%` }}
               />
-              <div
-                className="bg-blue-500"
-                style={{ width: `${(result.merged / total) * 100}%` }}
-              />
+              <div className="bg-blue-500" style={{ width: `${(result.merged / total) * 100}%` }} />
               <div
                 className="bg-yellow-500"
                 style={{ width: `${(result.skipped / total) * 100}%` }}
@@ -112,10 +98,8 @@ export function ImportSummary({
         {result.errors.length > 0 && (
           <div className="rounded border border-red-200 bg-red-50 p-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="font-medium text-red-800">
-                Có {result.errors.length} lỗi
-              </span>
+              <AlertTriangle className="h-4 w-4 text-red-500" aria-hidden="true" />
+              <span className="font-medium text-red-800">Có {result.errors.length} lỗi</span>
             </div>
             <ul className="mt-2 list-inside list-disc text-sm text-red-700">
               {result.errors.slice(0, 5).map((err, i) => (
@@ -123,9 +107,7 @@ export function ImportSummary({
                   Dòng #{err.rowIndex}: {err.error}
                 </li>
               ))}
-              {result.errors.length > 5 && (
-                <li>...và {result.errors.length - 5} lỗi khác</li>
-              )}
+              {result.errors.length > 5 && <li>...và {result.errors.length - 5} lỗi khác</li>}
             </ul>
           </div>
         )}
@@ -150,7 +132,7 @@ export function ImportSummary({
         {/* Actions */}
         <div className="flex justify-between border-t pt-4">
           <Button variant="outline" onClick={onRollback} disabled={isRollingBack}>
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
             {isRollingBack ? "Đang hoàn tác..." : "Hoàn tác (Rollback)"}
           </Button>
           <Button onClick={onClose}>Hoàn tất</Button>

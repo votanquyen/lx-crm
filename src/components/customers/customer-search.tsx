@@ -50,7 +50,7 @@ export function CustomerSearch({ defaultValue = "" }: CustomerSearchProps) {
 
   return (
     <div className="relative max-w-sm flex-1">
-      <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+      <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" aria-hidden="true" />
       <Input
         id="customer-search"
         type="search"
@@ -60,7 +60,7 @@ export function CustomerSearch({ defaultValue = "" }: CustomerSearchProps) {
         onChange={(e) => handleSearch(e.target.value)}
       />
       {isPending && (
-        <Loader2 className="text-muted-foreground absolute top-1/2 right-9 h-4 w-4 -translate-y-1/2 animate-spin" />
+        <Loader2 className="text-muted-foreground absolute top-1/2 right-9 h-4 w-4 -translate-y-1/2 animate-spin" aria-hidden="true" />
       )}
       {defaultValue && !isPending && (
         <Button
@@ -69,7 +69,7 @@ export function CustomerSearch({ defaultValue = "" }: CustomerSearchProps) {
           className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
           onClick={handleClear}
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" aria-hidden="true" />
           <span className="sr-only">Xóa tìm kiếm</span>
         </Button>
       )}

@@ -19,7 +19,7 @@ export default function Error({ error, reset }: ErrorProps) {
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
-          <AlertCircle className="text-destructive h-16 w-16" />
+          <AlertCircle className="text-destructive h-16 w-16" aria-hidden="true" />
         </div>
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">Đã xảy ra lỗi</h1>

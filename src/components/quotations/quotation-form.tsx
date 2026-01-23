@@ -62,7 +62,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createQuotationSchema) as Resolver<FormValues>,
+    resolver: zodResolver(createQuotationSchema) as any,
     defaultValues: {
       validFrom: new Date(),
       validUntil: addDays(new Date(), 30),
@@ -100,15 +100,18 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
     return { subtotal, discountAmount, vatAmount, totalAmount };
   }, [items, discountRate, vatRate]);
 
+  // Extract stable setValue reference to avoid infinite loop
+  // (form object is not referentially stable, but setValue is)
+  const { setValue } = form;
+
   // Update form values when totals change (still needed for form submission)
-  // Use shouldValidate: false to prevent re-render loop
   useEffect(() => {
     const options = { shouldValidate: false, shouldDirty: false };
-    form.setValue("subtotal", calculatedTotals.subtotal, options);
-    form.setValue("discountAmount", calculatedTotals.discountAmount, options);
-    form.setValue("vatAmount", calculatedTotals.vatAmount, options);
-    form.setValue("totalAmount", calculatedTotals.totalAmount, options);
-  }, [calculatedTotals, form]);
+    setValue("subtotal", calculatedTotals.subtotal, options);
+    setValue("discountAmount", calculatedTotals.discountAmount, options);
+    setValue("vatAmount", calculatedTotals.vatAmount, options);
+    setValue("totalAmount", calculatedTotals.totalAmount, options);
+  }, [calculatedTotals, setValue]);
 
   function addItem() {
     append({
@@ -211,7 +214,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           <div className="flex items-center justify-between">
             <CardTitle>Danh sách sản phẩm</CardTitle>
             <Button type="button" onClick={addItem} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
               Thêm sản phẩm
             </Button>
           </div>
@@ -236,9 +239,11 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                 </TableHeader>
                 <TableBody>
                   {fields.map((field, index) => {
-                    const quantity = form.watch(`items.${index}.quantity`) || 0;
-                    const unitPrice = form.watch(`items.${index}.unitPrice`) || 0;
-                    const itemDiscount = form.watch(`items.${index}.discountRate`) || 0;
+                    // Use already-watched items array instead of form.watch() in loop
+                    const item = items[index];
+                    const quantity = item?.quantity || 0;
+                    const unitPrice = item?.unitPrice || 0;
+                    const itemDiscount = item?.discountRate || 0;
                     const total = quantity * unitPrice * (1 - itemDiscount / 100);
 
                     return (
@@ -306,7 +311,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
                             size="sm"
                             onClick={() => remove(index)}
                           >
-                            <Trash2 className="text-destructive h-4 w-4" />
+                            <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -353,7 +358,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           <div className="space-y-2 border-t pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tạm tính:</span>
-              <span className="font-medium">{formatCurrency(form.watch("subtotal") || 0)}</span>
+              <span className="font-medium">{formatCurrency(calculatedTotals.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Chiết khấu ({discountRate}%):</span>
@@ -363,11 +368,11 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">VAT ({vatRate}%):</span>
-              <span className="font-medium">{formatCurrency(form.watch("vatAmount") || 0)}</span>
+              <span className="font-medium">{formatCurrency(calculatedTotals.vatAmount)}</span>
             </div>
             <div className="flex justify-between border-t pt-2 text-lg font-bold">
               <span>Tổng cộng:</span>
-              <span className="text-primary">{formatCurrency(form.watch("totalAmount") || 0)}</span>
+              <span className="text-primary">{formatCurrency(calculatedTotals.totalAmount)}</span>
             </div>
           </div>
         </CardContent>
@@ -406,7 +411,7 @@ export function QuotationForm({ customers = [], plantTypes = [] }: QuotationForm
           Hủy
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           Tạo báo giá
         </Button>
       </div>

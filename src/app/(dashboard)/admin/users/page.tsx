@@ -23,7 +23,11 @@ export default async function UsersPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const search = params.search;
-  const role = params.role as any;
+  // Validate role parameter to avoid as any
+  const role =
+    params.role && VALID_ROLES.includes(params.role as ValidRole)
+      ? (params.role as ValidRole)
+      : undefined;
   const isActive =
     params.isActive === "true" ? true : params.isActive === "false" ? false : undefined;
 

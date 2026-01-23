@@ -145,6 +145,13 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
   const isOverdue =
     new Date(invoice.dueDate) < new Date() && !["PAID", "CANCELLED"].includes(invoice.status);
 
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
+  };
+
   const handleSend = () => {
     startTransition(async () => {
       const result = await sendInvoice(invoice.id);
@@ -200,22 +207,22 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
           {invoice.status === "DRAFT" && (
             <Button onClick={handleSend} disabled={isPending}>
               {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Send className="mr-2 h-4 w-4" />
+                <Send className="mr-2 h-4 w-4" aria-hidden="true" />
               )}
               Gửi hóa đơn
             </Button>
           )}
           {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) && (
             <Button onClick={() => setShowPaymentDialog(true)}>
-              <DollarSign className="mr-2 h-4 w-4" />
+              <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
               Ghi nhận thanh toán
             </Button>
           )}
           {invoice.status !== "CANCELLED" && invoice.payments.length === 0 && (
             <Button variant="destructive" onClick={handleCancel} disabled={isPending}>
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Hủy
             </Button>
           )}
@@ -225,7 +232,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
       {/* Contract link */}
       {invoice.contract && (
         <div className="bg-muted flex items-center gap-2 rounded-lg p-4">
-          <FileText className="h-4 w-4" />
+          <FileText className="h-4 w-4" aria-hidden="true" />
           <span className="text-muted-foreground">Hợp đồng:</span>
           <Link href={`/contracts/${invoice.contract.id}`} className="text-primary hover:underline">
             {invoice.contract.contractNumber}
@@ -238,7 +245,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
+              <Building2 className="h-5 w-5" aria-hidden="true" />
               Thông tin khách hàng
             </CardTitle>
           </CardHeader>
@@ -257,13 +264,13 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
             <div className="flex flex-wrap gap-4">
               {invoice.customer.contactPhone && (
                 <div className="flex items-center gap-1 text-sm">
-                  <Phone className="h-4 w-4" />
+                  <Phone className="h-4 w-4" aria-hidden="true" />
                   {invoice.customer.contactPhone}
                 </div>
               )}
               {invoice.customer.contactEmail && (
                 <div className="flex items-center gap-1 text-sm">
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4" aria-hidden="true" />
                   {invoice.customer.contactEmail}
                 </div>
               )}
@@ -275,7 +282,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
+              <Receipt className="h-5 w-5" aria-hidden="true" />
               Thông tin hóa đơn
             </CardTitle>
           </CardHeader>
@@ -284,7 +291,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
               <div>
                 <p className="text-muted-foreground text-sm">Ngày phát hành</p>
                 <p className="flex items-center gap-1 font-medium">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
                   {format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
@@ -293,7 +300,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                 <p
                   className={`flex items-center gap-1 font-medium ${isOverdue ? "text-destructive" : ""}`}
                 >
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
                   {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
                 </p>
               </div>
@@ -380,7 +387,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
               Lịch sử thanh toán
             </CardTitle>
           </CardHeader>
@@ -401,7 +408,11 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
                     <TableCell>
                       {format(new Date(payment.paymentDate), "dd/MM/yyyy HH:mm", { locale: vi })}
                     </TableCell>
-                    <TableCell>{paymentMethodLabels[(payment.method ?? payment.paymentMethod) as PaymentMethod] ?? "-"}</TableCell>
+                    <TableCell>
+                      {paymentMethodLabels[
+                        (payment.method ?? payment.paymentMethod) as PaymentMethod
+                      ] ?? "-"}
+                    </TableCell>
                     <TableCell>{payment.reference ?? payment.bankRef ?? "-"}</TableCell>
                     <TableCell className="text-right font-medium text-green-600">
                       {formatCurrency(payment.amount)}
@@ -494,7 +505,7 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
               Hủy
             </Button>
             <Button onClick={handleRecordPayment} disabled={isPending || paymentData.amount <= 0}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               Xác nhận
             </Button>
           </DialogFooter>

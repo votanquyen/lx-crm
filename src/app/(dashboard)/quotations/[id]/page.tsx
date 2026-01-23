@@ -89,7 +89,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
+            <Building2 className="h-5 w-5" aria-hidden="true" />
             Thông tin khách hàng
           </CardTitle>
         </CardHeader>
@@ -100,19 +100,19 @@ export default async function QuotationDetailPage({ params }: PageProps) {
           </div>
           {quotation.customer.contactEmail && (
             <div className="flex items-center gap-2">
-              <Mail className="text-muted-foreground h-4 w-4" />
+              <Mail className="text-muted-foreground h-4 w-4" aria-hidden="true" />
               <span className="text-sm">{quotation.customer.contactEmail}</span>
             </div>
           )}
           {quotation.customer.contactPhone && (
             <div className="flex items-center gap-2">
-              <Phone className="text-muted-foreground h-4 w-4" />
+              <Phone className="text-muted-foreground h-4 w-4" aria-hidden="true" />
               <span className="text-sm">{quotation.customer.contactPhone}</span>
             </div>
           )}
           {quotation.customer.address && (
             <div className="flex items-center gap-2">
-              <MapPin className="text-muted-foreground h-4 w-4" />
+              <MapPin className="text-muted-foreground h-4 w-4" aria-hidden="true" />
               <span className="text-sm">{quotation.customer.address}</span>
             </div>
           )}
@@ -123,7 +123,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5" aria-hidden="true" />
             Chi tiết báo giá
           </CardTitle>
         </CardHeader>
@@ -132,7 +132,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
             <div>
               <p className="text-muted-foreground text-sm">Ngày tạo</p>
               <p className="flex items-center gap-2 font-medium">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4" aria-hidden="true" />
                 {format(new Date(quotation.createdAt), "dd/MM/yyyy HH:mm", {
                   locale: vi,
                 })}
@@ -141,7 +141,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
             <div>
               <p className="text-muted-foreground text-sm">Hạn hiệu lực</p>
               <p className="flex items-center gap-2 font-medium">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4" aria-hidden="true" />
                 {format(new Date(quotation.validUntil), "dd/MM/yyyy", {
                   locale: vi,
                 })}
@@ -268,7 +268,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div>
                   <p className="font-medium">Tạo báo giá</p>
@@ -285,7 +285,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
               ) && (
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                    <Send className="h-4 w-4 text-blue-600" />
+                    <Send className="h-4 w-4 text-blue-600" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-medium">Đã gửi</p>
@@ -301,7 +301,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
               {quotation.status === "ACCEPTED" && quotation.responseDate && (
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-green-600" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-medium">Đã chấp nhận</p>
@@ -315,7 +315,7 @@ export default async function QuotationDetailPage({ params }: PageProps) {
               {quotation.status === "REJECTED" && quotation.responseDate && (
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                    <XCircle className="h-4 w-4 text-red-600" />
+                    <XCircle className="h-4 w-4 text-red-600" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-medium">Đã từ chối</p>

@@ -194,7 +194,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           {schedule.status === "SCHEDULED" && (
             <div className="mt-4">
               <Button onClick={handleCheckIn} className="w-full">
-                <Clock className="mr-2 h-4 w-4" />
+                <Clock className="mr-2 h-4 w-4" aria-hidden="true" />
                 Bắt đầu ca làm việc
               </Button>
             </div>
@@ -206,7 +206,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+            <FileText className="h-5 w-5" aria-hidden="true" />
             Chi tiết công việc
           </CardTitle>
         </CardHeader>
@@ -264,7 +264,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           {/* Issues Found */}
           <div className="space-y-2">
             <Label htmlFor="issuesFound" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
               Vấn đề phát hiện
             </Label>
             <Textarea
@@ -294,7 +294,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
+            <Camera className="h-5 w-5" aria-hidden="true" />
             Hình ảnh chăm sóc
           </CardTitle>
         </CardHeader>
@@ -326,8 +326,9 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
                     type="button"
                     onClick={() => handleRemovePhoto(index)}
                     className="absolute top-1 right-1 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                    aria-label="Xóa ảnh"
                   >
-                    ✕
+                    <span aria-hidden="true">✕</span>
                   </button>
                 </div>
               ))}
@@ -336,7 +337,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
 
           {isUploading && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Upload className="h-4 w-4 animate-spin" />
+              <Upload className="h-4 w-4 animate-spin" aria-hidden="true" />
               Đang tải ảnh lên...
             </div>
           )}
@@ -423,7 +424,7 @@ export function CareCompletionForm({ schedule }: CareCompletionFormProps) {
           disabled={isPending || isUploading}
           className="bg-green-600 hover:bg-green-700"
         >
-          <CheckCircle className="mr-2 h-4 w-4" />
+          <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
           {isPending ? "Đang lưu..." : "Hoàn thành công việc"}
         </Button>
       </div>

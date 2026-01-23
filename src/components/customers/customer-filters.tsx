@@ -24,7 +24,7 @@ interface CustomerFiltersProps {
 const STATUS_OPTIONS = [
   { value: "LEAD", label: "Tiềm năng" },
   { value: "ACTIVE", label: "Hoạt động" },
-  { value: "INACTIVE", label: "Ngưng hoạt động" },
+  { value: "INACTIVE", label: "Tạm ngưng" },
 ];
 
 export function CustomerFilters({ districts }: CustomerFiltersProps) {
@@ -85,7 +85,7 @@ export function CustomerFilters({ districts }: CustomerFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="text-muted-foreground flex items-center gap-1 text-sm">
-        <Filter className="h-4 w-4" />
+        <Filter className="h-4 w-4" aria-hidden="true" />
         <span>Lọc:</span>
       </div>
 
@@ -127,19 +127,51 @@ export function CustomerFilters({ districts }: CustomerFiltersProps) {
       </Button>
 
       {activeFilters > 0 && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clearFilters}
-          disabled={isPending}
-          className="gap-1"
-        >
-          <X className="h-4 w-4" />
-          Xóa bộ lọc
-          <Badge variant="secondary" className="ml-1">
-            {activeFilters}
-          </Badge>
-        </Button>
+        <>
+          <div className="bg-border mx-1 h-6 w-px" />
+          {/* Individual filter badges */}
+          {currentStatus && (
+            <Badge
+              variant="secondary"
+              className="hover:bg-secondary/80 cursor-pointer gap-1 pr-1"
+              onClick={() => updateFilter("status", "all")}
+            >
+              {STATUS_OPTIONS.find((o) => o.value === currentStatus)?.label}
+              <X className="h-3 w-3" aria-hidden="true" />
+            </Badge>
+          )}
+          {currentDistrict && (
+            <Badge
+              variant="secondary"
+              className="hover:bg-secondary/80 cursor-pointer gap-1 pr-1"
+              onClick={() => updateFilter("district", "all")}
+            >
+              {currentDistrict}
+              <X className="h-3 w-3" aria-hidden="true" />
+            </Badge>
+          )}
+          {hasDebt && (
+            <Badge
+              variant="secondary"
+              className="hover:bg-secondary/80 cursor-pointer gap-1 pr-1"
+              onClick={toggleDebt}
+            >
+              Còn nợ
+              <X className="h-3 w-3" aria-hidden="true" />
+            </Badge>
+          )}
+          {activeFilters > 1 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              disabled={isPending}
+              className="h-6 px-2 text-xs"
+            >
+              Xóa tất cả
+            </Button>
+          )}
+        </>
       )}
     </div>
   );

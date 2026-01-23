@@ -27,9 +27,7 @@ interface NormalizeResponse {
  * Normalize Vietnamese company names
  * Handles: Cty, TNHH, CP, Công ty, Co., Ltd, etc.
  */
-export async function normalizeCompanyNames(
-  names: string[]
-): Promise<NormalizedName[]> {
+export async function normalizeCompanyNames(names: string[]): Promise<NormalizedName[]> {
   if (names.length === 0) return [];
 
   const prompt = `Chuẩn hóa ${names.length} tên công ty Việt Nam.

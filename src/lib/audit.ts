@@ -14,7 +14,8 @@ export type EntityType =
   | "Payment"
   | "CareSchedule"
   | "User"
-  | "PlantType";
+  | "PlantType"
+  | "Setting";
 
 /** Supported action types for audit logging */
 export type ActionType = "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "EXPORT" | "IMPORT";

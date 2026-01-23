@@ -72,7 +72,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5" aria-hidden="true" />
             Thông tin lịch hẹn
           </CardTitle>
         </CardHeader>
@@ -98,7 +98,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
             <div>
               <div className="text-sm text-gray-600">Nhân viên</div>
               <div className="flex items-center gap-2 font-medium">
-                <User className="h-4 w-4" />
+                <User className="h-4 w-4" aria-hidden="true" />
                 {schedule.staff?.name || "Chưa phân công"}
               </div>
             </div>
@@ -140,7 +140,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
+            <MapPin className="h-5 w-5" aria-hidden="true" />
             Thông tin khách hàng
           </CardTitle>
         </CardHeader>
@@ -176,7 +176,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+                <FileText className="h-5 w-5" aria-hidden="true" />
                 Báo cáo công việc
               </CardTitle>
             </CardHeader>
@@ -191,7 +191,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
               {schedule.issuesFound && (
                 <div>
                   <div className="mb-1 flex items-center gap-1 text-sm text-gray-600">
-                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    <AlertTriangle className="h-4 w-4 text-orange-500" aria-hidden="true" />
                     Vấn đề phát hiện
                   </div>
                   <div className="rounded border border-orange-200 bg-orange-50 p-3 text-sm">
@@ -204,7 +204,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
                 <div>
                   <div className="mb-1 text-sm text-gray-600">Hành động đã thực hiện</div>
                   <div className="rounded border border-green-200 bg-green-50 p-3 text-sm">
-                    {schedule.actionsToken}
+                    {schedule.actionsTaken}
                   </div>
                 </div>
               )}
@@ -265,7 +265,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Camera className="h-5 w-5" />
+                  <Camera className="h-5 w-5" aria-hidden="true" />
                   Hình ảnh ({schedule.photoUrls.length})
                 </CardTitle>
               </CardHeader>
@@ -301,7 +301,7 @@ async function CareDetailContent({ params }: DetailPageProps) {
         {["SCHEDULED", "IN_PROGRESS"].includes(schedule.status) && (
           <Link href={`/care/${schedule.id}/complete`}>
             <Button className="bg-green-600 hover:bg-green-700">
-              <CheckCircle className="mr-2 h-4 w-4" />
+              <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Hoàn thành công việc
             </Button>
           </Link>

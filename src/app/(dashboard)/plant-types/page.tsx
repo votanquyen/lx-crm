@@ -82,7 +82,7 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
         <div className="flex items-center gap-2">
           <Button asChild>
             <Link href="/plant-types/new" className="gap-1">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Thêm loại cây
             </Link>
           </Button>
@@ -169,7 +169,7 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
                 <img src={plant.imageUrl} alt={plant.name} className="h-full w-full object-cover" />
               ) : (
                 <div className="text-muted-foreground flex h-full items-center justify-center">
-                  <Package className="h-12 w-12" />
+                  <Package className="h-12 w-12" aria-hidden="true" />
                 </div>
               )}
               {!plant.isActive && (
@@ -200,11 +200,12 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
                   {formatCurrencyDecimal(plant.rentalPrice)}/tháng
                 </span>
               </div>
-              {(plant as any).inventory?.totalStock !== undefined && (
+              {(plant as PlantWithInventory).inventory?.totalStock !== undefined && (
                 <div className="text-muted-foreground flex items-center justify-between text-xs">
                   <span>Tồn kho</span>
                   <span>
-                    {(plant as PlantWithInventory).inventory?.availableStock}/{(plant as PlantWithInventory).inventory?.totalStock}
+                    {(plant as PlantWithInventory).inventory?.availableStock}/
+                    {(plant as PlantWithInventory).inventory?.totalStock}
                   </span>
                 </div>
               )}
@@ -222,14 +223,14 @@ export default async function PlantTypesPage({ searchParams }: PageProps) {
       {plantsResult.plantTypes.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Package className="text-muted-foreground mb-4 h-12 w-12" />
+            <Package className="text-muted-foreground mb-4 h-12 w-12" aria-hidden="true" />
             <h3 className="mb-2 text-lg font-semibold">Chưa có loại cây nào</h3>
             <p className="text-muted-foreground mb-4 text-center">
               Bắt đầu bằng cách thêm loại cây đầu tiên vào danh mục
             </p>
             <Button asChild>
               <Link href="/plant-types/new">
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
                 Thêm loại cây
               </Link>
             </Button>

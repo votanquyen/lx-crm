@@ -11,7 +11,7 @@ export default async function UnauthorizedPage() {
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
           <div className="bg-destructive/10 rounded-full p-6">
-            <ShieldAlert className="text-destructive h-16 w-16" />
+            <ShieldAlert className="text-destructive h-16 w-16" aria-hidden="true" />
           </div>
         </div>
 

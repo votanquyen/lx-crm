@@ -31,7 +31,6 @@ import {
   type UpdateCustomerInput,
 } from "@/lib/validations/customer";
 import type { CustomerStatus } from "@prisma/client";
-import { HCM_DISTRICTS } from "@/config/districts";
 
 interface CustomerFormProps {
   customer?: {
@@ -48,9 +47,37 @@ interface CustomerFormProps {
     latitude: number | null;
     longitude: number | null;
   };
+  onSuccess?: () => void;
 }
 
-export function CustomerForm({ customer }: CustomerFormProps) {
+const DISTRICTS = [
+  "Quận 1",
+  "Quận 2",
+  "Quận 3",
+  "Quận 4",
+  "Quận 5",
+  "Quận 6",
+  "Quận 7",
+  "Quận 8",
+  "Quận 9",
+  "Quận 10",
+  "Quận 11",
+  "Quận 12",
+  "Bình Thạnh",
+  "Gò Vấp",
+  "Phú Nhuận",
+  "Tân Bình",
+  "Tân Phú",
+  "Thủ Đức",
+  "Bình Tân",
+  "Nhà Bè",
+  "Hóc Môn",
+  "Củ Chi",
+  "Cần Giờ",
+  "Bình Chánh",
+];
+
+export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -96,8 +123,12 @@ export function CustomerForm({ customer }: CustomerFormProps) {
 
         if (result.success) {
           toast.success(isEditing ? "Cập nhật thành công" : "Thêm khách hàng thành công");
-          router.push(isEditing ? `/customers/${customer.id}` : "/customers");
-          router.refresh();
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            router.push(isEditing ? `/customers/${customer.id}` : "/customers");
+            router.refresh();
+          }
         } else {
           toast.error(result.error);
         }
@@ -327,7 +358,7 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       {/* Actions */}
       <div className="flex items-center gap-4">
         <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {isEditing ? "Cập nhật" : "Thêm khách hàng"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>

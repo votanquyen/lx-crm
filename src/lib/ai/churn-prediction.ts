@@ -269,10 +269,7 @@ function fallbackSentimentAnalysis(notes: string[]): SentimentResult {
 /**
  * Generate retention actions based on risk factors
  */
-function generateRetentionActions(
-  factors: string[],
-  riskLevel: ChurnRiskLevel
-): string[] {
+function generateRetentionActions(factors: string[], riskLevel: ChurnRiskLevel): string[] {
   const actions: string[] = [];
 
   // Payment-related actions
@@ -332,9 +329,7 @@ function getRiskLevel(score: number): ChurnRiskLevel {
  * Calculate churn risk for a customer
  * Uses hybrid approach: rule-based + LLM sentiment analysis
  */
-export async function calculateChurnRisk(
-  input: ChurnRiskInput
-): Promise<ChurnRiskResult> {
+export async function calculateChurnRisk(input: ChurnRiskInput): Promise<ChurnRiskResult> {
   const allFactors: string[] = [];
 
   // Step 1: Calculate rule-based scores
@@ -355,18 +350,13 @@ export async function calculateChurnRisk(
 
     // Add concern keywords as factors
     if (sentimentResult.concernKeywords.length > 0) {
-      allFactors.push(
-        `Ghi chú có từ khóa tiêu cực: ${sentimentResult.concernKeywords.join(", ")}`
-      );
+      allFactors.push(`Ghi chú có từ khóa tiêu cực: ${sentimentResult.concernKeywords.join(", ")}`);
     }
   }
 
   // Step 3: Calculate total score
   const totalScore = Math.min(
-    paymentResult.score +
-      exchangeResult.score +
-      satisfactionResult.score +
-      sentimentScore,
+    paymentResult.score + exchangeResult.score + satisfactionResult.score + sentimentScore,
     100
   );
 

@@ -129,7 +129,7 @@ export function CareScheduleForm({
           {/* Staff Assignment */}
           <div className="space-y-2">
             <Label htmlFor="staffId" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <User className="h-4 w-4" aria-hidden="true" />
               Nhân viên phụ trách
             </Label>
             <Select
@@ -153,7 +153,7 @@ export function CareScheduleForm({
           {/* Date Selection */}
           <div className="space-y-2">
             <Label htmlFor="scheduledDate" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4" aria-hidden="true" />
               Ngày thực hiện <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -168,7 +168,7 @@ export function CareScheduleForm({
           {/* Time Slot */}
           <div className="space-y-2">
             <Label htmlFor="timeSlot" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+              <Clock className="h-4 w-4" aria-hidden="true" />
               Khung giờ
             </Label>
             <Select

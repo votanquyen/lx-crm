@@ -1,13 +1,16 @@
-import "dotenv/config";
-import path from "path";
-import { defineConfig } from "prisma/config";
+import { config } from "dotenv";
+import { resolve } from "path";
+import { defineConfig, env } from "prisma/config";
+
+// Load .env from project root (parent of prisma folder)
+config({ path: resolve(__dirname, "../.env") });
 
 export default defineConfig({
-  schema: path.join(__dirname, "schema.prisma"),
+  schema: "./schema.prisma",
   migrations: {
-    path: path.join(__dirname, "migrations"),
+    path: "./migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL!,
+    url: env("DATABASE_URL"),
   },
 });

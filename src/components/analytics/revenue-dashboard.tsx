@@ -46,7 +46,7 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tổng doanh thu</CardTitle>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <DollarSign className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.totalRevenue)}</div>
@@ -58,7 +58,7 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Doanh thu năm nay</CardTitle>
-            <Calendar className="text-muted-foreground h-4 w-4" />
+            <Calendar className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.ytdRevenue)}</div>
@@ -70,15 +70,15 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Doanh thu tháng này</CardTitle>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <DollarSign className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.mtdRevenue)}</div>
             <div className="mt-1 flex items-center text-xs">
               {isGrowthPositive ? (
-                <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                <TrendingUp className="mr-1 h-3 w-3 text-green-500" aria-hidden="true" />
               ) : (
-                <TrendingDown className="mr-1 h-3 w-3 text-red-500" />
+                <TrendingDown className="mr-1 h-3 w-3 text-red-500" aria-hidden="true" />
               )}
               <span className={isGrowthPositive ? "text-green-500" : "text-red-500"}>
                 {Math.abs(overview.revenueGrowth)}%
@@ -92,7 +92,7 @@ export function RevenueDashboard({ overview, monthlyData }: RevenueDashboardProp
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Giá trị hợp đồng TB</CardTitle>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <DollarSign className="text-muted-foreground h-4 w-4" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overview.avgContractValue)}</div>

@@ -3,21 +3,27 @@
  */
 import { notFound } from "next/navigation";
 import { getCustomerById } from "@/actions/customers";
+import { getCustomerNotes } from "@/actions/sticky-notes";
 import { CustomerDetail } from "@/components/customers/customer-detail";
-import type { ComponentProps } from "react";
+import { CustomerSheetManager } from "@/components/customers/customer-sheet-manager";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-type CustomerData = ComponentProps<typeof CustomerDetail>["customer"];
-
-export default async function CustomerDetailPage({ params }: PageProps) {
+export default async function CustomerDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { tab } = await searchParams;
 
   try {
-    const customer = (await getCustomerById(id)) as unknown as CustomerData;
-    return <CustomerDetail customer={customer} />;
+    const [customer, notes] = await Promise.all([getCustomerById(id), getCustomerNotes(id)]);
+    return (
+      <>
+        <CustomerDetail customer={customer} notes={notes} defaultTab={tab} />
+        <CustomerSheetManager />
+      </>
+    );
   } catch {
     notFound();
   }

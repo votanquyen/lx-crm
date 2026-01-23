@@ -20,10 +20,7 @@ export interface ParsedExcel {
 /**
  * Parse Excel buffer to structured data
  */
-export function parseExcelBuffer(
-  buffer: ArrayBuffer,
-  filename: string
-): ParsedExcel {
+export function parseExcelBuffer(buffer: ArrayBuffer, filename: string): ParsedExcel {
   const workbook = XLSX.read(buffer, { type: "array" });
 
   const sheets: ParsedSheet[] = workbook.SheetNames.map((name) => {

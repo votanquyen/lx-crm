@@ -75,7 +75,7 @@ export function AnalyticsExportButtons({ variant = "outline" }: AnalyticsExportB
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant={variant} disabled={isExporting}>
-          <Download className="mr-2 h-4 w-4" />
+          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
           {isExporting ? "Đang xuất..." : "Xuất CSV"}
         </Button>
       </DropdownMenuTrigger>
@@ -136,7 +136,7 @@ export function SingleExportButton({ type, label, variant = "outline" }: SingleE
 
   return (
     <Button variant={variant} size="sm" onClick={handleExport} disabled={isExporting}>
-      <Download className="mr-1 h-3 w-3" />
+      <Download className="mr-1 h-3 w-3" aria-hidden="true" />
       {isExporting ? "..." : label || "Xuất CSV"}
     </Button>
   );

@@ -1,622 +1,134 @@
-"use client";
-
-import { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Download, Printer, CheckCircle2, AlertCircle, Calendar, Pencil } from "lucide-react";
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+import { BangKeClient } from "@/components/bang-ke/bang-ke-client";
 import {
   getMonthlyStatements,
   getCustomersForStatements,
-  getMonthlyStatement,
-  confirmMonthlyStatement,
-  getAvailableYears,
+  getAvailableYearMonths,
 } from "@/actions/monthly-statements";
-import type { StatementListItem, StatementDTO } from "@/types/monthly-statement";
-import { formatCurrency } from "@/lib/format";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { toast } from "sonner";
-import { StatementEditor } from "@/components/statements/statement-editor";
 
-interface CustomerForStatement {
-  id: string;
-  code: string | null;
-  companyName: string;
-  shortName: string | null;
-  address: string | null;
-  district: string | null;
-  contactName: string | null;
-}
+/**
+ * Bang-ke (Monthly Statement) Page - Server Component
+ *
+ * Fetches initial data on server for faster first paint:
+ * - Available years with statement counts
+ * - Customer list for sidebar
+ * - Statements for the default year
+ *
+ * Client component handles interactive state management.
+ */
 
-export default function BangKePage() {
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Debounce search input (300ms delay)
-  useEffect(() => {
-    const timer = setTimeout(() => setSearchQuery(searchInput), 300);
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [statements, setStatements] = useState<StatementListItem[]>([]);
-  const [customers, setCustomers] = useState<CustomerForStatement[]>([]);
-  const [availableYears, setAvailableYears] = useState<number[]>([new Date().getFullYear()]);
-  const [currentStatementDetail, setCurrentStatementDetail] = useState<StatementDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-
-  /**
-   * PERFORMANCE: Load customers and statements in PARALLEL on mount/year change
-   * This eliminates the waterfall: loadCustomers() -> loadStatements() (sequential)
-   * Now both run simultaneously, saving ~200ms on initial load
-   *
-   * TODO: For further optimization, consider Option 4 (Hybrid SSR):
-   * - Move this Promise.all to Server Component
-   * - Pass data as props to client component
-   * - Eliminates loading spinner entirely on first paint
-   * - See: plans/260109-app-performance-optimization/phase-02-ssr-migration.md
-   */
-  useEffect(() => {
-    async function loadInitialData() {
-      try {
-        setIsLoading(true);
-        const [customersResult, statementsResult] = await Promise.all([
-          getCustomersForStatements({}),
-          getMonthlyStatements({
-            year: selectedYear,
-            limit: 500,
-            offset: 0,
-          }),
-        ]);
-
-        if (customersResult.success && customersResult.data) {
-          setCustomers(customersResult.data);
-        }
-        if (statementsResult.success && statementsResult.data) {
-          setStatements(statementsResult.data.items || []);
-        }
-      } catch (error) {
-        console.error("Failed to load data:", error);
-        toast.error("Không thể tải dữ liệu");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadInitialData();
-  }, [selectedYear]);
-
-  // Load statement detail when customer/month/statements change
-  useEffect(() => {
-    const customerStmts = selectedCustomerId
-      ? statements.filter((s) => s.customerId === selectedCustomerId)
-      : [];
-    const stmt = customerStmts.find((s) => s.month === selectedMonth);
-
-    if (selectedCustomerId && stmt) {
-      loadStatementDetail(stmt.id);
-    } else {
-      setCurrentStatementDetail(null);
-    }
-  }, [selectedCustomerId, selectedMonth, statements]);
-
-  async function loadCustomers() {
-    try {
-      const [customersResult, yearsResult] = await Promise.all([
-        getCustomersForStatements({}),
-        getAvailableYears({}),
-      ]);
-      if (customersResult.success && customersResult.data) {
-        setCustomers(customersResult.data);
-      }
-      if (yearsResult.success && yearsResult.data) {
-        setAvailableYears(yearsResult.data);
-      }
-    } catch (error) {
-      console.error("Failed to load customers:", error);
-      toast.error("Không thể tải danh sách công ty");
-    }
-  }
-
-  async function loadStatements() {
-    try {
-      setIsLoading(true);
-      const result = await getMonthlyStatements({
-        year: selectedYear,
-        limit: 100,
-        offset: 0,
-      });
-      if (result.success && result.data) {
-        setStatements(result.data.items || []);
-      }
-    } catch (error) {
-      console.error("Failed to load statements:", error);
-      toast.error("Không thể tải bảng kê");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function loadStatementDetail(id: string) {
-    try {
-      setIsLoading(true);
-      const result = await getMonthlyStatement({ id });
-      if (result.success && result.data) {
-        setCurrentStatementDetail(result.data);
-      }
-    } catch (error) {
-      console.error("Failed to load statement detail:", error);
-      setCurrentStatementDetail(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleConfirmStatement(id: string) {
-    try {
-      setIsConfirming(true);
-      const result = await confirmMonthlyStatement({ id });
-      if (result.success) {
-        toast.success(result.data?.message || "Đã xác nhận bảng kê");
-        // Reload statements after confirmation
-        const statementsResult = await getMonthlyStatements({
-          year: selectedYear,
-          limit: 500,
-          offset: 0,
-        });
-        if (statementsResult.success && statementsResult.data) {
-          setStatements(statementsResult.data.items || []);
-        }
-        if (currentStatementDetail) {
-          await loadStatementDetail(currentStatementDetail.id);
-        }
-      } else {
-        throw new Error(result.error || "Không thể xác nhận");
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể xác nhận bảng kê";
-      toast.error(message);
-    } finally {
-      setIsConfirming(false);
-    }
-  }
-
-  async function handleExportCSV() {
-    if (!currentStatementDetail) {
-      toast.error("Không có dữ liệu để xuất");
-      return;
-    }
-
-    try {
-      // Dynamic import to reduce initial bundle size
-      const { generateMonthlyStatementCSV, getStatementFilename } =
-        await import("@/lib/csv/export-monthly-statement");
-
-      const csv = generateMonthlyStatementCSV(currentStatementDetail);
-      const filename = getStatementFilename(
-        currentStatementDetail.customer?.companyName || "company",
-        currentStatementDetail.year,
-        currentStatementDetail.month
-      );
-
-      // Create blob and download
-      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-
-      link.setAttribute("href", url);
-      link.setAttribute("download", filename);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast.success("Đã xuất file CSV");
-    } catch (error) {
-      console.error("Failed to export CSV:", error);
-      toast.error("Không thể xuất file CSV");
-    }
-  }
-
-  async function handleExportPDF() {
-    if (!currentStatementDetail) {
-      toast.error("Không có dữ liệu để xuất");
-      return;
-    }
-
-    try {
-      // Dynamic import to reduce initial bundle size
-      const { generateMonthlyStatementPDF } = await import("@/lib/pdf/monthly-statement-pdf");
-      const { getStatementFilename } = await import("@/lib/csv/export-monthly-statement");
-
-      const doc = generateMonthlyStatementPDF(currentStatementDetail);
-      const filename = getStatementFilename(
-        currentStatementDetail.customer?.companyName || "company",
-        currentStatementDetail.year,
-        currentStatementDetail.month
-      ).replace(".csv", ".pdf");
-
-      doc.save(filename);
-      toast.success("Đã tạo file PDF");
-    } catch (error) {
-      console.error("Failed to export PDF:", error);
-      toast.error("Không thể xuất file PDF");
-    }
-  }
-
-  // Filter customers by search (memoized)
-  const filteredCustomers = useMemo(
-    () =>
-      customers.filter((c) =>
-        c.companyName.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    [customers, searchQuery]
-  );
-
-  // Pre-group statements by customerId for O(1) lookup (avoids O(n²) filter inside map)
-  const statementsByCustomer = useMemo(() => {
-    const grouped = new Map<string, StatementListItem[]>();
-    statements.forEach((s) => {
-      const existing = grouped.get(s.customerId) || [];
-      existing.push(s);
-      grouped.set(s.customerId, existing);
-    });
-    return grouped;
-  }, [statements]);
-
-  // Filter statements for selected customer (using pre-grouped map for O(1) lookup)
-  const customerStatements = useMemo(
-    () => (selectedCustomerId ? statementsByCustomer.get(selectedCustomerId) || [] : []),
-    [selectedCustomerId, statementsByCustomer]
-  );
-
-  const currentStatement = customerStatements.find((s) => s.month === selectedMonth);
-
-  // Months array
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
+// Loading skeleton for Suspense fallback
+function BangKeLoadingSkeleton() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
-      {/* Sidebar - Company List */}
-      <div className="bg-card flex w-80 flex-col overflow-hidden border-r">
-        <div className="shrink-0 border-b p-4">
-          <h1 className="mb-1 text-2xl font-bold">Bảng Kê</h1>
-          <p className="text-muted-foreground text-sm">Cây xanh văn phòng</p>
-          <div className="relative mt-4">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder="Tìm công ty..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+      {/* Sidebar Skeleton */}
+      <div className="flex h-full w-80 flex-col border-r bg-white">
+        <div className="sticky top-0 z-10 border-b bg-white/95 p-5">
+          <div className="h-6 w-40 animate-pulse rounded bg-slate-200" />
+          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-slate-100" />
+          <div className="mt-4 h-9 w-full animate-pulse rounded bg-slate-100" />
         </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {filteredCustomers.map((customer) => {
-            const customerStmts = statements.filter((s) => s.customerId === customer.id);
-            const hasUnconfirmed = customerStmts.some((s) => s.needsConfirmation);
-            const monthlyTotal =
-              customerStmts.find(
-                (s) => s.month === selectedMonth // FIX: Use selectedMonth instead of current month
-              )?.total || 0;
-
-            return (
-              <div
-                key={customer.id}
-                onClick={() => setSelectedCustomerId(customer.id)}
-                className={`cursor-pointer border-b p-4 transition-colors ${
-                  selectedCustomerId === customer.id
-                    ? "bg-primary/10 border-l-primary border-l-4"
-                    : "hover:bg-muted/50"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary/20 text-primary flex h-10 w-10 items-center justify-center rounded-full font-semibold">
-                        {customer.shortName?.substring(0, 2).toUpperCase() ||
-                          customer.companyName.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{customer.companyName}</div>
-                        <div className="text-muted-foreground text-xs">
-                          {customer.district} • {customerStmts.length} tháng
-                        </div>
-                      </div>
-                      {hasUnconfirmed && (
-                        <Badge
-                          variant="outline"
-                          className="border-amber-500 bg-amber-50 text-amber-700"
-                        >
-                          <AlertCircle className="h-3 w-3" />
-                        </Badge>
-                      )}
-                    </div>
-                    {monthlyTotal > 0 && (
-                      <div className="text-primary mt-2 text-sm font-semibold">
-                        {formatCurrency(monthlyTotal)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex-1 space-y-2 p-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="h-20 animate-pulse rounded-lg bg-slate-100" />
+          ))}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {selectedCustomerId ? (
-          <div className="h-full overflow-y-auto p-6">
-            {/* Header with customer name */}
-            {(() => {
-              const customer = customers.find((c) => c.id === selectedCustomerId);
-              return (
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold">{customer?.companyName}</h2>
-                  {customer?.address && (
-                    <p className="text-muted-foreground text-sm">{customer.address}</p>
-                  )}
-                  <p className="text-muted-foreground text-sm">
-                    {customer?.district}
-                    {customer?.contactName && ` • Liên hệ: ${customer.contactName}`}
-                  </p>
-                </div>
-              );
-            })()}
-
-            {/* Year & Month Selector */}
-            <div className="mb-6 space-y-4">
-              {/* Year and Actions Row */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="bg-background rounded-md border px-4 py-2 font-medium"
-                >
-                  {availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      Năm {year}
-                    </option>
-                  ))}
-                </select>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsEditMode(true)}
-                    disabled={!currentStatementDetail || isEditMode}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Sửa</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportCSV}
-                    disabled={!currentStatementDetail}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Excel</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportPDF}
-                    disabled={!currentStatementDetail}
-                  >
-                    <Printer className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">In</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Month Grid */}
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12">
-                {months.map((month) => {
-                  const stmt = customerStatements.find((s) => s.month === month);
-                  const isSelected = selectedMonth === month;
-                  const needsConfirm = stmt?.needsConfirmation;
-                  const hasData = !!stmt;
-
-                  return (
-                    <Button
-                      key={month}
-                      variant={isSelected ? "default" : hasData ? "secondary" : "ghost"}
-                      size="sm"
-                      onClick={() => setSelectedMonth(month)}
-                      className={`relative h-10 w-full ${needsConfirm ? "ring-2 ring-amber-500 ring-offset-1" : ""} ${!hasData && !isSelected ? "text-muted-foreground" : ""}`}
-                    >
-                      Tháng {month}
-                      {needsConfirm && (
-                        <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500" />
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Statement Card or Editor */}
-            {isEditMode && currentStatementDetail ? (
-              <StatementEditor
-                statement={currentStatementDetail}
-                onSave={async () => {
-                  setIsEditMode(false);
-                  await loadStatements();
-                  if (currentStatementDetail) {
-                    await loadStatementDetail(currentStatementDetail.id);
-                  }
-                }}
-                onCancel={() => setIsEditMode(false)}
-              />
-            ) : currentStatement ? (
-              <Card
-                className={
-                  currentStatement.needsConfirmation
-                    ? "border-amber-500 bg-amber-50/50 dark:bg-amber-950/20"
-                    : ""
-                }
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        {currentStatement.needsConfirmation && (
-                          <AlertCircle className="h-5 w-5 text-amber-500" />
-                        )}
-                        Tháng {selectedMonth}/{selectedYear}
-                        {currentStatement.needsConfirmation && (
-                          <Badge variant="outline" className="border-amber-500 text-amber-700">
-                            Chưa xác nhận
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      {currentStatementDetail && (
-                        <p className="text-muted-foreground mt-1 text-sm">
-                          Đợt:{" "}
-                          {new Date(currentStatementDetail.periodStart).toLocaleDateString("vi-VN")} →{" "}
-                          {new Date(currentStatementDetail.periodEnd).toLocaleDateString("vi-VN")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className="text-primary text-2xl font-bold">
-                        {formatCurrency(currentStatement.total)}
-                      </div>
-                      <div className="text-muted-foreground text-xs">đã gồm VAT</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {currentStatement.needsConfirmation && (
-                    <div className="mb-4 rounded-md bg-amber-100 p-4 dark:bg-amber-900/30">
-                      <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                        ⚠ Tháng mới - Hệ thống tự động tạo từ tháng trước
-                      </p>
-                      <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                        Vui lòng kiểm tra và xác nhận.
-                      </p>
-                      <Button
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => handleConfirmStatement(currentStatement.id)}
-                        disabled={isConfirming}
-                      >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        {isConfirming ? "Đang xác nhận..." : "Xác nhận"}
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Plant Table */}
-                  {currentStatementDetail && isLoading ? (
-                    <div className="text-muted-foreground py-8 text-center">
-                      <div className="border-primary mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2"></div>
-                      <p>Đang tải...</p>
-                    </div>
-                  ) : currentStatementDetail ? (
-                    <div>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-16">STT</TableHead>
-                            <TableHead>Tên cây</TableHead>
-                            <TableHead>Quy cách</TableHead>
-                            <TableHead className="text-right">Đơn giá</TableHead>
-                            <TableHead className="text-right">Số lượng</TableHead>
-                            <TableHead className="text-right">Thành tiền</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {currentStatementDetail.plants.map((plant, idx) => (
-                            <TableRow key={plant.id}>
-                              <TableCell className="font-medium">{idx + 1}</TableCell>
-                              <TableCell>{plant.name}</TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {plant.sizeSpec}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(plant.unitPrice)}
-                              </TableCell>
-                              <TableCell className="text-right">{plant.quantity}</TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatCurrency(plant.total)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-
-                      {/* Financial Summary */}
-                      <div className="mt-6 space-y-2 border-t pt-4">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Tổng cộng:</span>
-                          <span className="font-medium">
-                            {formatCurrency(currentStatementDetail.subtotal)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            VAT ({currentStatementDetail.vatRate}%):
-                          </span>
-                          <span className="font-medium">
-                            {formatCurrency(currentStatementDetail.vatAmount)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 text-lg font-bold">
-                          <span>Thành tiền:</span>
-                          <span className="text-primary">
-                            {formatCurrency(currentStatementDetail.total)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground py-8 text-center">
-                      <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                      <p>Chưa có dữ liệu chi tiết</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-muted-foreground py-12 text-center">
-                  <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <p>
-                    Chưa có bảng kê cho tháng {selectedMonth}/{selectedYear}
-                  </p>
-                  <Button className="mt-4" variant="outline">
-                    Tạo bảng kê mới
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        ) : (
-          <div className="text-muted-foreground flex h-full items-center justify-center">
-            <div className="text-center">
-              <Search className="mx-auto mb-4 h-16 w-16 opacity-50" />
-              <p className="text-lg">Chọn một công ty để xem bảng kê</p>
-            </div>
-          </div>
-        )}
+      {/* Main Content Skeleton */}
+      <div className="flex flex-1 items-center justify-center bg-slate-50/50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" aria-hidden="true" />
+          <p className="text-sm font-medium text-slate-500">Đang tải dữ liệu...</p>
+        </div>
       </div>
     </div>
+  );
+}
+
+// Server data fetching component
+async function BangKeData() {
+  // Determine default year: try localStorage pattern or use current year
+  const currentYear = new Date().getFullYear();
+
+  // Fetch initial data in parallel on server
+  const [yearMonthsResult, customersResult, statementsResult] = await Promise.all([
+    getAvailableYearMonths({}),
+    getCustomersForStatements({}),
+    getMonthlyStatements({
+      year: currentYear,
+      limit: 500,
+      offset: 0,
+    }),
+  ]);
+
+  // Process available years
+  let availableYears: Array<{ year: number; count: number }> = [];
+  let initialYear = currentYear;
+
+  if (yearMonthsResult.success && yearMonthsResult.data) {
+    // Group by year and sum counts
+    const yearCounts = yearMonthsResult.data.reduce(
+      (acc, item) => {
+        const existing = acc.find((y) => y.year === item.year);
+        if (existing) {
+          existing.count += item.count;
+        } else {
+          acc.push({ year: item.year, count: item.count });
+        }
+        return acc;
+      },
+      [] as Array<{ year: number; count: number }>
+    );
+
+    yearCounts.sort((a, b) => b.year - a.year);
+    availableYears = yearCounts;
+
+    // Smart default: use year with most data, or current year
+    const yearWithMostData =
+      yearCounts.length > 0
+        ? yearCounts.reduce((max, y) => (y.count > max.count ? y : max))
+        : null;
+
+    initialYear = yearWithMostData?.year || currentYear;
+  }
+
+  // If initialYear differs from currentYear, fetch statements for that year
+  let initialStatements = statementsResult.success && statementsResult.data
+    ? statementsResult.data.items || []
+    : [];
+
+  if (initialYear !== currentYear) {
+    const correctYearStatements = await getMonthlyStatements({
+      year: initialYear,
+      limit: 500,
+      offset: 0,
+    });
+    if (correctYearStatements.success && correctYearStatements.data) {
+      initialStatements = correctYearStatements.data.items || [];
+    }
+  }
+
+  // Process customers
+  const initialCustomers =
+    customersResult.success && customersResult.data ? customersResult.data : [];
+
+  return (
+    <BangKeClient
+      initialCustomers={initialCustomers}
+      initialStatements={initialStatements}
+      initialYears={availableYears}
+      initialYear={initialYear}
+    />
+  );
+}
+
+// Page component with Suspense boundary
+export default function BangKePage() {
+  return (
+    <Suspense fallback={<BangKeLoadingSkeleton />}>
+      <BangKeData />
+    </Suspense>
   );
 }

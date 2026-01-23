@@ -38,8 +38,8 @@ export function formatCurrencyNumeric(value: NumericValue): string {
  * Format currency for Excel CSV export
  * Uses regular spaces instead of non-breaking spaces for better compatibility
  */
-export function formatCurrencyForExcel(amount: NumericValue): string {
-  const num = typeof amount === "object" ? Number(amount) : Number(amount);
+export function formatCurrencyForExcel(amount: DecimalLike): string {
+  const num = typeof amount === "object" ? Number(amount.toString()) : Number(amount);
   return num
     .toLocaleString("vi-VN", {
       minimumFractionDigits: 0,

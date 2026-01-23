@@ -30,7 +30,7 @@ export function StopCard({ stop, isDragging, dragHandleProps }: StopCardProps) {
             {...dragHandleProps}
             className="mt-1 cursor-grab text-gray-400 hover:text-gray-600 active:cursor-grabbing"
           >
-            <GripVertical className="h-5 w-5" />
+            <GripVertical className="h-5 w-5" aria-hidden="true" />
           </div>
 
           {/* Stop Order Badge */}
@@ -48,7 +48,7 @@ export function StopCard({ stop, isDragging, dragHandleProps }: StopCardProps) {
               <h4 className="truncate text-sm font-semibold">{stop.customerName}</h4>
               {stop.eta && (
                 <Badge variant="outline" className="shrink-0">
-                  <Clock className="mr-1 h-3 w-3" />
+                  <Clock className="mr-1 h-3 w-3" aria-hidden="true" />
                   {stop.eta}
                 </Badge>
               )}
@@ -56,12 +56,12 @@ export function StopCard({ stop, isDragging, dragHandleProps }: StopCardProps) {
 
             <div className="space-y-1 text-xs text-gray-600">
               <div className="flex items-start gap-1">
-                <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                <MapPin className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
                 <span className="line-clamp-2">{stop.address}</span>
               </div>
 
               <div className="flex items-center gap-1">
-                <Package className="h-3 w-3 shrink-0" />
+                <Package className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span>
                   {stop.plantCount} cây • ~{stop.estimatedDurationMins || 30} phút
                 </span>

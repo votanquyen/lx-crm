@@ -127,7 +127,7 @@ export function ImportPreviewTable({
                 onClick={approveSelected}
                 disabled={selectedRows.size === 0}
               >
-                <Check className="mr-1 h-4 w-4" />
+                <Check className="mr-1 h-4 w-4" aria-hidden="true" />
                 Duyệt ({selectedRows.size})
               </Button>
               <Button
@@ -136,7 +136,7 @@ export function ImportPreviewTable({
                 onClick={skipSelected}
                 disabled={selectedRows.size === 0}
               >
-                <X className="mr-1 h-4 w-4" />
+                <X className="mr-1 h-4 w-4" aria-hidden="true" />
                 Bỏ qua
               </Button>
             </div>
@@ -148,9 +148,7 @@ export function ImportPreviewTable({
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={
-                      selectedRows.size === filteredRows.length && filteredRows.length > 0
-                    }
+                    checked={selectedRows.size === filteredRows.length && filteredRows.length > 0}
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
@@ -181,36 +179,25 @@ export function ImportPreviewTable({
                       </span>
                       {row.duplicateInfo?.isDuplicate && (
                         <div className="text-sm text-yellow-600">
-                          Trùng: {row.duplicateInfo.matchName} (
-                          {Math.round(row.confidence * 100)}%)
+                          Trùng: {row.duplicateInfo.matchName} ({Math.round(row.confidence * 100)}%)
                         </div>
                       )}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {String(
-                      row.normalizedData.address || row.normalizedData["Địa chỉ"] || "-"
-                    )}
+                    {String(row.normalizedData.address || row.normalizedData["Địa chỉ"] || "-")}
                   </TableCell>
                   <TableCell>
                     <ConfidenceBadge confidence={row.confidence} status={row.status} />
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingRow(row)}
-                      >
-                        <Edit className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" onClick={() => setEditingRow(row)} aria-label="Chỉnh sửa">
+                        <Edit className="h-4 w-4" aria-hidden="true" />
                       </Button>
                       {row.duplicateInfo?.isDuplicate && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setMergingRow(row)}
-                        >
-                          <GitMerge className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => setMergingRow(row)} aria-label="Gộp dữ liệu">
+                          <GitMerge className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       )}
                     </div>
@@ -262,15 +249,7 @@ export function ImportPreviewTable({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   const colorClasses: Record<string, string> = {
     gray: "bg-gray-100 text-gray-800",
     green: "bg-green-100 text-green-800",
@@ -288,13 +267,7 @@ function StatCard({
   );
 }
 
-function ConfidenceBadge({
-  confidence,
-  status,
-}: {
-  confidence: number;
-  status: RowStatus;
-}) {
+function ConfidenceBadge({ confidence, status }: { confidence: number; status: RowStatus }) {
   const percent = Math.round(confidence * 100);
 
   if (status === "auto_approve" || percent >= 90) {

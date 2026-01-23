@@ -176,9 +176,7 @@ function daysSince(date: Date): number {
  * Predict exchange need for a single plant
  * Returns health score and urgency recommendation
  */
-export function predictExchangeNeed(
-  input: PlantHealthInput
-): ExchangeRecommendation {
+export function predictExchangeNeed(input: PlantHealthInput): ExchangeRecommendation {
   // Get base lifespan for plant type
   const baseLifespan = getPlantLifespan(input.plantTypeCode);
 
@@ -190,8 +188,7 @@ export function predictExchangeNeed(
   let expectedLifespan: number;
   if (input.avgExchangeIntervalDays && input.avgExchangeIntervalDays > 0) {
     expectedLifespan =
-      input.avgExchangeIntervalDays * 0.7 +
-      baseLifespan * conditionMultiplier * 0.3;
+      input.avgExchangeIntervalDays * 0.7 + baseLifespan * conditionMultiplier * 0.3;
   } else {
     expectedLifespan = baseLifespan * conditionMultiplier;
   }

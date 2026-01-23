@@ -336,7 +336,7 @@ export function PlantTypeForm({ plantType }: PlantTypeFormProps) {
       {/* Actions */}
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {plantType ? "Cập nhật" : "Tạo loại cây"}
         </Button>
         <Button

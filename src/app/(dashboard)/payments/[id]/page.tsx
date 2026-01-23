@@ -35,7 +35,7 @@ export default async function PaymentDetailPage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href="/payments">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
         <div className="flex-1">
@@ -47,12 +47,12 @@ export default async function PaymentDetailPage({ params }: PageProps) {
             <>
               <Button asChild variant="outline" size="sm">
                 <Link href={`/payments/${id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
                   Sửa
                 </Link>
               </Button>
               <Button variant="default" size="sm">
-                <CheckCircle className="mr-2 h-4 w-4" />
+                <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                 Xác minh
               </Button>
             </>

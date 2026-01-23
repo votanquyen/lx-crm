@@ -78,38 +78,12 @@ const getCachedRevenueOverview = unstable_cache(
       _avg: { monthlyFee: true },
     });
 
-    // Revenue by customer status
-    const revenueByStatus = await prisma.$queryRaw<
-      Array<{
-        status: string;
-        revenue: string | null;
-        customer_count: bigint;
-      }>
-    >`
-      SELECT
-        c.status,
-        SUM(i."totalAmount") as revenue,
-        COUNT(DISTINCT i."customerId") as customer_count
-      FROM invoices i
-      JOIN customers c ON c.id = i."customerId"
-      WHERE i.status IN ('PAID', 'PARTIAL')
-      GROUP BY c.status
-      ORDER BY revenue DESC
-    `;
-
-    const serializedRevenueByStatus = revenueByStatus.map((item) => ({
-      status: item.status,
-      revenue: Number(item.revenue || 0),
-      customer_count: Number(item.customer_count || 0),
-    }));
-
     return {
       totalRevenue: Number(totalRevenue._sum.totalAmount || 0),
       ytdRevenue: Number(ytdRevenue._sum.totalAmount || 0),
       mtdRevenue: Number(mtdRevenue._sum.totalAmount || 0),
       revenueGrowth: Math.round(revenueGrowth * 10) / 10,
       avgContractValue: Number(avgContract._avg.monthlyFee || 0),
-      revenueByStatus: serializedRevenueByStatus,
     };
   },
   ["revenue-overview"],
@@ -468,59 +442,44 @@ const getCachedCustomerAnalytics = unstable_cache(
     const now = new Date();
     const startOfThisMonth = startOfMonth(now);
 
-    // Total active customers
-    const totalActive = await prisma.customer.count({
-      where: { status: "ACTIVE" },
-    });
+    // Consolidated customer analytics query (4 queries → 1)
+    const stats = await prisma.$queryRaw<
+      [
+        {
+          total_active: bigint;
+          new_this_month: bigint;
+          total_terminated: bigint;
+          avg_lifetime_value: string | null;
+        },
+      ]
+    >`
+      SELECT
+        COUNT(*) FILTER (WHERE c.status = 'ACTIVE') as total_active,
+        COUNT(*) FILTER (WHERE c.status = 'ACTIVE' AND c."createdAt" >= ${startOfThisMonth}) as new_this_month,
+        COUNT(*) FILTER (WHERE c.status = 'TERMINATED') as total_terminated,
+        (
+          SELECT COALESCE(AVG(customer_revenue), 0)::text
+          FROM (
+            SELECT COALESCE(SUM(i."totalAmount"), 0) as customer_revenue
+            FROM customers c2
+            LEFT JOIN invoices i ON i."customerId" = c2.id AND i.status IN ('PAID', 'PARTIAL')
+            WHERE c2.status = 'ACTIVE'
+            GROUP BY c2.id
+          ) customer_totals
+        ) as avg_lifetime_value
+      FROM customers c
+    `;
 
-    // New customers this month
-    const newThisMonth = await prisma.customer.count({
-      where: {
-        status: "ACTIVE",
-        createdAt: { gte: startOfThisMonth },
-      },
-    });
-
-    // Terminated customers (churn)
-    const totalTerminated = await prisma.customer.count({
-      where: { status: "TERMINATED" },
-    });
-
+    const totalActive = Number(stats[0].total_active);
+    const totalTerminated = Number(stats[0].total_terminated);
     const churnRate =
       totalActive > 0 ? (totalTerminated / (totalActive + totalTerminated)) * 100 : 0;
 
-    // Customer distribution by status
-    const customersByStatus = await prisma.customer.groupBy({
-      by: ["status"],
-      _count: true,
-    });
-
-    // Average lifetime value - use database aggregation instead of fetching all
-    const avgLifetimeValueResult = await prisma.$queryRaw<[{ avg: string | null }]>`
-      SELECT AVG(customer_revenue) as avg
-      FROM (
-        SELECT
-          c.id,
-          COALESCE(SUM(i."totalAmount"), 0) as customer_revenue
-        FROM customers c
-        LEFT JOIN invoices i ON i."customerId" = c.id
-          AND i.status IN ('PAID', 'PARTIAL')
-        WHERE c.status = 'ACTIVE'
-        GROUP BY c.id
-      ) customer_totals
-    `;
-
-    const avgLifetimeValue = Number(avgLifetimeValueResult[0]?.avg || 0);
-
     return {
       totalActive,
-      newThisMonth,
+      newThisMonth: Number(stats[0].new_this_month),
       churnRate: Math.round(churnRate * 10) / 10,
-      avgLifetimeValue: Math.round(avgLifetimeValue),
-      customersByStatus: customersByStatus.map((s) => ({
-        status: s.status,
-        count: s._count,
-      })),
+      avgLifetimeValue: Math.round(Number(stats[0].avg_lifetime_value || 0)),
     };
   },
   ["customer-analytics"],
@@ -548,7 +507,6 @@ const getCachedTopCustomersDefault = unstable_cache(
         id: string;
         company_name: string;
         code: string;
-        status: string;
         total_revenue: string | null;
         monthly_fee: string | null;
         invoice_count: bigint;
@@ -558,7 +516,6 @@ const getCachedTopCustomersDefault = unstable_cache(
         c.id,
         c."companyName" as company_name,
         c.code,
-        c.status,
         COALESCE(SUM(i."totalAmount"), 0) as total_revenue,
         COALESCE(SUM(ct."monthlyFee"), 0) as monthly_fee,
         COUNT(DISTINCT i.id) as invoice_count
@@ -568,7 +525,7 @@ const getCachedTopCustomersDefault = unstable_cache(
       LEFT JOIN contracts ct ON ct."customerId" = c.id
         AND ct.status = 'ACTIVE'
       WHERE c.status = 'ACTIVE'
-      GROUP BY c.id, c."companyName", c.code, c.status
+      GROUP BY c.id, c."companyName", c.code
       ORDER BY total_revenue DESC
       LIMIT 10
     `;
@@ -577,7 +534,6 @@ const getCachedTopCustomersDefault = unstable_cache(
       id: c.id,
       companyName: c.company_name,
       code: c.code,
-      status: c.status,
       totalRevenue: Number(c.total_revenue),
       monthlyFee: Number(c.monthly_fee),
       invoiceCount: Number(c.invoice_count),
@@ -607,7 +563,6 @@ export async function getTopCustomers(limit: number = 10) {
           id: string;
           company_name: string;
           code: string;
-          status: string;
           total_revenue: string | null;
           monthly_fee: string | null;
           invoice_count: bigint;
@@ -617,7 +572,6 @@ export async function getTopCustomers(limit: number = 10) {
           c.id,
           c."companyName" as company_name,
           c.code,
-          c.status,
           COALESCE(SUM(i."totalAmount"), 0) as total_revenue,
           COALESCE(SUM(ct."monthlyFee"), 0) as monthly_fee,
           COUNT(DISTINCT i.id) as invoice_count
@@ -627,7 +581,7 @@ export async function getTopCustomers(limit: number = 10) {
         LEFT JOIN contracts ct ON ct."customerId" = c.id
           AND ct.status = 'ACTIVE'
         WHERE c.status = 'ACTIVE'
-        GROUP BY c.id, c."companyName", c.code, c.status
+        GROUP BY c.id, c."companyName", c.code
         ORDER BY total_revenue DESC
         LIMIT ${limit}
       `;
@@ -636,7 +590,6 @@ export async function getTopCustomers(limit: number = 10) {
         id: c.id,
         companyName: c.company_name,
         code: c.code,
-        status: c.status,
         totalRevenue: Number(c.total_revenue),
         monthlyFee: Number(c.monthly_fee),
         invoiceCount: Number(c.invoice_count),
@@ -659,55 +612,41 @@ export async function getTopCustomers(limit: number = 10) {
 const getCachedContractAnalytics = unstable_cache(
   async () => {
     const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    // Active contracts
-    const activeCount = await prisma.contract.count({
-      where: { status: "ACTIVE" },
-    });
+    // Consolidated contract analytics query (6 queries → 2)
+    const [stats, contractsByStatus] = await Promise.all([
+      prisma.$queryRaw<
+        [
+          {
+            active_count: bigint;
+            expiring_soon: bigint;
+            expired_count: bigint;
+            avg_months: string | null;
+          },
+        ]
+      >`
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'ACTIVE') as active_count,
+          COUNT(*) FILTER (WHERE status = 'ACTIVE' AND "endDate" >= ${now} AND "endDate" <= ${thirtyDaysLater}) as expiring_soon,
+          COUNT(*) FILTER (WHERE status = 'EXPIRED') as expired_count,
+          ROUND(AVG(EXTRACT(EPOCH FROM ("endDate" - "startDate")) / (30 * 24 * 60 * 60)) FILTER (WHERE status IN ('ACTIVE', 'EXPIRED'))) as avg_months
+        FROM contracts
+      `,
+      prisma.contract.groupBy({
+        by: ["status"],
+        _count: true,
+      }),
+    ]);
 
-    // Expiring soon (next 30 days)
-    const expiringSoon = await prisma.contract.count({
-      where: {
-        status: "ACTIVE",
-        endDate: {
-          gte: now,
-          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-        },
-      },
-    });
-
-    // Contract status distribution
-    const contractsByStatus = await prisma.contract.groupBy({
-      by: ["status"],
-      _count: true,
-    });
-
-    // Average contract duration using SQL AVG (optimized)
-    const avgDurationResult = await prisma.$queryRaw<[{ avg_months: string | null }]>`
-      SELECT
-        ROUND(AVG(EXTRACT(EPOCH FROM ("endDate" - "startDate")) / (30 * 24 * 60 * 60))) as avg_months
-      FROM contracts
-      WHERE status IN ('ACTIVE', 'EXPIRED')
-    `;
-    const avgDuration = Number(avgDurationResult[0]?.avg_months || 0);
-
-    // Renewal rate (signed after expired)
-    const expiredContracts = await prisma.contract.count({
-      where: { status: "EXPIRED" },
-    });
-
-    const renewedContracts = await prisma.contract.count({
-      where: {
-        status: "ACTIVE",
-      },
-    });
-
-    const renewalRate = expiredContracts > 0 ? (renewedContracts / expiredContracts) * 100 : 0;
+    const activeCount = Number(stats[0].active_count);
+    const expiredCount = Number(stats[0].expired_count);
+    const renewalRate = expiredCount > 0 ? (activeCount / expiredCount) * 100 : 0;
 
     return {
       activeCount,
-      expiringSoon,
-      avgDuration,
+      expiringSoon: Number(stats[0].expiring_soon),
+      avgDuration: Number(stats[0].avg_months || 0),
       renewalRate: Math.round(renewalRate * 10) / 10,
       contractsByStatus: contractsByStatus.map((s) => ({
         status: s.status,

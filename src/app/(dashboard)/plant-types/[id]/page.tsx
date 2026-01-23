@@ -30,7 +30,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon">
             <Link href="/plant-types">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
           <div>
@@ -43,7 +43,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
         </div>
         <Button asChild>
           <Link href={`/plant-types/${id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" />
+            <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
             Chỉnh sửa
           </Link>
         </Button>
@@ -192,7 +192,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4" aria-hidden="true" />
                 Giá cả
               </CardTitle>
             </CardHeader>
@@ -229,7 +229,7 @@ export default async function PlantTypeDetailPage({ params }: PageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-4 w-4" />
+                  <Package className="h-4 w-4" aria-hidden="true" />
                   Tồn kho
                 </CardTitle>
               </CardHeader>

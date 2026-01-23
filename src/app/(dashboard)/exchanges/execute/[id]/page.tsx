@@ -32,7 +32,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
         <div className="flex items-center gap-4">
           <Button variant="outline" asChild>
             <a href="/exchanges/daily-schedule">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
               Quay lại
             </a>
           </Button>
@@ -63,7 +63,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5" aria-hidden="true" />
             Thông tin lịch trình
           </CardTitle>
         </CardHeader>
@@ -95,7 +95,7 @@ async function ExecuteContent({ scheduleId }: { scheduleId: string }) {
               }}
             >
               <Button type="submit" size="lg" className="w-full">
-                <PlayCircle className="mr-2 h-5 w-5" />
+                <PlayCircle className="mr-2 h-5 w-5" aria-hidden="true" />
                 Bắt đầu thực hiện lịch trình
               </Button>
             </form>

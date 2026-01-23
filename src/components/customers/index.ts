@@ -7,9 +7,17 @@ export { CustomerCard } from "./customer-card";
 export { CustomerTable } from "./customer-table";
 export { CustomerForm } from "./customer-form";
 export { CustomerDetail } from "./customer-detail";
-export { CustomerContracts } from "./customer-contracts";
-export { CustomerPlants } from "./customer-plants";
-export { CustomerPayments } from "./customer-payments";
-export { CustomerDebtCard } from "./customer-debt-card";
-export { CustomerStatementPreview } from "./customer-statement-preview";
-export { CustomerNotes } from "./customer-notes";
+export { CustomerBusinessCard } from "./customer-business-card";
+export { ActionItemsWidget } from "./action-items-widget";
+export { OpsSnapshotWidget } from "./ops-snapshot-widget";
+export {
+  RecentActivityFeed,
+  createActivityFromInvoice,
+  createActivityFromNote,
+} from "./recent-activity-feed";
+export { CustomerStatementsTable } from "./customer-statements-table";
+export { FinanceTab } from "./finance-tab";
+export { OperationsTab } from "./operations-tab";
+export { CustomerMapMapcn } from "./customer-map-mapcn";
+export { CustomerPopupContent } from "./customer-popup-content";
+export { ViewToggle } from "./view-toggle";

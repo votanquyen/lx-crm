@@ -161,7 +161,7 @@ export function DailyScheduleBuilder({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <Calendar className="h-5 w-5" aria-hidden="true" />
             Chọn ngày
           </CardTitle>
         </CardHeader>
@@ -202,12 +202,12 @@ export function DailyScheduleBuilder({
                     <>
                       <Button variant="outline" asChild>
                         <a href={`/exchanges/execute/${existingSchedule.id}`}>
-                          <PlayCircle className="mr-2 h-4 w-4" />
+                          <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                           Thực hiện
                         </a>
                       </Button>
                       <Button variant="outline" onClick={handlePrintBriefing}>
-                        <Printer className="mr-2 h-4 w-4" />
+                        <Printer className="mr-2 h-4 w-4" aria-hidden="true" />
                         In lịch trình
                       </Button>
                     </>
@@ -215,7 +215,7 @@ export function DailyScheduleBuilder({
                   {existingSchedule.status === "IN_PROGRESS" && (
                     <Button variant="outline" asChild>
                       <a href={`/exchanges/execute/${existingSchedule.id}`}>
-                        <PlayCircle className="mr-2 h-4 w-4" />
+                        <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                         Tiếp tục
                       </a>
                     </Button>
@@ -223,11 +223,11 @@ export function DailyScheduleBuilder({
                   {existingSchedule.status === "DRAFT" && (
                     <>
                       <Button onClick={handleApprove} disabled={isPending}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
+                        <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                         Duyệt lịch
                       </Button>
                       <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                         Xóa
                       </Button>
                     </>

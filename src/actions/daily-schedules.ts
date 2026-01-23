@@ -429,13 +429,10 @@ export const startScheduleExecution = createSimpleAction(async (scheduleId: stri
     },
   });
 
-  if (!schedule) {
-    // Check if schedule exists at all (for better error message)
-    const exists = await prisma.dailySchedule.findUnique({
-      where: { id: scheduleId },
-      select: { id: true },
-    });
-    if (!exists) throw new NotFoundError("Lịch trình");
+  if (!schedule) throw new NotFoundError("Lịch trình");
+
+  // Authorization check: Only creator or approver can execute
+  if (schedule.createdById !== session.user.id && schedule.approvedById !== session.user.id) {
     throw new AppError("Bạn không có quyền thực hiện lịch trình này", "FORBIDDEN", 403);
   }
 
@@ -518,13 +515,13 @@ export const completeStop = createAction(completeStopSchema, async (input) => {
     },
   });
 
-  if (!stop) {
-    // Check if stop exists at all (for better error message)
-    const exists = await prisma.scheduledExchange.findUnique({
-      where: { id: input.stopId },
-      select: { id: true },
-    });
-    if (!exists) throw new NotFoundError("Điểm dừng");
+  if (!stop) throw new NotFoundError("Điểm dừng");
+
+  // Authorization check: Only creator or approver of the schedule can complete stops
+  if (
+    stop.schedule.createdById !== session.user.id &&
+    stop.schedule.approvedById !== session.user.id
+  ) {
     throw new AppError("Bạn không có quyền cập nhật điểm dừng này", "FORBIDDEN", 403);
   }
 
@@ -598,13 +595,13 @@ export const skipStop = createAction(skipStopSchema, async (input) => {
     },
   });
 
-  if (!stop) {
-    // Check if stop exists at all (for better error message)
-    const exists = await prisma.scheduledExchange.findUnique({
-      where: { id: input.stopId },
-      select: { id: true },
-    });
-    if (!exists) throw new NotFoundError("Điểm dừng");
+  if (!stop) throw new NotFoundError("Điểm dừng");
+
+  // Authorization check: Only creator or approver of the schedule can skip stops
+  if (
+    stop.schedule.createdById !== session.user.id &&
+    stop.schedule.approvedById !== session.user.id
+  ) {
     throw new AppError("Bạn không có quyền bỏ qua điểm dừng này", "FORBIDDEN", 403);
   }
 
@@ -643,13 +640,10 @@ export const completeSchedule = createSimpleAction(async (scheduleId: string) =>
     },
   });
 
-  if (!schedule) {
-    // Check if schedule exists at all (for better error message)
-    const exists = await prisma.dailySchedule.findUnique({
-      where: { id: scheduleId },
-      select: { id: true },
-    });
-    if (!exists) throw new NotFoundError("Lịch trình");
+  if (!schedule) throw new NotFoundError("Lịch trình");
+
+  // Authorization check: Only creator or approver can complete
+  if (schedule.createdById !== session.user.id && schedule.approvedById !== session.user.id) {
     throw new AppError("Bạn không có quyền hoàn thành lịch trình này", "FORBIDDEN", 403);
   }
 

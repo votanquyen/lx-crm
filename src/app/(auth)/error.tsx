@@ -20,7 +20,7 @@ export default function AuthError({ error, reset }: ErrorProps) {
       <div className="w-full max-w-md space-y-6 text-center">
         <div className="flex justify-center">
           <div className="bg-destructive/10 rounded-full p-6">
-            <AlertCircle className="text-destructive h-12 w-12" />
+            <AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
           </div>
         </div>
         <div className="space-y-2">
@@ -47,7 +47,7 @@ export default function AuthError({ error, reset }: ErrorProps) {
             onClick={() => (window.location.href = "/login")}
             className="gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Quay lại đăng nhập
           </Button>
         </div>

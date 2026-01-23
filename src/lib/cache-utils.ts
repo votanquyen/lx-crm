@@ -2,7 +2,27 @@
  * Cache Invalidation Utilities
  * Centralized revalidation helpers for consistent cache management
  */
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+
+// ========================================
+// Cache Tags (for unstable_cache)
+// ========================================
+
+export const CACHE_TAGS = {
+  CUSTOMERS_LIST: "customers-list",
+  INVOICES_LIST: "invoices-list",
+  CARE_SCHEDULES: "care-schedules",
+  EXCHANGES_LIST: "exchanges-list",
+} as const;
+
+/** Invalidate customer search cache */
+export function invalidateCustomerCache() {
+  revalidateTag(CACHE_TAGS.CUSTOMERS_LIST, "max");
+}
+
+// ========================================
+// Path Revalidation (for page cache)
+// ========================================
 
 /**
  * Revalidate customer-related paths

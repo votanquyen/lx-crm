@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
-import robotoRegularBase64 from "./fonts/roboto-regular-vn-base64.txt";
-import robotoBoldBase64 from "./fonts/roboto-bold-vn-base64.txt";
+import { robotoRegularBase64, robotoBoldBase64 } from "./fonts/embedded-fonts";
 
 /**
  * Adds Vietnamese-compatible fonts (Roboto) to the jsPDF instance.

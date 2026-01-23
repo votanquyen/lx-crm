@@ -40,23 +40,13 @@ export const customerSchema = z.object({
 
   // Primary Contact
   contactName: z.string().max(100).optional().nullable(),
-  contactPhone: z
-    .string()
-    .regex(phoneRegex, "Số điện thoại không hợp lệ (VD: 0901234567)")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contactPhone: phoneSchema,
   contactEmail: z.string().email("Email không hợp lệ").optional().nullable().or(z.literal("")),
   contactTitle: z.string().max(100).optional().nullable(),
 
   // Secondary Contact
   contact2Name: z.string().max(100).optional().nullable(),
-  contact2Phone: z
-    .string()
-    .regex(phoneRegex, "Số điện thoại không hợp lệ")
-    .optional()
-    .nullable()
-    .or(z.literal("")),
+  contact2Phone: phoneSchema,
   contact2Email: z.string().email("Email không hợp lệ").optional().nullable().or(z.literal("")),
   contact2Title: z.string().max(100).optional().nullable(),
 

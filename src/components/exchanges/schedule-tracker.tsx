@@ -229,7 +229,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
 
           {completedCount === totalCount && (
             <Button onClick={handleCompleteSchedule} disabled={isPending} className="w-full">
-              <CheckCircle className="mr-2 h-4 w-4" />
+              <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Hoàn thành lịch trình
             </Button>
           )}
@@ -260,7 +260,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                   <div>
                     <CardTitle className="text-lg">{stop.customer.companyName}</CardTitle>
                     <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-3 w-3" />
+                      <MapPin className="h-3 w-3" aria-hidden="true" />
                       {stop.customer.address}, {stop.customer.district}
                     </div>
                   </div>
@@ -273,11 +273,11 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
               {/* Stop Info */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
+                  <Phone className="h-4 w-4 text-gray-400" aria-hidden="true" />
                   {stop.customer.contactPhone || "---"}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-400" />
+                  <Clock className="h-4 w-4 text-gray-400" aria-hidden="true" />
                   {stop.estimatedDurationMins} phút
                 </div>
               </div>
@@ -303,7 +303,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                         variant="outline"
                         className="flex-1"
                       >
-                        <PlayCircle className="mr-2 h-4 w-4" />
+                        <PlayCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                         Bắt đầu
                       </Button>
                     </>
@@ -475,7 +475,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                         onClick={() => document.getElementById("photo-upload")?.click()}
                         disabled={isUploading}
                       >
-                        <Camera className="mr-2 h-4 w-4" />
+                        <Camera className="mr-2 h-4 w-4" aria-hidden="true" />
                         {isUploading ? "Đang tải..." : "Tải ảnh lên"}
                       </Button>
                       <input
@@ -501,7 +501,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                       disabled={isPending}
                       className="flex-1"
                     >
-                      <CheckCircle className="mr-2 h-4 w-4" />
+                      <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                       Hoàn thành
                     </Button>
 
@@ -516,7 +516,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
                       variant="destructive"
                       disabled={isPending}
                     >
-                      <XCircle className="mr-2 h-4 w-4" />
+                      <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                       Bỏ qua
                     </Button>
                   </div>
@@ -527,7 +527,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
               {stop.status === "COMPLETED" && stop.completedAt && (
                 <div className="border-t pt-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-green-600" aria-hidden="true" />
                     Hoàn thành lúc {format(new Date(stop.completedAt), "HH:mm")}
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export function ScheduleTracker({ schedule }: ScheduleTrackerProps) {
               {stop.status === "CANCELLED" && (
                 <div className="border-t pt-2 text-sm text-red-600">
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
                     {stop.skipReason || "Đã bỏ qua"}
                   </div>
                 </div>

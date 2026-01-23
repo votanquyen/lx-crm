@@ -1,7 +1,16 @@
 "use server";
 
 import { createAction, createSimpleAction } from "@/lib/action-utils";
+import { VAT_RATE } from "@/lib/constants/billing";
+import {
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { createId } from "@paralleldrive/cuid2";
 import {
   calculateStatementPeriod,
   getPreviousMonth,
@@ -12,6 +21,7 @@ import {
   updateMonthlyStatementSchema,
   confirmMonthlyStatementSchema,
   deleteMonthlyStatementSchema,
+  restoreMonthlyStatementSchema,
   getMonthlyStatementSchema,
   getMonthlyStatementsSchema,
   autoRolloverSchema,
@@ -26,7 +36,9 @@ import { revalidatePath } from "next/cache";
 export const getMonthlyStatements = createAction(getMonthlyStatementsSchema, async (input) => {
   const { customerId, year, month, needsConfirmation, limit, offset } = input;
 
-  const where: Prisma.MonthlyStatementWhereInput = {};
+  const where: Prisma.MonthlyStatementWhereInput = {
+    deletedAt: null, // Exclude soft-deleted records
+  };
 
   if (customerId) where.customerId = customerId;
   if (year) where.year = year;
@@ -106,8 +118,46 @@ export const getMonthlyStatement = createAction(getMonthlyStatementSchema, async
   });
 
   if (!statement) {
-    throw new Error("Không tìm thấy bảng kê");
+    throw new NotFoundError("Bảng kê");
   }
+
+  // Convert plants and ensure each has an ID
+  // Handle both legacy (size, amount) and new (sizeSpec, total) field names
+  interface RawPlant {
+    id?: string;
+    name?: string;
+    size?: string;        // Legacy field from SQL import
+    sizeSpec?: string;    // New field
+    quantity?: number;
+    unitPrice?: number;
+    amount?: number;      // Legacy field from SQL import
+    total?: number;       // New field
+  }
+  const rawPlants = statement.plants as unknown as RawPlant[];
+
+  // Filter out summary rows (Tổng, Thuế GTGT, VAT, etc.) from legacy SQL import
+  const SUMMARY_KEYWORDS = ['tổng', 'thuế gtgt', 'vat', 'thuế', 'gtgt'];
+  const filteredPlants = rawPlants.filter((plant) => {
+    const name = (plant.name ?? '').toLowerCase().trim();
+    // Skip empty names
+    if (!name) return false;
+    // Skip summary/total rows
+    if (SUMMARY_KEYWORDS.some(keyword => name.includes(keyword))) return false;
+    // Skip rows with zero or negative quantity
+    if ((plant.quantity ?? 0) <= 0) return false;
+    return true;
+  });
+
+  const plantsWithIds: PlantItem[] = filteredPlants.map((plant) => ({
+    id: plant.id ?? createId(),
+    name: plant.name ?? "",
+    sizeSpec: plant.sizeSpec ?? plant.size ?? "",  // Fallback to size
+    quantity: plant.quantity ?? 0,
+    unitPrice: plant.unitPrice ?? 0,
+    total: plant.total ?? plant.amount ?? 0,       // Fallback to amount
+  }));
+
+
 
   // Convert to DTO
   const dto: StatementDTO = {
@@ -118,7 +168,7 @@ export const getMonthlyStatement = createAction(getMonthlyStatementSchema, async
     periodStart: statement.periodStart.toISOString(),
     periodEnd: statement.periodEnd.toISOString(),
     contactName: statement.contactName,
-    plants: statement.plants as unknown as PlantItem[],
+    plants: plantsWithIds,
     subtotal: Number(statement.subtotal),
     vatRate: Number(statement.vatRate),
     vatAmount: Number(statement.vatAmount),
@@ -144,12 +194,12 @@ export const createMonthlyStatement = createAction(
   async (input, ctx) => {
     // Check authentication
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     // Only ADMIN, MANAGER, ACCOUNTANT can create
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error("Bạn không có quyền tạo bảng kê");
+      throw new ForbiddenError("Bạn không có quyền tạo bảng kê");
     }
 
     const { customerId, year, month, contactName, plants, notes, internalNotes } = input;
@@ -162,7 +212,7 @@ export const createMonthlyStatement = createAction(
     });
 
     if (existing) {
-      throw new Error(`Bảng kê cho tháng ${month}/${year} đã tồn tại`);
+      throw new ConflictError(`Bảng kê cho tháng ${month}/${year} đã tồn tại`);
     }
 
     // Calculate period dates
@@ -182,7 +232,7 @@ export const createMonthlyStatement = createAction(
         contactName,
         plants: plants as unknown as Prisma.InputJsonValue,
         subtotal,
-        vatRate: 8, // Fixed 8% VAT
+        vatRate: VAT_RATE,
         vatAmount,
         total,
         notes,
@@ -214,12 +264,12 @@ export const updateMonthlyStatement = createAction(
   async (input, ctx) => {
     // Check authentication
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
     // Only ADMIN, MANAGER, ACCOUNTANT can update
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error("Bạn không có quyền sửa bảng kê");
+      throw new ForbiddenError("Bạn không có quyền sửa bảng kê");
     }
 
     const {
@@ -239,11 +289,14 @@ export const updateMonthlyStatement = createAction(
     });
 
     if (!existing) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     if (!existing.needsConfirmation && existing.confirmedAt) {
-      throw new Error("Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý.");
+      throw new AppError(
+        "Không thể sửa bảng kê đã xác nhận. Vui lòng liên hệ quản lý.",
+        "STATEMENT_CONFIRMED"
+      );
     }
 
     // Recalculate amounts with custom VAT rate
@@ -282,12 +335,12 @@ export const confirmMonthlyStatement = createAction(
   confirmMonthlyStatementSchema,
   async ({ id }, ctx) => {
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập để xác nhận bảng kê");
+      throw new UnauthorizedError("Bạn phải đăng nhập để xác nhận bảng kê");
     }
 
     // Check permissions
     if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
-      throw new Error(
+      throw new ForbiddenError(
         "Bạn không có quyền xác nhận bảng kê. Chỉ Manager/Accountant mới được xác nhận."
       );
     }
@@ -302,11 +355,11 @@ export const confirmMonthlyStatement = createAction(
     });
 
     if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
     }
 
     if (!statement.needsConfirmation) {
-      throw new Error("Bảng kê đã được xác nhận trước đó");
+      throw new AppError("Bảng kê đã được xác nhận trước đó", "ALREADY_CONFIRMED");
     }
 
     // Confirm
@@ -329,18 +382,19 @@ export const confirmMonthlyStatement = createAction(
 );
 
 /**
- * Delete monthly statement (admin only, before confirmation)
+ * Soft delete monthly statement (admin/manager only, before confirmation)
+ * Marks the statement as deleted without permanently removing it from database
  */
 export const deleteMonthlyStatement = createAction(
   deleteMonthlyStatementSchema,
   async ({ id }, ctx) => {
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
-    // Only ADMIN can delete
-    if (ctx.user.role !== "ADMIN") {
-      throw new Error("Chỉ Admin mới có quyền xóa bảng kê");
+    // ADMIN and MANAGER can soft delete
+    if (!["ADMIN", "MANAGER"].includes(ctx.user.role)) {
+      throw new ForbiddenError("Chỉ Admin hoặc Manager mới có quyền xóa bảng kê");
     }
 
     const statement = await prisma.monthlyStatement.findUnique({
@@ -348,21 +402,103 @@ export const deleteMonthlyStatement = createAction(
     });
 
     if (!statement) {
-      throw new Error("Không tìm thấy bảng kê");
+      throw new NotFoundError("Bảng kê");
+    }
+
+    // Check if already soft-deleted
+    if (statement.deletedAt) {
+      throw new AppError("Bảng kê này đã được xóa trước đó", "ALREADY_DELETED");
     }
 
     if (!statement.needsConfirmation) {
-      throw new Error("Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support.");
+      throw new AppError(
+        "Không thể xóa bảng kê đã xác nhận. Vui lòng liên hệ IT support.",
+        "STATEMENT_CONFIRMED"
+      );
     }
 
-    await prisma.monthlyStatement.delete({
+    // Check if there are invoices referencing this statement
+    const invoiceCount = await prisma.invoice.count({
+      where: { monthlyStatementId: id },
+    });
+
+    if (invoiceCount > 0) {
+      throw new AppError(
+        `Không thể xóa bảng kê vì đã có ${invoiceCount} hóa đơn liên quan. Vui lòng xóa hóa đơn trước.`,
+        "HAS_RELATED_INVOICES"
+      );
+    }
+
+    // Soft delete
+    await prisma.monthlyStatement.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: ctx.user.id,
+      },
     });
 
     revalidatePath("/bang-ke");
 
     return {
-      message: `Đã xóa bảng kê tháng ${statement.month}/${statement.year}`,
+      message: `Đã xóa bảng kê tháng ${statement.month}/${statement.year}. Bạn có thể khôi phục trong vòng 30 ngày.`,
+    };
+  }
+);
+
+/**
+ * Restore soft-deleted monthly statement (admin/manager only)
+ * Reverses the soft delete operation within 30-day grace period
+ */
+export const restoreMonthlyStatement = createAction(
+  restoreMonthlyStatementSchema,
+  async ({ id }, ctx) => {
+    if (!ctx.user) {
+      throw new UnauthorizedError("Bạn phải đăng nhập");
+    }
+
+    // ADMIN and MANAGER can restore
+    if (!["ADMIN", "MANAGER"].includes(ctx.user.role)) {
+      throw new ForbiddenError("Chỉ Admin hoặc Manager mới có quyền khôi phục bảng kê");
+    }
+
+    const statement = await prisma.monthlyStatement.findUnique({
+      where: { id },
+    });
+
+    if (!statement) {
+      throw new NotFoundError("Bảng kê");
+    }
+
+    if (!statement.deletedAt) {
+      throw new AppError("Bảng kê này chưa bị xóa", "NOT_DELETED");
+    }
+
+    // Check 30-day grace period
+    const daysSinceDeleted = Math.floor(
+      (Date.now() - statement.deletedAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSinceDeleted > 30) {
+      throw new AppError(
+        "Không thể khôi phục bảng kê đã bị xóa quá 30 ngày. Vui lòng liên hệ IT support.",
+        "GRACE_PERIOD_EXPIRED"
+      );
+    }
+
+    // Restore (clear soft delete fields)
+    await prisma.monthlyStatement.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+        deletedById: null,
+      },
+    });
+
+    revalidatePath("/bang-ke");
+
+    return {
+      message: `Đã khôi phục bảng kê tháng ${statement.month}/${statement.year}`,
     };
   }
 );
@@ -376,11 +512,12 @@ export const autoRolloverStatements = createAction(
   async ({ targetYear, targetMonth, customerIds }, ctx) => {
     // Check authentication - auto-rollover should be restricted to ADMIN
     if (!ctx.user) {
-      throw new Error("Bạn phải đăng nhập");
+      throw new UnauthorizedError("Bạn phải đăng nhập");
     }
 
-    if (ctx.user.role !== "ADMIN") {
-      throw new Error("Chỉ Admin mới có quyền tự động tạo bảng kê");
+    // Allow ADMIN, MANAGER, ACCOUNTANT to auto-rollover statements
+    if (!["ADMIN", "MANAGER", "ACCOUNTANT"].includes(ctx.user.role)) {
+      throw new ForbiddenError("Bạn không có quyền tự động tạo bảng kê");
     }
 
     // Get previous month
@@ -390,6 +527,7 @@ export const autoRolloverStatements = createAction(
     const customerFilter: Prisma.MonthlyStatementWhereInput = {
       year: prevYear,
       month: prevMonth,
+      deletedAt: null, // Exclude soft-deleted statements
     };
 
     if (customerIds && customerIds.length > 0) {
@@ -403,6 +541,7 @@ export const autoRolloverStatements = createAction(
           select: {
             id: true,
             contactName: true,
+            accountingName: true, // Prefer for billing statements
           },
         },
       },
@@ -418,55 +557,55 @@ export const autoRolloverStatements = createAction(
     // Calculate new period
     const newPeriod = calculateStatementPeriod(targetYear, targetMonth);
 
-    // Create new statements
-    const created: string[] = [];
-    const skipped: string[] = [];
+    // Pre-fetch all existing statements for target period in one query (N+1 fix)
+    const existingStatements = await prisma.monthlyStatement.findMany({
+      where: {
+        customerId: { in: previousStatements.map((s) => s.customerId) },
+        year: targetYear,
+        month: targetMonth,
+        deletedAt: null, // Exclude soft-deleted statements
+      },
+      select: { customerId: true },
+    });
+    const existingCustomerIds = new Set(existingStatements.map((s) => s.customerId));
 
-    for (const prevStmt of previousStatements) {
-      // Check if already exists
-      const existing = await prisma.monthlyStatement.findUnique({
-        where: {
-          customerId_year_month: {
-            customerId: prevStmt.customerId,
-            year: targetYear,
-            month: targetMonth,
-          },
-        },
-      });
+    // Filter out already existing statements
+    const statementsToCreate = previousStatements.filter(
+      (prevStmt) => !existingCustomerIds.has(prevStmt.customerId)
+    );
+    const skippedCount = previousStatements.length - statementsToCreate.length;
 
-      if (existing) {
-        skipped.push(prevStmt.customer.id);
-        continue;
-      }
-
-      // Create new statement from previous
-      const newStatement = await prisma.monthlyStatement.create({
-        data: {
+    // Batch create new statements
+    if (statementsToCreate.length > 0) {
+      await prisma.monthlyStatement.createMany({
+        data: statementsToCreate.map((prevStmt) => ({
           customerId: prevStmt.customerId,
           year: targetYear,
           month: targetMonth,
           periodStart: newPeriod.periodStart,
           periodEnd: newPeriod.periodEnd,
-          contactName: prevStmt.contactName ?? prevStmt.customer.contactName,
-          plants: prevStmt.plants as Prisma.InputJsonValue, // Copy plants from previous month
+          contactName:
+            prevStmt.contactName ??
+            prevStmt.customer.accountingName ??
+            prevStmt.customer.contactName,
+          plants: prevStmt.plants as Prisma.InputJsonValue,
           subtotal: prevStmt.subtotal,
-          vatRate: 8,
+          vatRate: VAT_RATE,
           vatAmount: prevStmt.vatAmount,
           total: prevStmt.total,
-          needsConfirmation: true, // Require confirmation
+          needsConfirmation: true,
           copiedFromId: prevStmt.id,
-        },
+        })),
+        skipDuplicates: true, // Extra safety for race conditions
       });
-
-      created.push(newStatement.id);
     }
 
     revalidatePath("/bang-ke");
 
     return {
-      created: created.length,
-      skipped: skipped.length,
-      message: `Đã tạo ${created.length} bảng kê mới cho tháng ${targetMonth}/${targetYear}. Bỏ qua ${skipped.length} bảng kê đã tồn tại.`,
+      created: statementsToCreate.length,
+      skipped: skippedCount,
+      message: `Đã tạo ${statementsToCreate.length} bảng kê mới cho tháng ${targetMonth}/${targetYear}. Bỏ qua ${skippedCount} bảng kê đã tồn tại.`,
     };
   }
 );
@@ -477,7 +616,9 @@ export const autoRolloverStatements = createAction(
 export const getCustomersForStatements = createSimpleAction(async () => {
   const customers = await prisma.customer.findMany({
     where: {
-      status: "ACTIVE",
+      // Include both ACTIVE and LEAD customers (LEAD is default status for new customers)
+      status: { in: ["ACTIVE", "LEAD"] },
+      // Note: Customer model doesn't have deletedAt, no need to filter
     },
     select: {
       id: true,
@@ -486,7 +627,9 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       shortName: true,
       address: true,
       district: true,
+      address: true,
       contactName: true,
+      accountingName: true, // For billing - prefer over contactName
     },
     orderBy: {
       companyName: "asc",
@@ -503,6 +646,7 @@ export const getUnconfirmedCount = createSimpleAction(async () => {
   const count = await prisma.monthlyStatement.count({
     where: {
       needsConfirmation: true,
+      deletedAt: null, // Exclude soft-deleted statements
     },
   });
 
@@ -510,22 +654,98 @@ export const getUnconfirmedCount = createSimpleAction(async () => {
 });
 
 /**
- * Get available years with statement data
+ * Get available year-months that have statement records
+ * Returns distinct year-month combinations with record counts
  */
-export const getAvailableYears = createSimpleAction(async () => {
-  const result = await prisma.monthlyStatement.findMany({
-    select: { year: true },
-    distinct: ["year"],
-    orderBy: { year: "desc" },
+export const getAvailableYearMonths = createSimpleAction(async () => {
+  const results = await prisma.monthlyStatement.groupBy({
+    by: ["year", "month"],
+    where: {
+      deletedAt: null, // Exclude soft-deleted statements
+    },
+    _count: {
+      id: true,
+    },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
   });
 
-  const years = result.map((r) => r.year);
-
-  // Always include current year even if no data
-  const currentYear = new Date().getFullYear();
-  if (!years.includes(currentYear)) {
-    years.unshift(currentYear);
-  }
-
-  return years.sort((a, b) => b - a);
+  return results.map((r) => ({
+    year: r.year,
+    month: r.month,
+    count: r._count.id,
+  }));
 });
+
+/**
+ * Get soft-deleted monthly statements (within 30-day grace period)
+ * Similar to getMonthlyStatements but filters for deletedAt IS NOT NULL
+ */
+export const getDeletedMonthlyStatements = createAction(
+  getMonthlyStatementsSchema,
+  async (input, ctx) => {
+    // Only ADMIN and MANAGER can view deleted statements
+    if (!ctx.user || !["ADMIN", "MANAGER"].includes(ctx.user.role)) {
+      throw new ForbiddenError("Chỉ Admin hoặc Manager mới có quyền xem bảng kê đã xóa");
+    }
+
+    const { customerId, year, month, limit, offset } = input;
+
+    const where: Prisma.MonthlyStatementWhereInput = {
+      deletedAt: { not: null }, // Only soft-deleted records
+    };
+
+    if (customerId) where.customerId = customerId;
+    if (year) where.year = year;
+    if (month) where.month = month;
+
+    const [statements, total] = await Promise.all([
+      prisma.monthlyStatement.findMany({
+        where,
+        include: {
+          customer: {
+            select: {
+              id: true,
+              code: true,
+              companyName: true,
+              shortName: true,
+              district: true,
+            },
+          },
+          deletedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: [{ deletedAt: "desc" }, { year: "desc" }, { month: "desc" }],
+        take: limit,
+        skip: offset,
+      }),
+      prisma.monthlyStatement.count({ where }),
+    ]);
+
+    // Calculate days since deletion and if restore is allowed
+    const now = new Date();
+    const itemsWithMeta = statements.map((stmt) => {
+      const daysSinceDeleted = stmt.deletedAt
+        ? Math.floor((now.getTime() - stmt.deletedAt.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      const canRestore = daysSinceDeleted <= 30;
+
+      return {
+        ...stmt,
+        daysSinceDeleted,
+        canRestore,
+      };
+    });
+
+    return {
+      items: itemsWithMeta,
+      total,
+      limit,
+      offset,
+    };
+  }
+);

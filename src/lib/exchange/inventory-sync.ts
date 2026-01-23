@@ -192,7 +192,12 @@ export async function validateInventoryForExchange(
 
   const inventoryMap = new Map(inventories.map((inv) => [inv.plantTypeId, inv]));
 
-  const insufficientStock: { plantTypeId: string; name: string; required: number; available: number }[] = [];
+  const insufficientStock: {
+    plantTypeId: string;
+    name: string;
+    required: number;
+    available: number;
+  }[] = [];
 
   for (const plant of plantsToInstall) {
     const inventory = inventoryMap.get(plant.plantTypeId);

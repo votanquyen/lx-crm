@@ -41,10 +41,13 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
   const today = useMemo(() => new Date(), []);
 
   // Memoize weekStart/weekEnd based on currentWeek to avoid new Date objects each render
-  const { weekStart, weekEnd } = useMemo(() => ({
-    weekStart: startOfWeek(currentWeek, { weekStartsOn: 1 }),
-    weekEnd: endOfWeek(currentWeek, { weekStartsOn: 1 }),
-  }), [currentWeek]);
+  const { weekStart, weekEnd } = useMemo(
+    () => ({
+      weekStart: startOfWeek(currentWeek, { weekStartsOn: 1 }),
+      weekEnd: endOfWeek(currentWeek, { weekStartsOn: 1 }),
+    }),
+    [currentWeek]
+  );
 
   // Generate array of days in current week (memoized to avoid new array each render)
   const weekDays = useMemo(
@@ -102,7 +105,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
+            <CalendarIcon className="h-5 w-5" aria-hidden="true" />
             <CardTitle>Lịch chăm sóc tuần</CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -110,15 +113,15 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
               Hôm nay
             </Button>
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={handlePrevWeek}>
-                <ChevronLeft className="h-4 w-4" />
+              <Button variant="ghost" size="icon" onClick={handlePrevWeek} aria-label="Tuần trước">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
               <div className="min-w-[200px] text-center text-sm font-medium">
                 {format(weekStart, "dd/MM", { locale: vi })} -{" "}
                 {format(weekEnd, "dd/MM/yyyy", { locale: vi })}
               </div>
-              <Button variant="ghost" size="icon" onClick={handleNextWeek}>
-                <ChevronRight className="h-4 w-4" />
+              <Button variant="ghost" size="icon" onClick={handleNextWeek} aria-label="Tuần sau">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -163,7 +166,7 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
                     className="mb-2 w-full"
                     onClick={() => onCreateSchedule(date)}
                   >
-                    <Plus className="mr-1 h-3 w-3" />
+                    <Plus className="mr-1 h-3 w-3" aria-hidden="true" />
                     Thêm
                   </Button>
                 )}
@@ -233,21 +236,15 @@ export function CareCalendar({ schedules, onCreateSchedule, onViewSchedule }: Ca
             <div className="text-xs text-gray-600">Tổng lịch</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {summaryStats.scheduled}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{summaryStats.scheduled}</div>
             <div className="text-xs text-gray-600">Chờ thực hiện</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {summaryStats.inProgress}
-            </div>
+            <div className="text-2xl font-bold text-orange-600">{summaryStats.inProgress}</div>
             <div className="text-xs text-gray-600">Đang thực hiện</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {summaryStats.completed}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{summaryStats.completed}</div>
             <div className="text-xs text-gray-600">Hoàn thành</div>
           </div>
         </div>

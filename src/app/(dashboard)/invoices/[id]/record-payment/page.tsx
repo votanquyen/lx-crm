@@ -29,7 +29,7 @@ export default async function RecordPaymentPage({ params }: PageProps) {
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost" size="icon">
             <Link href={`/invoices/${id}`}>
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
           <div>
@@ -62,7 +62,7 @@ export default async function RecordPaymentPage({ params }: PageProps) {
       <div className="flex items-center gap-4">
         <Button asChild variant="ghost" size="icon">
           <Link href={`/invoices/${id}`}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
         <div>
@@ -80,7 +80,7 @@ export default async function RecordPaymentPage({ params }: PageProps) {
           <CardTitle>Thông tin thanh toán</CardTitle>
         </CardHeader>
         <CardContent>
-          <PaymentForm invoice={invoice as any} remainingBalance={remainingBalance} />
+          <PaymentForm invoice={invoice} remainingBalance={remainingBalance} />
         </CardContent>
       </Card>
     </div>

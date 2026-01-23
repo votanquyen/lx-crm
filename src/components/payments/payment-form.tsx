@@ -308,7 +308,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
       {/* Actions */}
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {payment ? "Cập nhật thanh toán" : "Ghi nhận thanh toán"}
         </Button>
         <Button

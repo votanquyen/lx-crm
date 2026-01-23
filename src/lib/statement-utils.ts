@@ -1,4 +1,5 @@
 import type { PlantItem, StatementPeriod } from "@/types/monthly-statement";
+import { BILLING_PERIOD_START_DAY, BILLING_PERIOD_END_DAY } from "@/lib/constants/billing";
 
 /**
  * Calculate period dates for a given year/month
@@ -14,10 +15,10 @@ export function calculateStatementPeriod(year: number, month: number): Statement
   const prevYear = month === 1 ? year - 1 : year;
 
   // periodStart: 24th of previous month
-  const periodStart = new Date(prevYear, prevMonth - 1, 24);
+  const periodStart = new Date(prevYear, prevMonth - 1, BILLING_PERIOD_START_DAY);
 
   // periodEnd: 23rd of current month
-  const periodEnd = new Date(year, month - 1, 23);
+  const periodEnd = new Date(year, month - 1, BILLING_PERIOD_END_DAY);
 
   return {
     year,

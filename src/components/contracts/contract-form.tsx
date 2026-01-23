@@ -120,15 +120,18 @@ export function ContractForm({
     [watchItems]
   );
 
+  // Extract stable setValue to avoid unnecessary callback re-creation
+  const setValue = form.setValue;
+
   const handlePlantTypeChange = useCallback(
     (index: number, plantTypeId: string) => {
       const plantType = plantTypes.find((pt) => pt.id === plantTypeId);
       if (plantType) {
-        form.setValue(`items.${index}.plantTypeId`, plantTypeId);
-        form.setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
+        setValue(`items.${index}.plantTypeId`, plantTypeId);
+        setValue(`items.${index}.unitPrice`, plantType.rentalPrice);
       }
     },
-    [plantTypes, form]
+    [plantTypes, setValue]
   );
 
   const onSubmit = (data: CreateContractInput) => {
@@ -267,7 +270,7 @@ export function ContractForm({
             size="sm"
             onClick={() => append({ plantTypeId: "", quantity: 1, unitPrice: 0 })}
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
             Thêm cây
           </Button>
         </CardHeader>
@@ -325,8 +328,9 @@ export function ContractForm({
                     size="icon"
                     onClick={() => remove(index)}
                     className="mt-6"
+                    aria-label="Xóa loại cây"
                   >
-                    <Trash2 className="text-destructive h-4 w-4" />
+                    <Trash2 className="text-destructive h-4 w-4" aria-hidden="true" />
                   </Button>
                 )}
               </div>
@@ -348,7 +352,7 @@ export function ContractForm({
 
       <div className="flex gap-4">
         <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {isEditing ? "Cập nhật hợp đồng" : "Tạo hợp đồng"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={isPending}>

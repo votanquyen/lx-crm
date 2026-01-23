@@ -45,9 +45,7 @@ const RATE_LIMIT_DELAY = 12000; // 12 seconds between batches (5 RPM)
 /**
  * Analyze customer import data
  */
-export async function analyzeCustomerImport(
-  sheet: ParsedSheet
-): Promise<AnalysisResult> {
+export async function analyzeCustomerImport(sheet: ParsedSheet): Promise<AnalysisResult> {
   const rows = sheet.rows;
   const results: AnalyzedRow[] = [];
 
@@ -122,9 +120,7 @@ export async function analyzeCustomerImport(
 /**
  * Analyze plant import data
  */
-export async function analyzePlantImport(
-  sheet: ParsedSheet
-): Promise<AnalysisResult> {
+export async function analyzePlantImport(sheet: ParsedSheet): Promise<AnalysisResult> {
   const rows = sheet.rows;
   const results: AnalyzedRow[] = [];
 

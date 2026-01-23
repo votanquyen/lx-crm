@@ -15,21 +15,103 @@ import { normalizeVietnamese } from "@/lib/utils";
 import { requireRateLimit } from "@/lib/rate-limit";
 import { RATE_LIMITS, CACHE_TTL } from "@/lib/constants";
 import { sanitizeText, sanitizePhone, sanitizeEmail } from "@/lib/sanitize";
-import { logCustomerAction } from "@/lib/audit";
+import { CACHE_TAGS, invalidateCustomerCache } from "@/lib/cache-utils";
 import {
   createCustomerSchema,
   updateCustomerSchema,
   customerSearchSchema,
   type CustomerSearchParams,
 } from "@/lib/validations/customer";
+import { getCustomerUseCases } from "@/infrastructure/factories";
+import {
+  DuplicateCustomerError,
+  CustomerNotFoundError,
+  CustomerHasActiveContractsError,
+} from "@/domain/customer";
 
 /**
- * Get paginated list of customers with optional search and filters.
- * Uses pg_trgm for Vietnamese fuzzy search when search term provided.
- *
- * @param params - Search parameters including pagination, filters, and sorting
- * @returns Paginated customer list with counts
- * @throws {AppError} If rate limit exceeded for search queries
+ * Raw customer result type from trigram search
+ * Note: PostgreSQL returns columns with exact case from schema (camelCase via Prisma)
+ */
+type CustomerRawResult = {
+  id: string;
+  code: string;
+  companyName: string;
+  companyNameNorm: string;
+  address: string;
+  addressNormalized: string | null;
+  district: string | null;
+  city: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  // Secondary contact
+  contact2Name: string | null;
+  contact2Phone: string | null;
+  contact2Email: string | null;
+  // Accounting contact
+  accountingName: string | null;
+  accountingPhone: string | null;
+  accountingEmail: string | null;
+  taxCode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  status: string;
+  aiNotes: string | null;
+  createdById: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  similarity: number;
+  total_count: bigint;
+};
+
+/**
+ * Cached trigram search for Vietnamese fuzzy matching
+ * Uses window function for single-query pagination
+ * Cache TTL: 60s, invalidated on customer mutations
+ */
+const searchCustomersWithCache = unstable_cache(
+  async (
+    normalized: string,
+    codePattern: string,
+    status: string | null,
+    district: string | null,
+    limit: number,
+    skip: number
+  ): Promise<{ data: CustomerRawResult[]; total: number }> => {
+    // Use window function for single-query pagination
+    // Note: Column names use camelCase (Prisma default) - must quote in SQL
+    const customersRaw = await prisma.$queryRaw<CustomerRawResult[]>`
+      SELECT c.*,
+             GREATEST(
+               similarity("companyNameNorm", ${normalized}),
+               similarity(COALESCE("addressNormalized", ''), ${normalized}),
+               similarity(code, ${normalized})
+             ) as similarity,
+             COUNT(*) OVER() as total_count
+      FROM customers c
+      WHERE c.status != 'TERMINATED'
+        AND (
+          c."companyNameNorm" % ${normalized}
+          OR c.code ILIKE ${codePattern}
+          OR COALESCE(c."addressNormalized", '') % ${normalized}
+        )
+        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
+        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
+      ORDER BY similarity DESC, c."companyName" ASC
+      LIMIT ${limit} OFFSET ${skip}
+    `;
+
+    const total = customersRaw.length > 0 ? Number(customersRaw[0]!.total_count) : 0;
+    return { data: customersRaw, total };
+  },
+  [CACHE_TAGS.CUSTOMERS_LIST],
+  { revalidate: 60, tags: [CACHE_TAGS.CUSTOMERS_LIST] }
+);
+
+/**
+ * Get paginated list of customers with optional search and filters
+ * Enhanced with financial aggregations for Enterprise view
  */
 export async function getCustomers(params: CustomerSearchParams) {
   await requireAuth();
@@ -64,76 +146,23 @@ export async function getCustomers(params: CustomerSearchParams) {
     };
   }
 
-  // Use trigram search for Vietnamese fuzzy matching
+  // Use cached trigram search for Vietnamese fuzzy matching
   if (search && search.trim()) {
-    // Sanitize search input and create pattern for ILIKE (properly parameterized)
     const sanitizedSearch = sanitizeText(search) ?? search.trim();
     const normalized = normalizeVietnamese(sanitizedSearch);
     const codePattern = `%${sanitizedSearch}%`;
 
-    // Use raw query for trigram search
-    // Note: Column names match Prisma schema (camelCase stored as-is in DB)
-    const customersRaw = await prisma.$queryRaw<
-      Array<{
-        id: string;
-        code: string;
-        companyName: string;
-        companyNameNorm: string | null;
-        address: string;
-        addressNormalized: string | null;
-        district: string | null;
-        city: string | null;
-        contactName: string | null;
-        contactPhone: string | null;
-        contactEmail: string | null;
-        taxCode: string | null;
-        latitude: number | null;
-        longitude: number | null;
-        status: string;
-        notes: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-        similarity: number;
-      }>
-    >`
-      SELECT c.id, c.code, c."companyName", c."companyNameNorm", c.address,
-             c."addressNormalized", c.district, c.city, c."contactName",
-             c."contactPhone", c."contactEmail", c."taxCode", c.latitude,
-             c.longitude, c.status, c.notes, c."createdAt", c."updatedAt",
-             GREATEST(
-               similarity(COALESCE(c."companyNameNorm", ''), ${normalized}),
-               similarity(COALESCE(c."addressNormalized", ''), ${normalized}),
-               similarity(c.code, ${normalized})
-             ) as similarity
-      FROM customers c
-      WHERE c.status != 'TERMINATED'
-        AND (
-          COALESCE(c."companyNameNorm", '') % ${normalized}
-          OR c.code ILIKE ${codePattern}
-          OR COALESCE(c."addressNormalized", '') % ${normalized}
-        )
-        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-      ORDER BY similarity DESC, c."companyName" ASC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
+    // Use cached search with window function (single query)
+    const { data: customersRaw, total } = await searchCustomersWithCache(
+      normalized,
+      codePattern,
+      status ?? null,
+      district ?? null,
+      limit,
+      skip
+    );
 
-    // Get total count for pagination
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) as count FROM customers c
-      WHERE c.status != 'TERMINATED'
-        AND (
-          COALESCE(c."companyNameNorm", '') % ${normalized}
-          OR c.code ILIKE ${codePattern}
-          OR COALESCE(c."addressNormalized", '') % ${normalized}
-        )
-        ${status ? Prisma.sql`AND c.status = ${status}` : Prisma.empty}
-        ${district ? Prisma.sql`AND c.district = ${district}` : Prisma.empty}
-    `;
-
-    const total = Number(countResult[0].count);
-
-    // Map raw results to consistent format
+    // Map raw results to Prisma model format (already camelCase from PostgreSQL)
     const customers = customersRaw.map((c) => ({
       id: c.id,
       code: c.code,
@@ -146,11 +175,20 @@ export async function getCustomers(params: CustomerSearchParams) {
       contactName: c.contactName,
       contactPhone: c.contactPhone,
       contactEmail: c.contactEmail,
+      // Secondary contact
+      contact2Name: c.contact2Name,
+      contact2Phone: c.contact2Phone,
+      contact2Email: c.contact2Email,
+      // Accounting contact
+      accountingName: c.accountingName,
+      accountingPhone: c.accountingPhone,
+      accountingEmail: c.accountingEmail,
       taxCode: c.taxCode,
       latitude: c.latitude,
       longitude: c.longitude,
       status: c.status,
-      notes: c.notes,
+      aiNotes: c.aiNotes,
+      createdById: c.createdById,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     }));
@@ -186,8 +224,44 @@ export async function getCustomers(params: CustomerSearchParams) {
     prisma.customer.count({ where }),
   ]);
 
+  // ---- ENTERPRISE ENHANCEMENT: Financial Aggregations ----
+  // Fetch financial data for the paginated customers
+  const customerIds = customers.map((c) => c.id);
+
+  // Use a single raw query to get debt and monthly value for all customers at once
+  const financials = await prisma.$queryRaw<
+    { customer_id: string; total_debt: string | null; monthly_contract_value: string | null }[]
+  >`
+    SELECT
+      c.id as customer_id,
+      COALESCE(SUM(i."outstandingAmount") FILTER (WHERE i.status IN ('SENT', 'PARTIAL', 'OVERDUE')), 0) as total_debt,
+      COALESCE(SUM(ct."monthlyFee") FILTER (WHERE ct.status = 'ACTIVE'), 0) as monthly_contract_value
+    FROM customers c
+    LEFT JOIN invoices i ON i."customerId" = c.id
+    LEFT JOIN contracts ct ON ct."customerId" = c.id
+    WHERE c.id = ANY(${customerIds})
+    GROUP BY c.id
+  `;
+
+  // Create a lookup map for O(1) merge
+  const financialMap = new Map(
+    financials.map((f) => [
+      f.customer_id,
+      {
+        totalDebt: Number(f.total_debt || 0),
+        monthlyContractValue: Number(f.monthly_contract_value || 0),
+      },
+    ])
+  );
+
+  // Merge financial data into customer objects
+  const customersWithFinancials = customers.map((c) => ({
+    ...c,
+    financials: financialMap.get(c.id) ?? { totalDebt: 0, monthlyContractValue: 0 },
+  }));
+
   return {
-    data: customers,
+    data: customersWithFinancials,
     pagination: {
       page,
       limit,
@@ -267,37 +341,21 @@ export async function getCustomerById(id: string) {
     throw new NotFoundError("Khách hàng");
   }
 
-  return customer;
+  // Serialize Decimal values to numbers for client components
+  return {
+    ...customer,
+    invoices: customer.invoices.map((inv) => ({
+      ...inv,
+      totalAmount: Number(inv.totalAmount),
+      paidAmount: Number(inv.paidAmount),
+      outstandingAmount: Number(inv.outstandingAmount),
+    })),
+  };
 }
 
 /**
- * Generate next customer code (KH-XXXX)
- */
-async function generateCustomerCode(): Promise<string> {
-  const lastCustomer = await prisma.customer.findFirst({
-    orderBy: { code: "desc" },
-    select: { code: true },
-  });
-
-  let nextNumber = 1;
-  if (lastCustomer?.code) {
-    const match = lastCustomer.code.match(/KH-(\d+)/);
-    if (match?.[1]) {
-      nextNumber = parseInt(match[1], 10) + 1;
-    }
-  }
-
-  return `KH-${String(nextNumber).padStart(4, "0")}`;
-}
-
-/**
- * Create a new customer.
- * Auto-generates customer code (KH-XXXX), sanitizes inputs, checks duplicates.
- *
- * @param input - Customer data matching createCustomerSchema
- * @returns Newly created customer
- * @throws {ConflictError} If company name already exists
- * @throws {AppError} If rate limit exceeded
+ * Create a new customer
+ * Thin wrapper: auth + rate limit + sanitize + use case + cache
  */
 export const createCustomer = createAction(createCustomerSchema, async (input) => {
   const session = await requireAuth();
@@ -309,67 +367,46 @@ export const createCustomer = createAction(createCustomerSchema, async (input) =
   });
 
   // Sanitize string inputs (strips HTML and trims)
-  const companyName = sanitizeText(input.companyName) ?? input.companyName.trim();
-  const address = sanitizeText(input.address) ?? input.address.trim();
-  const contactName = sanitizeText(input.contactName);
-  const contactPhone = sanitizePhone(input.contactPhone);
-  const contactEmail = sanitizeEmail(input.contactEmail);
-  const taxCode = sanitizeText(input.taxCode);
-  const district = sanitizeText(input.district);
-  const city = sanitizeText(input.city) ?? "TP.HCM";
+  // Convert null to undefined for domain compatibility
+  const sanitizedInput = {
+    companyName: sanitizeText(input.companyName) ?? input.companyName.trim(),
+    address: sanitizeText(input.address) ?? input.address.trim(),
+    city: sanitizeText(input.city) ?? "TP.HCM",
+    contactName: sanitizeText(input.contactName) ?? undefined,
+    contactPhone: sanitizePhone(input.contactPhone) ?? undefined,
+    contactEmail: sanitizeEmail(input.contactEmail) ?? undefined,
+    taxCode: sanitizeText(input.taxCode) ?? undefined,
+    district: sanitizeText(input.district) ?? undefined,
+    status: input.status ?? "ACTIVE",
+    latitude: input.latitude ?? undefined,
+    longitude: input.longitude ?? undefined,
+  };
 
-  // Check for duplicate company name
-  const normalized = normalizeVietnamese(companyName);
-  const existing = await prisma.customer.findFirst({
-    where: {
-      companyNameNorm: normalized,
-      status: { not: "TERMINATED" },
-    },
-  });
+  try {
+    // Delegate to use case
+    const { createCustomer: useCase } = getCustomerUseCases();
+    const { customer } = await useCase.execute({
+      input: sanitizedInput,
+      userId: session.user.id,
+    });
 
-  if (existing) {
-    throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
+    // Cache invalidation stays in action layer
+    revalidatePath("/customers");
+    invalidateCustomerCache();
+
+    return customer.toPersistence();
+  } catch (error) {
+    // Map domain errors to action errors
+    if (error instanceof DuplicateCustomerError) {
+      throw new ConflictError(error.message);
+    }
+    throw error;
   }
-
-  // Generate customer code
-  const code = await generateCustomerCode();
-
-  // Create customer with sanitized data
-  const customer = await prisma.customer.create({
-    data: {
-      code,
-      companyName,
-      companyNameNorm: normalized,
-      address,
-      addressNormalized: normalizeVietnamese(address),
-      district,
-      city,
-      contactName,
-      contactPhone,
-      contactEmail,
-      taxCode,
-      status: input.status ?? "ACTIVE",
-      latitude: input.latitude ?? null,
-      longitude: input.longitude ?? null,
-    },
-  });
-
-  // Log activity with IP and user agent
-  await logCustomerAction(session.user.id, "CREATE", customer.id, undefined, customer);
-
-  revalidatePath("/customers");
-  return customer;
 });
 
 /**
- * Update an existing customer.
- * Sanitizes inputs and checks for duplicate company names.
- *
- * @param input - Update data with id and fields to update
- * @returns Updated customer
- * @throws {NotFoundError} If customer not found
- * @throws {ConflictError} If new company name already exists
- * @throws {AppError} If rate limit exceeded
+ * Update an existing customer
+ * Thin wrapper: auth + rate limit + sanitize + use case + cache
  */
 export const updateCustomer = createAction(updateCustomerSchema, async (input) => {
   const session = await requireAuth();
@@ -382,83 +419,56 @@ export const updateCustomer = createAction(updateCustomerSchema, async (input) =
 
   const { id, ...updateData } = input;
 
-  // Check customer exists
-  const existing = await prisma.customer.findUnique({
-    where: { id },
-  });
-
-  if (!existing) {
-    throw new NotFoundError("Khách hàng");
-  }
-
   // Sanitize string inputs (strips HTML and trims)
-  const companyName = sanitizeText(updateData.companyName);
-  const address = sanitizeText(updateData.address);
+  const sanitizedUpdates = {
+    companyName: sanitizeText(updateData.companyName),
+    address: sanitizeText(updateData.address),
+    district: sanitizeText(updateData.district),
+    city: sanitizeText(updateData.city),
+    contactName: sanitizeText(updateData.contactName),
+    contactPhone: sanitizePhone(updateData.contactPhone),
+    contactEmail: sanitizeEmail(updateData.contactEmail),
+    taxCode: sanitizeText(updateData.taxCode),
+    status: updateData.status,
+    latitude: updateData.latitude,
+    longitude: updateData.longitude,
+  };
 
-  // Check for duplicate company name (if changing)
-  if (companyName && companyName !== existing.companyName) {
-    const normalized = normalizeVietnamese(companyName);
-    const duplicate = await prisma.customer.findFirst({
-      where: {
-        companyNameNorm: normalized,
-        status: { not: "TERMINATED" },
-        id: { not: id },
-      },
+  // Remove undefined values
+  const updates = Object.fromEntries(
+    Object.entries(sanitizedUpdates).filter(([_, v]) => v !== undefined)
+  );
+
+  try {
+    // Delegate to use case
+    const { updateCustomer: useCase } = getCustomerUseCases();
+    const { customer } = await useCase.execute({
+      id,
+      updates,
+      userId: session.user.id,
     });
 
-    if (duplicate) {
-      throw new ConflictError(`Khách hàng "${companyName}" đã tồn tại`);
+    // Cache invalidation stays in action layer
+    revalidatePath(`/customers/${id}`);
+    revalidatePath("/customers");
+    invalidateCustomerCache();
+
+    return customer.toPersistence();
+  } catch (error) {
+    // Map domain errors to action errors
+    if (error instanceof DuplicateCustomerError) {
+      throw new ConflictError(error.message);
     }
+    if (error instanceof CustomerNotFoundError) {
+      throw new NotFoundError("Khách hàng");
+    }
+    throw error;
   }
-
-  // Build update data with sanitized values
-  const data: Prisma.CustomerUpdateInput = {};
-
-  if (companyName) {
-    data.companyName = companyName;
-    data.companyNameNorm = normalizeVietnamese(companyName);
-  }
-  if (address) {
-    data.address = address;
-    data.addressNormalized = normalizeVietnamese(address);
-  }
-  if (updateData.district !== undefined)
-    data.district = sanitizeText(updateData.district) ?? undefined;
-  if (updateData.city !== undefined) data.city = sanitizeText(updateData.city) ?? undefined;
-  if (updateData.contactName !== undefined)
-    data.contactName = sanitizeText(updateData.contactName) ?? undefined;
-  if (updateData.contactPhone !== undefined)
-    data.contactPhone = sanitizePhone(updateData.contactPhone) ?? undefined;
-  if (updateData.contactEmail !== undefined)
-    data.contactEmail = sanitizeEmail(updateData.contactEmail) ?? undefined;
-  if (updateData.taxCode !== undefined)
-    data.taxCode = sanitizeText(updateData.taxCode) ?? undefined;
-  if (updateData.status !== undefined) data.status = updateData.status;
-  if (updateData.latitude !== undefined) data.latitude = updateData.latitude;
-  if (updateData.longitude !== undefined) data.longitude = updateData.longitude;
-
-  // Update customer
-  const customer = await prisma.customer.update({
-    where: { id },
-    data,
-  });
-
-  // Log activity with IP and user agent
-  await logCustomerAction(session.user.id, "UPDATE", customer.id, existing, customer);
-
-  revalidatePath(`/customers/${id}`);
-  revalidatePath("/customers");
-  return customer;
 });
 
 /**
- * Soft delete a customer by setting status to TERMINATED.
- * Requires ADMIN or MANAGER role.
- *
- * @param id - Customer UUID
- * @returns Success confirmation object
- * @throws {NotFoundError} If customer not found
- * @throws {AppError} If customer has active contracts or rate limit exceeded
+ * Soft delete a customer (set status to TERMINATED)
+ * Thin wrapper: auth + rate limit + use case + cache
  */
 export const deleteCustomer = createSimpleAction(async (id: string) => {
   const session = await requireManager(); // Only ADMIN or MANAGER can delete
@@ -469,37 +479,29 @@ export const deleteCustomer = createSimpleAction(async (id: string) => {
     windowMs: RATE_LIMITS.MUTATION.window * 1000,
   });
 
-  // Check customer exists
-  const existing = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      contracts: { where: { status: "ACTIVE" } },
-    },
-  });
+  try {
+    // Delegate to use case
+    const { deleteCustomer: useCase } = getCustomerUseCases();
+    await useCase.execute({
+      id,
+      userId: session.user.id,
+    });
 
-  if (!existing) {
-    throw new NotFoundError("Khách hàng");
+    // Cache invalidation stays in action layer
+    revalidatePath("/customers");
+    invalidateCustomerCache();
+
+    return { success: true };
+  } catch (error) {
+    // Map domain errors to action errors
+    if (error instanceof CustomerNotFoundError) {
+      throw new NotFoundError("Khách hàng");
+    }
+    if (error instanceof CustomerHasActiveContractsError) {
+      throw new AppError(error.message, error.code);
+    }
+    throw error;
   }
-
-  // Cannot delete if has active contracts
-  if (existing.contracts.length > 0) {
-    throw new AppError(
-      "Không thể xóa khách hàng đang có hợp đồng hoạt động",
-      "HAS_ACTIVE_CONTRACTS"
-    );
-  }
-
-  // Soft delete
-  const customer = await prisma.customer.update({
-    where: { id },
-    data: { status: "TERMINATED" },
-  });
-
-  // Log activity with IP and user agent
-  await logCustomerAction(session.user.id, "DELETE", customer.id, existing, undefined);
-
-  revalidatePath("/customers");
-  return { success: true };
 });
 
 /**
@@ -575,7 +577,6 @@ export async function getCustomerStats() {
  */
 export async function getCustomersForMap(filters?: {
   district?: string;
-  tier?: "VIP" | "PREMIUM" | "STANDARD";
   status?: "ACTIVE" | "INACTIVE" | "LEAD" | "TERMINATED";
 }) {
   await requireAuth();
@@ -587,39 +588,39 @@ export async function getCustomersForMap(filters?: {
   };
 
   if (filters?.district) where.district = filters.district;
-  if (filters?.tier) where.tier = filters.tier;
 
-  const customers = await prisma.customer.findMany({
-    where,
-    select: {
-      id: true,
-      code: true,
-      companyName: true,
-      address: true,
-      district: true,
-      latitude: true,
-      longitude: true,
-      contactPhone: true,
-      tier: true,
-      status: true,
-      _count: {
-        select: {
-          customerPlants: { where: { status: "ACTIVE" } },
+  // Parallel execution for independent queries (Vercel React Best Practices)
+  const [customers, pendingExchanges] = await Promise.all([
+    prisma.customer.findMany({
+      where,
+      select: {
+        id: true,
+        code: true,
+        companyName: true,
+        address: true,
+        district: true,
+        latitude: true,
+        longitude: true,
+        contactPhone: true,
+        status: true,
+        _count: {
+          select: {
+            customerPlants: { where: { status: "ACTIVE" } },
+          },
         },
       },
-    },
-    orderBy: { companyName: "asc" },
-  });
-
-  // Get customers with pending exchanges
-  const pendingExchanges = await prisma.exchangeRequest.findMany({
-    where: {
-      status: { in: ["PENDING", "SCHEDULED"] },
-    },
-    select: {
-      customerId: true,
-    },
-  });
+      orderBy: { companyName: "asc" },
+    }),
+    // Get customers with pending exchanges
+    prisma.exchangeRequest.findMany({
+      where: {
+        status: { in: ["PENDING", "SCHEDULED"] },
+      },
+      select: {
+        customerId: true,
+      },
+    }),
+  ]);
 
   const customersWithExchanges = new Set(pendingExchanges.map((e) => e.customerId));
 
@@ -632,7 +633,6 @@ export async function getCustomersForMap(filters?: {
     latitude: c.latitude,
     longitude: c.longitude,
     contactPhone: c.contactPhone,
-    tier: c.tier,
     status: c.status,
     plantCount: c._count.customerPlants,
     hasPendingExchange: customersWithExchanges.has(c.id),

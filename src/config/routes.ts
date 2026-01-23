@@ -24,6 +24,7 @@ export const ROUTE_PERMISSIONS: Record<string, UserRole[]> = {
   "/plant-types": ["ADMIN", "MANAGER"],
 
   // Financial routes (ADMIN + MANAGER + ACCOUNTANT)
+  "/bang-ke": ["ADMIN", "MANAGER", "ACCOUNTANT"],
   "/invoices": ["ADMIN", "MANAGER", "ACCOUNTANT"],
   "/payments": ["ADMIN", "MANAGER", "ACCOUNTANT"],
 

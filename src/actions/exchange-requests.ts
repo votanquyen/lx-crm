@@ -5,7 +5,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma, type ExchangePriority, type CustomerTier } from "@prisma/client";
+import { Prisma, type ExchangePriority } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { createAction, createSimpleAction } from "@/lib/action-utils";
@@ -29,32 +29,18 @@ import {
 /**
  * Calculate priority score based on priority and plant count
  */
-function calculatePriorityScore(priority: string, plantCount: number): number {
-  let score = 0;
-
-  // Priority weight (0-40)
-  switch (priority) {
-    case "URGENT":
-      score += 40;
-      break;
-    case "HIGH":
-      score += 30;
-      break;
-    case "MEDIUM":
-      score += 15;
-      break;
-    case "LOW":
-      score += 5;
-      break;
-  }
-
-  // Plant count weight (0-30)
-  score += Math.min(plantCount * 3, 30);
-
-  // Base customer score (0-30) - all customers equal
-  score += 15;
-
-  return score;
+function calculatePriorityScore(
+  priority: ExchangePriority,
+  plantCount: number,
+  reason?: string | null,
+  createdAt?: Date
+): number {
+  return calculateEnhancedPriorityScore({
+    priority,
+    quantity: plantCount,
+    reason,
+    createdAt: createdAt || new Date(),
+  });
 }
 
 // Re-export for UI usage
@@ -181,8 +167,8 @@ export const createExchangeRequest = createAction(createExchangeRequestSchema, a
   });
   if (!customer) throw new NotFoundError("Khách hàng");
 
-  // Calculate priority score
-  const priorityScore = calculatePriorityScore(input.priority, input.quantity);
+  // Calculate priority score with enhanced algorithm
+  const priorityScore = calculatePriorityScore(input.priority, input.quantity, input.reason);
 
   const request = await prisma.exchangeRequest.create({
     data: {
@@ -238,13 +224,15 @@ export const updateExchangeRequest = createAction(updateExchangeRequestSchema, a
     throw new AppError("Không thể sửa yêu cầu đã hoàn thành hoặc hủy", "INVALID_STATUS");
   }
 
-  // Recalculate priority if priority or quantity changed
+  // Recalculate priority if priority, quantity, or reason changed
   let priorityScore = existing.priorityScore;
-  if (updateData.priority || updateData.quantity) {
+  if (updateData.priority || updateData.quantity || updateData.reason) {
     const quantity = updateData.quantity || existing.quantity;
     priorityScore = calculatePriorityScore(
       updateData.priority || existing.priority,
-      quantity
+      quantity,
+      updateData.reason || existing.reason,
+      existing.createdAt
     );
   }
 
@@ -396,10 +384,7 @@ export const completeExchangeWithInventory = createSimpleAction(
         const errorItems = insufficientStock
           .map((item) => `${item.name}: cần ${item.required}, có ${item.available}`)
           .join(", ");
-        throw new AppError(
-          `Không đủ số lượng cây trong kho: ${errorItems}`,
-          "INSUFFICIENT_STOCK"
-        );
+        throw new AppError(`Không đủ số lượng cây trong kho: ${errorItems}`, "INSUFFICIENT_STOCK");
       }
     }
 

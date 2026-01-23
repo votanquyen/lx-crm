@@ -139,7 +139,7 @@ export function ExchangeRequestList({ initialData }: ExchangeRequestListProps) {
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               Trước
             </Button>
             <Button
@@ -151,7 +151,7 @@ export function ExchangeRequestList({ initialData }: ExchangeRequestListProps) {
               }
             >
               Sau
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>

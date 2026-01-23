@@ -164,7 +164,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
         {quotation.status === "DRAFT" && (
           <Button variant="outline" size="sm" asChild>
             <a href={`/quotations/${quotation.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit className="mr-2 h-4 w-4" aria-hidden="true" />
               Chỉnh sửa
             </a>
           </Button>
@@ -174,9 +174,9 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
         {quotation.status === "DRAFT" && (
           <Button size="sm" onClick={handleSend} disabled={isLoading}>
             {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <Send className="mr-2 h-4 w-4" />
+              <Send className="mr-2 h-4 w-4" aria-hidden="true" />
             )}
             Gửi báo giá
           </Button>
@@ -187,9 +187,9 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
           <>
             <Button size="sm" variant="default" onClick={handleAccept} disabled={isLoading}>
               {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <CheckCircle className="mr-2 h-4 w-4" />
+                <CheckCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               )}
               Chấp nhận
             </Button>
@@ -199,7 +199,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
               onClick={() => setShowRejectDialog(true)}
               disabled={isLoading}
             >
-              <XCircle className="mr-2 h-4 w-4" />
+              <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Từ chối
             </Button>
           </>
@@ -209,9 +209,9 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
         {quotation.status === "ACCEPTED" && !quotation.convertedToContractId && (
           <Button size="sm" onClick={handleConvert} disabled={isLoading}>
             {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
-              <FileCheck className="mr-2 h-4 w-4" />
+              <FileCheck className="mr-2 h-4 w-4" aria-hidden="true" />
             )}
             Chuyển thành hợp đồng
           </Button>
@@ -226,7 +226,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={handleDownloadPDF}>
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 h-4 w-4" aria-hidden="true" />
               Tải PDF
             </DropdownMenuItem>
             {quotation.status === "DRAFT" && (
@@ -236,7 +236,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
                   className="text-destructive"
                   onClick={() => setShowDeleteDialog(true)}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                   Xóa báo giá
                 </DropdownMenuItem>
               </>
@@ -262,7 +262,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
               disabled={isLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -281,7 +281,7 @@ export function QuotationActions({ quotation }: QuotationActionsProps) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Hủy</AlertDialogCancel>
             <AlertDialogAction onClick={handleReject} disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               Từ chối
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -102,12 +102,12 @@ export function ScheduleBuilder({
             onClick={handleOptimize}
             disabled={isOptimizing || stops.length < 2}
           >
-            <Shuffle className="mr-2 h-4 w-4" />
+            <Shuffle className="mr-2 h-4 w-4" aria-hidden="true" />
             {isOptimizing ? "Đang tối ưu..." : "Tối ưu lộ trình"}
           </Button>
 
           <Button size="sm" onClick={handleSave} disabled={!hasChanges || isSaving}>
-            <Save className="mr-2 h-4 w-4" />
+            <Save className="mr-2 h-4 w-4" aria-hidden="true" />
             {isSaving ? "Đang lưu..." : "Lưu thứ tự"}
           </Button>
         </div>

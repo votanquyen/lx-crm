@@ -11,7 +11,12 @@ interface VirtualTableProps<T> {
   className?: string;
   maxHeight?: string;
   renderHeader: () => React.ReactNode;
-  renderRow: (item: T, index: number, measureElement: (el: Element | null) => void, virtualStart: number) => React.ReactNode;
+  renderRow: (
+    item: T,
+    index: number,
+    measureElement: (el: Element | null) => void,
+    virtualStart: number
+  ) => React.ReactNode;
   getRowKey: (item: T) => string;
   emptyState?: React.ReactNode;
 }
@@ -39,29 +44,20 @@ export function VirtualTable<T>({
   const items = virtualizer.getVirtualItems();
 
   if (data.length === 0 && emptyState) {
-    return (
-      <div className={cn("rounded-md border", className)}>
-        {emptyState}
-      </div>
-    );
+    return <div className={cn("rounded-md border", className)}>{emptyState}</div>;
   }
 
   return (
     <div className={cn("rounded-md border", className)} role="table" aria-label="Virtual table">
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 bg-background border-b" role="rowgroup">
-        <div className="flex font-medium text-sm text-muted-foreground" role="row">
+      <div className="bg-background sticky top-0 z-10 border-b" role="rowgroup">
+        <div className="text-muted-foreground flex text-sm font-medium" role="row">
           {renderHeader()}
         </div>
       </div>
 
       {/* Scrollable body */}
-      <div
-        ref={parentRef}
-        className="overflow-auto"
-        style={{ maxHeight }}
-        role="rowgroup"
-      >
+      <div ref={parentRef} className="overflow-auto" style={{ maxHeight }} role="rowgroup">
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
@@ -114,10 +110,7 @@ export const VirtualTableRow = React.memo(function VirtualTableRow({
         width: "100%",
         transform: `translateY(${start}px)`,
       }}
-      className={cn(
-        "flex items-center border-b hover:bg-muted/50 transition-colors",
-        className
-      )}
+      className={cn("hover:bg-muted/50 flex items-center border-b transition-colors", className)}
     >
       {children}
     </div>

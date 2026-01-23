@@ -13,8 +13,8 @@
 | -------------------------------------- | ------------------ | ---------- |
 | Phase 1: Test Infrastructure           | ✅ Complete        | 100%       |
 | Phase 2: Core Business Features        | ✅ Complete        | 100%       |
-| Phase 2.5: Bảng Kê (Monthly Statement) | 🚧 In Progress     | 65%        |
-| Phase 3: Operational Excellence        | 🟢 Mostly Complete | 95%        |
+| Phase 2.5: Bảng Kê (Monthly Statement) | ⏳ Planned         | 0%         |
+| Phase 3: Operational Excellence        | 🟢 Mostly Complete | 92%        |
 | Phase 4: Advanced Features             | ⏳ Planned         | 0%         |
 | Phase 5: Enterprise Features           | ⏳ Future          | 0%         |
 

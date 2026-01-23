@@ -101,30 +101,30 @@ export interface SearchIntent {
 }
 
 export async function parseSearchQuery(query: string): Promise<SearchIntent | null> {
-  const prompt = `Phân tích câu tìm kiếm tự nhiên cho hệ thống CRM cho thuê cây xanh.
+  const prompt = `Phan tich cau tim kiem tu nhien cho he thong CRM cho thue cay xanh.
 
-Câu tìm kiếm: "${query}"
+Cau tim kiem: "${query}"
 
-Trả về JSON:
+Tra ve JSON:
 {
   "type": "CUSTOMER" | "CONTRACT" | "INVOICE" | "PLANT" | "GENERAL",
   "filters": {
     "status": ["ACTIVE", "INACTIVE", ...],
-    "district": ["Quận 1", "Quận 2", ...],
+    "district": ["Quan 1", "Quan 2", ...],
     "hasDebt": true/false,
-    "plantType": "tên loại cây"
+    "plantType": "ten loai cay"
   },
-  "keywords": ["từ khóa tìm kiếm"],
+  "keywords": ["tu khoa tim kiem"],
   "sortBy": "field name",
   "sortOrder": "asc" | "desc"
 }
 
-Ví dụ:
-- "khách quận 1 còn nợ" → type: CUSTOMER, filters: {district: ["Quận 1"], hasDebt: true}
-- "hợp đồng sắp hết hạn" → type: CONTRACT, filters: {dateRange: {end: "soon"}}
-- "cây kim tiền" → type: PLANT, filters: {plantType: "kim tiền"}
+Vi du:
+- "khach quan 1 con no" -> type: CUSTOMER, filters: {district: ["Quan 1"], hasDebt: true}
+- "hop dong sap het han" -> type: CONTRACT, filters: {dateRange: {end: "soon"}}
+- "cay kim tien" -> type: PLANT, filters: {plantType: "kim tien"}
 
-CHỈ trả về JSON.`;
+CHI tra ve JSON.`;
 
   try {
     const response = await callAI(prompt);
@@ -167,4 +167,107 @@ Viết tóm tắt 2-3 câu về tình trạng khách hàng, các vấn đề c�
     console.error("Summary generation error:", error);
     return null;
   }
+}
+
+// Entity extraction for quick notes
+export {
+  extractEntitiesAndMatch,
+  extractEntitiesAndMatchWithContext,
+  type EntityExtractionResult,
+  type MatchedCustomer,
+  type ExtractedEntities,
+  type CustomerContext,
+} from "./ai/entity-extractor";
+
+// ============================================================================
+// Suggestion Generation for Quick Notes
+// ============================================================================
+
+export interface Suggestion {
+  action: string;
+  actionType: "CALL" | "INVOICE" | "EXCHANGE" | "PAYMENT" | "REMINDER" | "OTHER";
+  link?: string;
+  priority: number;
+}
+
+/**
+ * Generate suggestions based on extracted entities and customer context
+ */
+export function generateNoteSuggestions(
+  entities: { actions: string[]; dates: string[]; amounts: string[] },
+  context: { overdueInvoices: number; totalDebt: number; activeContracts: number } | null,
+  customerId?: string
+): Suggestion[] {
+  const suggestions: Suggestion[] = [];
+
+  // Action-based suggestions
+  for (const action of entities.actions) {
+    const actionLower = action.toLowerCase();
+
+    if (actionLower.includes("hóa đơn") || actionLower.includes("hđ")) {
+      suggestions.push({
+        action: "Xem hóa đơn",
+        actionType: "INVOICE",
+        link: customerId ? `/invoices?customerId=${customerId}` : "/invoices",
+        priority: 3,
+      });
+    }
+
+    if (
+      actionLower.includes("nhắc") ||
+      actionLower.includes("gọi") ||
+      actionLower.includes("liên hệ")
+    ) {
+      suggestions.push({
+        action: "Liên hệ khách hàng",
+        actionType: "CALL",
+        link: customerId ? `/customers/${customerId}` : undefined,
+        priority: 2,
+      });
+    }
+
+    if (actionLower.includes("đổi cây") || actionLower.includes("thay cây")) {
+      suggestions.push({
+        action: "Tạo yêu cầu đổi cây",
+        actionType: "EXCHANGE",
+        link: customerId ? `/exchanges/new?customerId=${customerId}` : undefined,
+        priority: 2,
+      });
+    }
+
+    if (actionLower.includes("thanh toán") || actionLower.includes("thu tiền")) {
+      suggestions.push({
+        action: "Nhắc thanh toán",
+        actionType: "PAYMENT",
+        link: customerId ? `/customers/${customerId}?tab=invoices` : undefined,
+        priority: 1,
+      });
+    }
+  }
+
+  // Context-based suggestions
+  if (context) {
+    if (context.overdueInvoices > 0) {
+      suggestions.push({
+        action: `Có ${context.overdueInvoices} hóa đơn quá hạn`,
+        actionType: "PAYMENT",
+        link: customerId ? `/customers/${customerId}?tab=invoices` : undefined,
+        priority: 1,
+      });
+    }
+
+    if (context.totalDebt > 0) {
+      const debtFormatted = new Intl.NumberFormat("vi-VN").format(context.totalDebt);
+      suggestions.push({
+        action: `Công nợ: ${debtFormatted} VND`,
+        actionType: "PAYMENT",
+        link: customerId ? `/customers/${customerId}?tab=invoices` : undefined,
+        priority: 2,
+      });
+    }
+  }
+
+  // Dedupe by action text and sort by priority
+  const unique = Array.from(new Map(suggestions.map((s) => [s.action, s])).values());
+  return unique.sort((a, b) => a.priority - b.priority).slice(0, 5);
 }

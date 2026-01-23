@@ -9,9 +9,8 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Receipt, Eye, MoreHorizontal, Send, XCircle, DollarSign } from "lucide-react";
+import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Building2, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { InvoiceStatus } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility
@@ -34,29 +34,24 @@ type Invoice = {
   totalAmount: number;
   paidAmount: number;
   outstandingAmount: number;
+  // SmartVAS fields (placeholders until Phase 2 migration)
+  smartvasInvoiceNumber?: string | null;
+  smartvasSerial?: string | null;
+  smartvasIssueDate?: DateOrString | null;
+  paymentDate?: DateOrString | null;
+  subtotalAmount?: number | null;
+  vatAmount?: number | null;
   customer: {
     id: string;
     code: string;
     companyName: string;
+    taxCode?: string | null;
   };
   contract: {
     id: string;
     contractNumber: string;
   } | null;
   _count: { payments: number };
-};
-
-const statusConfig: Record<
-  InvoiceStatus,
-  { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-  DRAFT: { label: "Nháp", variant: "secondary" },
-  SENT: { label: "Đã gửi", variant: "outline" },
-  PARTIAL: { label: "Thanh toán một phần", variant: "outline" },
-  PAID: { label: "Đã thanh toán", variant: "default" },
-  OVERDUE: { label: "Quá hạn", variant: "destructive" },
-  CANCELLED: { label: "Đã hủy", variant: "destructive" },
-  REFUNDED: { label: "Đã hoàn tiền", variant: "secondary" },
 };
 
 /** Check if invoice is overdue */
@@ -90,83 +85,169 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
   onCancel?: (id: string) => void;
   onRecordPayment?: (id: string) => void;
 }) {
-  const status = statusConfig[invoice.status];
   const overdue = isOverdue(invoice.dueDate, invoice.status);
 
   return (
-    <TableRow>
-      <TableCell>
-        <Link href={`/invoices/${invoice.id}`} className="font-medium hover:underline">
-          {getInvoiceNo(invoice.invoiceNumber)}
-        </Link>
-        {invoice.contract && (
-          <p className="text-muted-foreground text-sm">HĐ: {invoice.contract.contractNumber}</p>
-        )}
-      </TableCell>
-      <TableCell>
-        <Link href={`/customers/${invoice.customer.id}`} className="font-medium hover:underline">
+    <div
+      data-index={dataIndex}
+      ref={measureElement}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        transform: `translateY(${virtualStart}px)`,
+      }}
+      className="data-table-row group flex h-[72px] items-center"
+    >
+      {/* Company Name (First) */}
+      <div className="w-[200px] shrink-0 px-4 py-2">
+        <Link
+          href={`/customers/${invoice.customer.id}`}
+          className="hover:text-primary block truncate text-xs font-bold text-slate-900 transition-colors"
+        >
           {invoice.customer.companyName}
         </Link>
-        <p className="text-sm text-muted-foreground">
-          {invoice.customer.code}
-        </p>
+        <div className="mt-0.5 flex items-center gap-1.5">
+          <Building2 className="text-muted-foreground h-2.5 w-2.5" aria-hidden="true" />
+          <span className="text-muted-foreground text-[10px] font-bold tracking-tight">
+            {invoice.customer.taxCode || invoice.customer.code}
+          </span>
+        </div>
+      </div>
+
+      {/* SmartVAS Invoice Number */}
+      <div className="w-[100px] shrink-0 px-4 py-2">
+        <span className="text-xs font-bold text-slate-900">
+          {invoice.smartvasInvoiceNumber || invoice.invoiceNumber}
+        </span>
+      </div>
+
+      {/* SmartVAS Serial */}
+      <div className="w-[80px] shrink-0 px-4 py-2">
+        <span className="text-xs font-medium text-slate-600">{invoice.smartvasSerial || "-"}</span>
+      </div>
+
+      {/* Issue Date */}
+      <div className="w-[100px] shrink-0 px-4 py-2">
+        <span className="text-xs font-medium text-slate-600">
+          {format(new Date(invoice.smartvasIssueDate || invoice.issueDate), "dd/MM/yyyy", {
+            locale: vi,
+          })}
+        </span>
+      </div>
+
+      {/* Subtotal (Chưa VAT) */}
+      <div className="w-[100px] shrink-0 px-4 py-2 text-right">
+        <span className="text-xs font-medium text-slate-600">
+          {invoice.subtotalAmount != null ? formatCurrency(invoice.subtotalAmount) : "-"}
+        </span>
+      </div>
+
+      {/* VAT */}
+      <div className="w-[80px] shrink-0 px-4 py-2 text-right">
+        <span className="text-xs font-medium text-slate-600">
+          {invoice.vatAmount != null ? formatCurrency(invoice.vatAmount) : "-"}
+        </span>
+      </div>
+
+      {/* Total Amount */}
+      <div className="w-[100px] shrink-0 px-4 py-2 text-right">
+        <span className="text-xs font-black text-slate-900">
+          {formatCurrency(invoice.totalAmount)}
+        </span>
+      </div>
+
+      {/* Payment Date */}
+      <div className="w-[100px] shrink-0 px-4 py-2">
+        {invoice.paymentDate ? (
+          <span className="text-xs font-medium text-emerald-600">
+            {format(new Date(invoice.paymentDate), "dd/MM/yyyy", { locale: vi })}
+          </span>
+        ) : (
+          <span className="text-xs font-medium text-slate-400">-</span>
+        )}
       </div>
 
       {/* Status */}
-      <div className="w-40 p-4">
-        <Badge variant={status.variant}>{status.label}</Badge>
-        {overdue && invoice.status !== "OVERDUE" && (
-          <Badge variant="destructive" className="ml-2">
-            Quá hạn
-          </Badge>
-        )}
-      </div>
-
-      {/* Due Date */}
-      <div className="w-32 p-4">
-        <span className={overdue ? "text-destructive font-medium" : ""}>
-          {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-        </span>
-      </TableCell>
-      <TableCell className="text-right">{formatCurrency(invoice.totalAmount)}</TableCell>
-      <TableCell className="text-right font-medium">
-        {invoice.outstandingAmount > 0 ? (
-          <span className="text-orange-600">{formatCurrency(invoice.outstandingAmount)}</span>
-        ) : (
-          <span className="text-green-600">0</span>
-        )}
+      <div className="w-[100px] shrink-0 px-4 py-2">
+        <div
+          className={cn(
+            "status-badge text-[10px]",
+            invoice.status === "PAID"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : invoice.status === "DRAFT"
+                ? "border-slate-200 bg-slate-50 text-slate-600"
+                : invoice.status === "SENT"
+                  ? "border-blue-200 bg-blue-50 text-blue-700"
+                  : invoice.status === "PARTIAL"
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : invoice.status === "OVERDUE" || overdue
+                      ? "border-rose-200 bg-rose-50 text-rose-700"
+                      : "bg-slate-50 text-slate-500"
+          )}
+        >
+          {overdue && invoice.status !== "PAID"
+            ? "Quá hạn"
+            : invoice.status === "PAID"
+              ? "Đã TT"
+              : invoice.status === "SENT"
+                ? "Đã gửi"
+                : invoice.status === "PARTIAL"
+                  ? "TT 1 phần"
+                  : invoice.status === "DRAFT"
+                    ? "Nháp"
+                    : "Đã hủy"}
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="w-12 p-4">
+      <div className="flex w-12 shrink-0 justify-end px-4 py-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Mở menu thao tác">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:text-primary h-8 w-8 text-slate-400 transition-colors"
+              aria-label="Tùy chọn"
+            >
               <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              asChild
+              className="py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+            >
               <Link href={`/invoices/${invoice.id}`}>
                 <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
-                Xem chi tiết
+                Dữ liệu chi tiết
               </Link>
             </DropdownMenuItem>
             {invoice.status === "DRAFT" && onSend && (
-              <DropdownMenuItem onClick={() => onSend(invoice.id)}>
+              <DropdownMenuItem
+                onClick={() => onSend(invoice.id)}
+                className="py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+              >
                 <Send className="mr-2 h-4 w-4" aria-hidden="true" />
-                Gửi hóa đơn
+                Gửi đối tác
               </DropdownMenuItem>
             )}
             {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) && onRecordPayment && (
-              <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
+              <DropdownMenuItem
+                onClick={() => onRecordPayment(invoice.id)}
+                className="text-primary py-2.5 font-sans text-xs font-bold tracking-tight uppercase"
+              >
                 <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
                 Ghi nhận thanh toán
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             {invoice.status !== "CANCELLED" && invoice._count.payments === 0 && onCancel && (
-              <DropdownMenuItem onClick={() => onCancel(invoice.id)} className="text-destructive">
+              <DropdownMenuItem
+                onClick={() => onCancel(invoice.id)}
+                className="py-2.5 font-sans text-xs font-bold tracking-tight text-rose-600 uppercase focus:text-rose-600"
+              >
                 <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                 Hủy hóa đơn
               </DropdownMenuItem>
@@ -178,133 +259,100 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
   );
 });
 
-export const InvoiceTable = memo(function InvoiceTable({
-  invoices,
-  onSend,
-  onCancel,
-  onRecordPayment,
-}: InvoiceTableProps) {
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Số hóa đơn</TableHead>
-            <TableHead>Khách hàng</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Hạn thanh toán</TableHead>
-            <TableHead className="text-right">Tổng tiền</TableHead>
-            <TableHead className="text-right">Còn nợ</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {invoices.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-muted-foreground py-8 text-center">
-                <Receipt className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                Chưa có hóa đơn nào
-              </TableCell>
-            </TableRow>
-          ) : (
-            invoices.map((invoice) => {
-              const status = statusConfig[invoice.status];
-              const overdue = isOverdue(invoice.dueDate, invoice.status);
+export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: InvoiceTableProps) {
+  const parentRef = React.useRef<HTMLDivElement>(null);
 
-              return (
-                <TableRow key={invoice.id}>
-                  <TableCell>
-                    <Link href={`/invoices/${invoice.id}`} className="font-medium hover:underline">
-                      {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
-                    </Link>
-                    {invoice.contract && (
-                      <p className="text-muted-foreground text-sm">
-                        HĐ: {invoice.contract.contractNumber}
-                      </p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/customers/${invoice.customer.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {invoice.customer.companyName}
-                    </Link>
-                    <p className="text-muted-foreground text-sm">{invoice.customer.code}</p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={status.variant}>{status.label}</Badge>
-                    {overdue && invoice.status !== "OVERDUE" && (
-                      <Badge variant="destructive" className="ml-2">
-                        Quá hạn
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className={overdue ? "text-destructive font-medium" : ""}>
-                      {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(invoice.totalAmount)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {invoice.outstandingAmount > 0 ? (
-                      <span className="text-orange-600">
-                        {formatCurrency(invoice.outstandingAmount)}
-                      </span>
-                    ) : (
-                      <span className="text-green-600">0</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/invoices/${invoice.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Xem chi tiết
-                          </Link>
-                        </DropdownMenuItem>
-                        {invoice.status === "DRAFT" && onSend && (
-                          <DropdownMenuItem onClick={() => onSend(invoice.id)}>
-                            <Send className="mr-2 h-4 w-4" />
-                            Gửi hóa đơn
-                          </DropdownMenuItem>
-                        )}
-                        {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) &&
-                          onRecordPayment && (
-                            <DropdownMenuItem onClick={() => onRecordPayment(invoice.id)}>
-                              <DollarSign className="mr-2 h-4 w-4" />
-                              Ghi nhận thanh toán
-                            </DropdownMenuItem>
-                          )}
-                        <DropdownMenuSeparator />
-                        {invoice.status !== "CANCELLED" &&
-                          invoice._count.payments === 0 &&
-                          onCancel && (
-                            <DropdownMenuItem
-                              onClick={() => onCancel(invoice.id)}
-                              className="text-destructive"
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Hủy hóa đơn
-                            </DropdownMenuItem>
-                          )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
+  const virtualizer = useVirtualizer({
+    count: invoices.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 72,
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // Empty state
+  if (invoices.length === 0) {
+    return (
+      <div className="p-12 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border bg-slate-50 text-slate-200 shadow-sm">
+          <Receipt className="h-8 w-8" aria-hidden="true" />
+        </div>
+        <h4 className="text-base font-bold text-slate-900">Chưa có hóa đơn</h4>
+        <p className="mt-1 text-sm font-medium text-slate-400">
+          Hóa đơn sẽ được tạo tự động từ bảng kê đã xác nhận.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      {/* Sticky header */}
+      <div className="sticky top-0 z-20 border-b bg-slate-50/80 backdrop-blur-sm">
+        <div className="flex h-10 items-center">
+          <div className="text-muted-foreground w-[200px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Công ty
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Số HĐ
+          </div>
+          <div className="text-muted-foreground w-[80px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Ký hiệu
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Ngày xuất
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-right text-[10px] font-bold tracking-widest uppercase">
+            Chưa VAT
+          </div>
+          <div className="text-muted-foreground w-[80px] shrink-0 px-4 text-right text-[10px] font-bold tracking-widest uppercase">
+            VAT
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-right text-[10px] font-bold tracking-widest uppercase">
+            Tổng cộng
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Ngày TT
+          </div>
+          <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
+            Trạng thái
+          </div>
+          <div className="w-12 shrink-0 px-4"></div>
+        </div>
+      </div>
+
+      {/* Virtualized body */}
+      <div
+        ref={parentRef}
+        className="scrollbar-hide overflow-auto"
+        style={{ maxHeight: "calc(100vh - 440px)" }}
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            position: "relative",
+          }}
+          className="divide-border/50 divide-y"
+        >
+          {virtualItems.map((virtualRow) => {
+            const invoice = invoices[virtualRow.index];
+            if (!invoice) return null;
+            return (
+              <InvoiceVirtualRow
+                key={invoice.id}
+                invoice={invoice}
+                virtualStart={virtualRow.start}
+                measureElement={virtualizer.measureElement}
+                dataIndex={virtualRow.index}
+                onSend={onSend}
+                onCancel={onCancel}
+                onRecordPayment={onRecordPayment}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 });

@@ -10,10 +10,10 @@ const CustomerMapClient = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-[600px] w-full rounded-lg border bg-muted/10 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <Skeleton className="h-8 w-48 mx-auto" />
-          <p className="text-sm text-muted-foreground">Đang tải bản đồ...</p>
+      <div className="bg-muted/10 flex h-[600px] w-full items-center justify-center rounded-lg border">
+        <div className="space-y-3 text-center">
+          <Skeleton className="mx-auto h-8 w-48" />
+          <p className="text-muted-foreground text-sm">Đang tải bản đồ...</p>
         </div>
       </div>
     ),

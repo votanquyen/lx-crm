@@ -53,7 +53,7 @@ export function ExchangeRequestCardComponent({
       <CardContent className="space-y-3">
         {/* Customer Info */}
         <div className="flex items-start gap-2 text-sm text-gray-600">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="line-clamp-2">
             {request.customer.address}, {request.customer.district}
           </span>
@@ -62,7 +62,7 @@ export function ExchangeRequestCardComponent({
         {/* Plant Details */}
         {request.currentPlant && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Package className="h-4 w-4 shrink-0" />
+            <Package className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               Cây hiện tại: <span className="font-medium">{request.currentPlant}</span>
               {request.quantity > 1 && ` (${request.quantity} cây)`}
@@ -73,7 +73,7 @@ export function ExchangeRequestCardComponent({
         {/* Preferred Date */}
         {request.preferredDate && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Calendar className="h-4 w-4 shrink-0" />
+            <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
               Ngày mong muốn: {format(request.preferredDate, "dd/MM/yyyy", { locale: vi })}
             </span>
@@ -95,7 +95,7 @@ export function ExchangeRequestCardComponent({
             onClick={() => onView?.(request.id)}
             className="min-w-[100px] flex-1"
           >
-            <User className="mr-1 h-4 w-4" />
+            <User className="mr-1 h-4 w-4" aria-hidden="true" />
             Chi tiết
           </Button>
 

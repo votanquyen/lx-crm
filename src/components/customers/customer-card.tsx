@@ -39,14 +39,14 @@ const statusConfig: Record<
   TERMINATED: { label: "Đã xóa", variant: "destructive" },
 };
 
-export function CustomerCard({ customer }: CustomerCardProps) {
+function CustomerCardComponent({ customer }: CustomerCardProps) {
   const status = statusConfig[customer.status];
 
   return (
     <div className="group bg-card hover:bg-accent/50 flex items-center gap-4 rounded-lg border p-4 transition-colors">
-      {/* Company icon */}
+      {/* Customer icon */}
       <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full">
-        <Building2 className="h-5 w-5" />
+        <Building2 className="h-5 w-5" aria-hidden="true" />
       </div>
 
       {/* Main info */}
@@ -94,7 +94,7 @@ export function CustomerCard({ customer }: CustomerCardProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="flex items-center gap-1">
-                  <Leaf className="h-4 w-4" />
+                  <Leaf className="h-4 w-4" aria-hidden="true" />
                   {customer._count.customerPlants}
                 </span>
               </TooltipTrigger>
@@ -108,7 +108,7 @@ export function CustomerCard({ customer }: CustomerCardProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4" aria-hidden="true" />
                   {customer._count.contracts}
                 </span>
               </TooltipTrigger>
@@ -123,7 +123,7 @@ export function CustomerCard({ customer }: CustomerCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="flex items-center gap-1 text-amber-500">
-                    <StickyNote className="h-4 w-4" />
+                    <StickyNote className="h-4 w-4" aria-hidden="true" />
                     {customer._count.stickyNotes}
                   </span>
                 </TooltipTrigger>

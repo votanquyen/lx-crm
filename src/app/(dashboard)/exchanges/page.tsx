@@ -1,16 +1,28 @@
-/**
- * Exchange Requests Page
- */
 import { Suspense } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Plus, RefreshCw, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExchangeTable } from "@/components/exchanges/exchange-table";
 import { Pagination } from "@/components/ui/pagination";
 import { getExchangeRequests, getExchangeStats } from "@/actions/exchange-requests";
+import { cn } from "@/lib/utils";
 import type { ExchangeStatus, ExchangePriority } from "@prisma/client";
+
+// Dynamic import for heavy table component
+const ExchangeTable = dynamic(
+  () => import("@/components/exchanges/exchange-table").then((m) => m.ExchangeTable),
+  {
+    loading: () => (
+      <div className="space-y-4 p-4">
+        <Skeleton className="h-10 w-full" />
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 interface ExchangesPageProps {
   searchParams: Promise<{
@@ -25,45 +37,45 @@ async function ExchangeStats() {
 
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Tổng yêu cầu</CardTitle>
-          <RefreshCw className="text-muted-foreground h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.total}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card bg-white p-5">
+        <p className="kpi-title mb-2 text-slate-500">Tổng yêu cầu</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-slate-900">{stats.total}</p>
+          <div className="rounded bg-slate-50 p-2 text-slate-400">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Chờ duyệt</CardTitle>
-          <Clock className="h-4 w-4 text-orange-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card border-amber-100 bg-white p-5">
+        <p className="kpi-title mb-2 text-amber-600">Chờ duyệt</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-amber-600">{stats.pending}</p>
+          <div className="rounded bg-amber-50 p-2 text-amber-500">
+            <Clock className="h-4 w-4" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Đã duyệt</CardTitle>
-          <CheckCircle className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.scheduled}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card border-blue-100 bg-white p-5">
+        <p className="kpi-title mb-2 text-blue-600">Đã duyệt</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-blue-600">{stats.scheduled}</p>
+          <div className="rounded bg-blue-50 p-2 text-blue-500">
+            <CheckCircle className="h-4 w-4" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Gấp/Khẩn cấp</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-red-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-red-600">{stats.urgent}</div>
-        </CardContent>
-      </Card>
+      <div className="enterprise-card border-rose-100 bg-white p-5">
+        <p className="kpi-title mb-2 text-rose-600">Gấp/Khẩn cấp</p>
+        <div className="flex items-center justify-between">
+          <p className="kpi-value text-rose-600">{stats.urgent}</p>
+          <div className="rounded bg-rose-50 p-2 text-rose-500">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -80,16 +92,18 @@ async function ExchangeList({
   const result = await getExchangeRequests({ page, limit: 20, status, priority });
 
   return (
-    <div className="space-y-4">
+    <div className="enterprise-card overflow-hidden bg-white">
       <ExchangeTable requests={result.data} />
 
       {result.pagination.totalPages > 1 && (
-        <Pagination
-          page={result.pagination.page}
-          limit={result.pagination.limit}
-          total={result.pagination.total}
-          totalPages={result.pagination.totalPages}
-        />
+        <div className="border-t bg-slate-50/30 p-4">
+          <Pagination
+            page={result.pagination.page}
+            limit={result.pagination.limit}
+            total={result.pagination.total}
+            totalPages={result.pagination.totalPages}
+          />
+        </div>
       )}
     </div>
   );
@@ -103,14 +117,16 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Yêu cầu đổi cây</h1>
-          <p className="text-muted-foreground">Quản lý yêu cầu đổi/thay thế cây từ khách hàng</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Yêu cầu đổi cây</h1>
+          <p className="text-muted-foreground text-sm font-medium">
+            Quản lý yêu cầu thay thế và bảo hành cây từ khách hàng
+          </p>
         </div>
-        <Button asChild>
-          <Link href="/exchanges/new">
-            <Plus className="mr-2 h-4 w-4" />
+        <Button asChild className="bg-primary hover:bg-primary/90 h-10 px-4 font-bold text-white">
+          <Link href="/exchanges/new" className="gap-2">
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Tạo yêu cầu
           </Link>
         </Button>
@@ -120,14 +136,10 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
         fallback={
           <div className="grid gap-4 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16" />
-                </CardContent>
-              </Card>
+              <div key={i} className="enterprise-card bg-white p-5">
+                <Skeleton className="mb-3 h-4 w-24" />
+                <Skeleton className="h-8 w-16" />
+              </div>
             ))}
           </div>
         }
@@ -135,37 +147,50 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
         <ExchangeStats />
       </Suspense>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4">
+      {/* Filters Navigation */}
+      <div className="scrollbar-hide flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border bg-slate-50/50 p-1">
         <Link
           href="/exchanges"
-          className={`rounded-full px-3 py-1.5 text-sm ${
-            !status && !priority ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
+            !status && !priority
+              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Tất cả
         </Link>
+        <div className="mx-1 h-3 w-px bg-slate-200" />
         <Link
           href="/exchanges?status=PENDING"
-          className={`rounded-full px-3 py-1.5 text-sm ${
-            status === "PENDING" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
+            status === "PENDING"
+              ? "border border-amber-100 bg-white text-amber-600 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Chờ duyệt
         </Link>
         <Link
           href="/exchanges?status=SCHEDULED"
-          className={`rounded-full px-3 py-1.5 text-sm ${
-            status === "SCHEDULED" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
+            status === "SCHEDULED"
+              ? "border border-blue-100 bg-white text-blue-600 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Đã duyệt
         </Link>
         <Link
           href="/exchanges?priority=URGENT"
-          className={`rounded-full px-3 py-1.5 text-sm ${
-            priority === "URGENT" ? "bg-primary text-primary-foreground" : "bg-muted"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
+            priority === "URGENT"
+              ? "border border-rose-100 bg-white text-rose-600 shadow-sm"
+              : "text-slate-500 hover:text-slate-900"
+          )}
         >
           Khẩn cấp
         </Link>
@@ -173,7 +198,7 @@ export default async function ExchangesPage({ searchParams }: ExchangesPageProps
 
       <Suspense
         fallback={
-          <div className="space-y-4">
+          <div className="enterprise-card space-y-4 bg-white p-4">
             <Skeleton className="h-10 w-full" />
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />

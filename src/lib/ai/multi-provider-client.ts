@@ -9,6 +9,8 @@
  * - multimodal: Gemini only (image/PDF analysis)
  */
 
+import { getApiKey } from "@/lib/settings-service";
+
 // Request timeout in milliseconds (30 seconds)
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -23,34 +25,34 @@ interface AIProvider {
   name: string;
   provider: "openrouter" | "groq" | "gemini";
   model: string;
-  apiKey: string | undefined;
+  keyName: string; // Key name for settings lookup
 }
 
-// All available providers
+// All available providers (without static API keys)
 const ALL_PROVIDERS: Record<string, AIProvider> = {
   qwen3: {
     name: "Qwen3 32B",
     provider: "groq",
     model: "qwen/qwen3-32b",
-    apiKey: process.env.GROQ_API_KEY,
+    keyName: "GROQ_API_KEY",
   },
   deepseek: {
     name: "DeepSeek V3",
     provider: "openrouter",
     model: "deepseek/deepseek-chat",
-    apiKey: process.env.OPENROUTER_API_KEY,
+    keyName: "OPENROUTER_API_KEY",
   },
   llama4: {
     name: "Llama 4 Scout",
     provider: "groq",
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
-    apiKey: process.env.GROQ_API_KEY,
+    keyName: "GROQ_API_KEY",
   },
   gemini: {
     name: "Gemini 2.5 Flash",
     provider: "gemini",
     model: "gemini-2.5-flash",
-    apiKey: process.env.GOOGLE_AI_API_KEY,
+    keyName: "GOOGLE_AI_API_KEY",
   },
 };
 
@@ -86,9 +88,7 @@ const DEFAULT_CHAIN: string[] = ["qwen3", "deepseek", "llama4", "gemini"];
  */
 function getProviderChain(taskType?: TaskType): AIProvider[] {
   const chainKeys = taskType ? TASK_CHAINS[taskType] : DEFAULT_CHAIN;
-  return chainKeys
-    .map((key) => ALL_PROVIDERS[key])
-    .filter((p): p is AIProvider => p !== undefined);
+  return chainKeys.map((key) => ALL_PROVIDERS[key]).filter((p): p is AIProvider => p !== undefined);
 }
 
 /**
@@ -150,8 +150,11 @@ export async function callAI(prompt: string, taskType?: TaskType): Promise<strin
   const errors: Array<{ provider: string; error: string }> = [];
 
   for (const provider of providers) {
+    // Fetch API key dynamically (DB first, then env fallback)
+    const apiKey = await getApiKey(provider.keyName);
+
     // Skip if API key not configured
-    if (!provider.apiKey) {
+    if (!apiKey) {
       continue;
     }
 
@@ -166,11 +169,11 @@ export async function callAI(prompt: string, taskType?: TaskType): Promise<strin
 
         let response: string;
         if (provider.provider === "openrouter") {
-          response = await callOpenRouter(prompt, provider.model, provider.apiKey);
+          response = await callOpenRouter(prompt, provider.model, apiKey);
         } else if (provider.provider === "groq") {
-          response = await callGroq(prompt, provider.model, provider.apiKey);
+          response = await callGroq(prompt, provider.model, apiKey);
         } else if (provider.provider === "gemini") {
-          response = await callGemini(prompt, provider.apiKey);
+          response = await callGemini(prompt, apiKey);
         } else {
           break; // Unknown provider, try next
         }
@@ -210,29 +213,22 @@ export async function callAI(prompt: string, taskType?: TaskType): Promise<strin
 /**
  * OpenRouter API (DeepSeek V3, Qwen 2.5)
  */
-async function callOpenRouter(
-  prompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const response = await fetchWithTimeout(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-        "X-Title": "Lộc Xanh CRM",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 2048,
-      }),
-    }
-  );
+async function callOpenRouter(prompt: string, model: string, apiKey: string): Promise<string> {
+  const response = await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "Lộc Xanh CRM",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 2048,
+    }),
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -254,27 +250,20 @@ async function callOpenRouter(
 /**
  * Groq API (Llama 3.3 70B)
  */
-async function callGroq(
-  prompt: string,
-  model: string,
-  apiKey: string
-): Promise<string> {
-  const response = await fetchWithTimeout(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 2048,
-      }),
-    }
-  );
+async function callGroq(prompt: string, model: string, apiKey: string): Promise<string> {
+  const response = await fetchWithTimeout("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 2048,
+    }),
+  });
 
   if (!response.ok) {
     const error = await response.text();
@@ -340,8 +329,7 @@ export function extractJson<T>(text: string): T {
     return JSON.parse(text) as T;
   } catch {
     // Extract from markdown code block or raw JSON
-    const match =
-      text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/\{[\s\S]*\}/);
+    const match = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/\{[\s\S]*\}/);
     if (!match) {
       throw new Error("No JSON found in response");
     }

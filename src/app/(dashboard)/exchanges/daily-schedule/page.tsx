@@ -93,7 +93,7 @@ export default async function DailySchedulePage({ searchParams }: DailyScheduleP
         <div className="flex gap-2">
           <Button variant="outline" asChild>
             <a href="/exchanges">
-              <Calendar className="mr-2 h-4 w-4" />
+              <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
               Xem tất cả yêu cầu
             </a>
           </Button>
