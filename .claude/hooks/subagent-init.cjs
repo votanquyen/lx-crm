@@ -10,8 +10,8 @@
  *   0 - Success (non-blocking, allows continuation)
  */
 
-const fs = require('fs');
-const { loadConfig } = require('./lib/ck-config-utils.cjs');
+const fs = require("fs");
+const { loadConfig } = require("./lib/ck-config-utils.cjs");
 
 /**
  * Get agent-specific context from config
@@ -27,11 +27,7 @@ function getAgentContext(agentType, config) {
  */
 function buildTrustVerification(config) {
   if (!config.trust?.enabled || !config.trust?.passphrase) return [];
-  return [
-    ``,
-    `## Trust Verification`,
-    `Passphrase: "${config.trust.passphrase}"`
-  ];
+  return [``, `## Trust Verification`, `Passphrase: "${config.trust.passphrase}"`];
 }
 
 /**
@@ -39,23 +35,23 @@ function buildTrustVerification(config) {
  */
 async function main() {
   try {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    const stdin = fs.readFileSync(0, "utf-8").trim();
     if (!stdin) process.exit(0);
 
     const payload = JSON.parse(stdin);
-    const agentType = payload.agent_type || 'unknown';
-    const agentId = payload.agent_id || 'unknown';
+    const agentType = payload.agent_type || "unknown";
+    const agentId = payload.agent_id || "unknown";
 
     // Load config for trust verification and agent-specific context
     const config = loadConfig({ includeProject: false, includeAssertions: false });
 
     // Read from env vars (set by SessionStart) - fallback to empty
-    const activePlan = process.env.CK_ACTIVE_PLAN || '';
-    const suggestedPlan = process.env.CK_SUGGESTED_PLAN || '';
-    const reportsPath = process.env.CK_REPORTS_PATH || 'plans/reports/';
-    const plansPath = process.env.CK_PLANS_PATH || 'plans';
-    const docsPath = process.env.CK_DOCS_PATH || 'docs';
-    const responseLanguage = process.env.CK_RESPONSE_LANGUAGE || '';
+    const activePlan = process.env.CK_ACTIVE_PLAN || "";
+    const suggestedPlan = process.env.CK_SUGGESTED_PLAN || "";
+    const reportsPath = process.env.CK_REPORTS_PATH || "plans/reports/";
+    const plansPath = process.env.CK_PLANS_PATH || "plans";
+    const docsPath = process.env.CK_DOCS_PATH || "docs";
+    const responseLanguage = process.env.CK_RESPONSE_LANGUAGE || "";
 
     // Build compact context (~200 tokens)
     const lines = [];
@@ -75,7 +71,9 @@ async function main() {
       lines.push(`- Plan: none`);
     }
     lines.push(`- Reports: ${reportsPath}`);
-    lines.push(`- Paths: plans/${plansPath !== 'plans' ? ` (${plansPath})` : ''} | docs/${docsPath !== 'docs' ? ` (${docsPath})` : ''}`);
+    lines.push(
+      `- Paths: plans/${plansPath !== "plans" ? ` (${plansPath})` : ""} | docs/${docsPath !== "docs" ? ` (${docsPath})` : ""}`
+    );
     lines.push(``);
 
     // Response language (if configured)
@@ -106,8 +104,8 @@ async function main() {
     const output = {
       hookSpecificOutput: {
         hookEventName: "SubagentStart",
-        additionalContext: lines.join('\n')
-      }
+        additionalContext: lines.join("\n"),
+      },
     };
 
     console.log(JSON.stringify(output));

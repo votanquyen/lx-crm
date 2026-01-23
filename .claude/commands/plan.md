@@ -4,6 +4,7 @@ argument-hint: [task]
 ---
 
 ## Your mission
+
 <task>
 $ARGUMENTS
 </task>
@@ -26,6 +27,7 @@ Before delegating to plan subcommands, check plan state:
 3. **If neither is set:** Proceed to create new plan (subcommand handles)
 
 ## Workflow
+
 - Analyze the given task and use `AskUserQuestion` tool to ask for more details if needed.
 - Decide to use `/plan:fast` or `/plan:hard` SlashCommands based on the complexity.
 - Execute SlashCommand: `/plan:fast <detailed-instructions-prompt>` or `/plan:hard <detailed-instructions-prompt>`
@@ -33,6 +35,7 @@ Before delegating to plan subcommands, check plan state:
 - Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
 ## Important Notes
+
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.

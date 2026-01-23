@@ -2,17 +2,17 @@
  * Shared browser utilities for Chrome DevTools scripts
  * Supports persistent browser sessions via WebSocket endpoint file
  */
-import puppeteer from 'puppeteer';
-import debug from 'debug';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import puppeteer from "puppeteer";
+import debug from "debug";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const log = debug('chrome-devtools:browser');
+const log = debug("chrome-devtools:browser");
 
 // Session file stores WebSocket endpoint for browser reuse across processes
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SESSION_FILE = path.join(__dirname, '..', '.browser-session.json');
+const SESSION_FILE = path.join(__dirname, "..", ".browser-session.json");
 
 let browserInstance = null;
 let pageInstance = null;
@@ -23,14 +23,14 @@ let pageInstance = null;
 function readSession() {
   try {
     if (fs.existsSync(SESSION_FILE)) {
-      const data = JSON.parse(fs.readFileSync(SESSION_FILE, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(SESSION_FILE, "utf8"));
       // Check if session is not too old (max 1 hour)
       if (Date.now() - data.timestamp < 3600000) {
         return data;
       }
     }
   } catch (e) {
-    log('Failed to read session:', e.message);
+    log("Failed to read session:", e.message);
   }
   return null;
 }
@@ -40,12 +40,15 @@ function readSession() {
  */
 function writeSession(wsEndpoint) {
   try {
-    fs.writeFileSync(SESSION_FILE, JSON.stringify({
-      wsEndpoint,
-      timestamp: Date.now()
-    }));
+    fs.writeFileSync(
+      SESSION_FILE,
+      JSON.stringify({
+        wsEndpoint,
+        timestamp: Date.now(),
+      })
+    );
   } catch (e) {
-    log('Failed to write session:', e.message);
+    log("Failed to write session:", e.message);
   }
 }
 
@@ -58,7 +61,7 @@ function clearSession() {
       fs.unlinkSync(SESSION_FILE);
     }
   } catch (e) {
-    log('Failed to clear session:', e.message);
+    log("Failed to clear session:", e.message);
   }
 }
 
@@ -70,7 +73,7 @@ function clearSession() {
 export async function getBrowser(options = {}) {
   // If we already have a connected browser in this process, reuse it
   if (browserInstance && browserInstance.isConnected()) {
-    log('Reusing existing browser instance from process');
+    log("Reusing existing browser instance from process");
     return browserInstance;
   }
 
@@ -78,24 +81,24 @@ export async function getBrowser(options = {}) {
   const session = readSession();
   if (session && session.wsEndpoint) {
     try {
-      log('Attempting to connect to existing browser session');
+      log("Attempting to connect to existing browser session");
       browserInstance = await puppeteer.connect({
-        browserWSEndpoint: session.wsEndpoint
+        browserWSEndpoint: session.wsEndpoint,
       });
-      log('Connected to existing browser');
+      log("Connected to existing browser");
       return browserInstance;
     } catch (e) {
-      log('Failed to connect to existing browser:', e.message);
+      log("Failed to connect to existing browser:", e.message);
       clearSession();
     }
   }
 
   // Connect via provided wsEndpoint or browserUrl
   if (options.wsEndpoint || options.browserUrl) {
-    log('Connecting to browser via provided endpoint');
+    log("Connecting to browser via provided endpoint");
     browserInstance = await puppeteer.connect({
       browserWSEndpoint: options.wsEndpoint,
-      browserURL: options.browserUrl
+      browserURL: options.browserUrl,
     });
     return browserInstance;
   }
@@ -104,25 +107,25 @@ export async function getBrowser(options = {}) {
   const launchOptions = {
     headless: options.headless !== false,
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      ...(options.args || [])
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      ...(options.args || []),
     ],
     defaultViewport: options.viewport || {
       width: 1920,
-      height: 1080
+      height: 1080,
     },
-    ...options
+    ...options,
   };
 
-  log('Launching new browser');
+  log("Launching new browser");
   browserInstance = await puppeteer.launch(launchOptions);
 
   // Save wsEndpoint for future connections
   const wsEndpoint = browserInstance.wsEndpoint();
   writeSession(wsEndpoint);
-  log('Browser launched, session saved');
+  log("Browser launched, session saved");
 
   return browserInstance;
 }
@@ -132,7 +135,7 @@ export async function getBrowser(options = {}) {
  */
 export async function getPage(browser) {
   if (pageInstance && !pageInstance.isClosed()) {
-    log('Reusing existing page');
+    log("Reusing existing page");
     return pageInstance;
   }
 
@@ -155,7 +158,7 @@ export async function closeBrowser() {
     browserInstance = null;
     pageInstance = null;
     clearSession();
-    log('Browser closed, session cleared');
+    log("Browser closed, session cleared");
   }
 }
 
@@ -168,7 +171,7 @@ export async function disconnectBrowser() {
     browserInstance.disconnect();
     browserInstance = null;
     pageInstance = null;
-    log('Disconnected from browser (browser still running)');
+    log("Disconnected from browser (browser still running)");
   }
 }
 
@@ -181,11 +184,11 @@ export function parseArgs(argv, options = {}) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
 
-    if (arg.startsWith('--')) {
+    if (arg.startsWith("--")) {
       const key = arg.slice(2);
       const nextArg = argv[i + 1];
 
-      if (nextArg && !nextArg.startsWith('--')) {
+      if (nextArg && !nextArg.startsWith("--")) {
         args[key] = nextArg;
         i++;
       } else {
@@ -208,10 +211,16 @@ export function outputJSON(data) {
  * Output error
  */
 export function outputError(error) {
-  console.error(JSON.stringify({
-    success: false,
-    error: error.message,
-    stack: error.stack
-  }, null, 2));
+  console.error(
+    JSON.stringify(
+      {
+        success: false,
+        error: error.message,
+        stack: error.stack,
+      },
+      null,
+      2
+    )
+  );
   process.exit(1);
 }
