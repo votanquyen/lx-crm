@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Receipt, AlertTriangle, DollarSign, Clock } from "lucide-react";
+import { Receipt, AlertTriangle, DollarSign, Clock, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination } from "@/components/ui/pagination";
 import { getInvoices, getInvoiceStats } from "@/actions/invoices";
@@ -44,51 +45,63 @@ async function InvoiceStats() {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-4">
-      <div className="enterprise-card bg-white p-5">
-        <p className="kpi-title mb-2">Tổng hóa đơn</p>
-        <div className="flex items-center justify-between">
-          <p className="kpi-value text-slate-900">{stats.total}</p>
-          <div className="rounded bg-slate-50 p-2 text-slate-400">
-            <Receipt className="h-4 w-4" aria-hidden="true" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Total Invoices */}
+      <div className="bg-white rounded-xl border p-4 shadow-sm flex flex-col justify-between h-full">
+        <div className="flex items-center gap-2 text-slate-500 mb-2">
+          <div className="p-1.5 bg-slate-100 rounded-md">
+            <Receipt className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider">Tổng hóa đơn</span>
+        </div>
+        <div>
+          <span className="text-2xl font-black text-slate-900">{stats.total}</span>
+        </div>
+      </div>
+
+      {/* Pending */}
+      <div className="bg-white rounded-xl border p-4 shadow-sm flex flex-col justify-between h-full">
+        <div className="flex items-center gap-2 text-amber-600 mb-2">
+          <div className="p-1.5 bg-amber-50 rounded-md">
+            <Clock className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider">Chờ thanh toán</span>
+        </div>
+        <div>
+          <span className="text-2xl font-black text-amber-600">{stats.pending}</span>
+        </div>
+      </div>
+
+      {/* Overdue */}
+      <div className="bg-rose-50/50 rounded-xl border border-rose-100 p-4 shadow-sm flex flex-col justify-between h-full">
+        <div className="flex items-center gap-2 text-rose-600 mb-2">
+          <div className="p-1.5 bg-rose-100 rounded-md">
+            <AlertTriangle className="h-4 w-4" />
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider">Quá hạn</span>
+        </div>
+        <div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-rose-600">{stats.overdue}</span>
+            <span className="text-xs font-bold text-rose-500">
+              ({formatCurrency(Number(stats.overdueAmount))})
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="enterprise-card bg-white p-5">
-        <p className="kpi-title mb-2">Chờ thanh toán</p>
-        <div className="flex items-center justify-between">
-          <p className="kpi-value text-amber-600">{stats.pending}</p>
-          <div className="rounded bg-amber-50 p-2 text-amber-500">
-            <Clock className="h-4 w-4" aria-hidden="true" />
+      {/* Total Receivables */}
+      <div className="bg-blue-50/50 rounded-xl border border-blue-100 p-4 shadow-sm flex flex-col justify-between h-full">
+        <div className="flex items-center gap-2 text-blue-600 mb-2">
+          <div className="p-1.5 bg-blue-100 rounded-md">
+            <DollarSign className="h-4 w-4" />
           </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider">Tổng phải thu</span>
         </div>
-      </div>
-
-      <div className="enterprise-card border-rose-100 bg-white p-5">
-        <p className="kpi-title mb-2 text-rose-600">Quá hạn</p>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="kpi-value text-rose-600">{stats.overdue}</p>
-            <p className="text-[10px] font-bold tracking-tighter text-rose-400 uppercase">
-              {formatCurrency(Number(stats.overdueAmount))}
-            </p>
-          </div>
-          <div className="rounded bg-rose-50 p-2 text-rose-500">
-            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
-
-      <div className="enterprise-card bg-white p-5">
-        <p className="kpi-title mb-2 text-blue-600">Tổng phải thu</p>
-        <div className="flex items-center justify-between">
-          <p className="kpi-value text-blue-600">
+        <div>
+          <span className="text-2xl font-black text-blue-600">
             {formatCurrency(Number(stats.totalReceivables))}
-          </p>
-          <div className="rounded bg-blue-50 p-2 text-blue-500">
-            <DollarSign className="h-4 w-4" aria-hidden="true" />
-          </div>
+          </span>
         </div>
       </div>
     </div>
@@ -137,11 +150,17 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     <div className="space-y-6">
       <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Theo dõi Hóa đơn</h1>
-          <p className="text-muted-foreground text-sm font-medium">
-            Quản lý hóa đơn VAT từ SmartVAS
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Hóa đơn VAT</h1>
+          <p className="text-slate-500 text-sm font-medium mt-1">
+            Quản lý và theo dõi hóa đơn GTGT từ hệ thống SmartVAS
           </p>
         </div>
+        <Button asChild className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 text-white font-bold">
+          <Link href="/invoices/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Tạo hóa đơn
+          </Link>
+        </Button>
       </div>
 
       <Suspense
@@ -160,74 +179,46 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       </Suspense>
 
       {/* Filters Navigation */}
-      <div className="scrollbar-hide flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-lg border bg-slate-50/50 p-1">
-        <Link
-          href="/invoices"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            !status && !overdueOnly
-              ? "text-primary border-primary/10 border bg-white shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Tất cả
-        </Link>
-        <div className="mx-1 h-3 w-px bg-slate-200" />
-        <Link
-          href="/invoices?status=SENT"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            status === "SENT"
-              ? "text-primary border-primary/10 border bg-white shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Đã gửi
-        </Link>
-        <Link
-          href="/invoices?status=PARTIAL"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            status === "PARTIAL"
-              ? "text-primary border-primary/10 border bg-white shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Thanh toán một phần
-        </Link>
-        <Link
-          href="/invoices?overdueOnly=true"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            overdueOnly
-              ? "border border-rose-100 bg-white text-rose-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Quá hạn
-        </Link>
-        <Link
-          href="/invoices?status=PAID"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            status === "PAID"
-              ? "border border-emerald-100 bg-white text-emerald-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Đã thanh toán
-        </Link>
-        <Link
-          href="/invoices?status=DRAFT"
-          className={cn(
-            "rounded-md px-4 py-1.5 text-[11px] font-bold tracking-wider uppercase transition-all",
-            status === "DRAFT"
-              ? "border border-slate-200 bg-white text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          )}
-        >
-          Nháp
-        </Link>
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="flex bg-slate-100/80 p-1 rounded-lg border border-slate-200">
+          {[
+            { label: "Tất cả", value: undefined, count: null },
+            { label: "Đã gửi", value: "SENT", count: null },
+            { label: "TT một phần", value: "PARTIAL", count: null },
+            { label: "Quá hạn", value: "OVERDUE", count: null },
+            { label: "Đã TT", value: "PAID", count: null },
+            { label: "Nháp", value: "DRAFT", count: null },
+          ].map((item) => {
+            const isActive = item.value === "OVERDUE"
+              ? overdueOnly
+              : status === item.value && !overdueOnly;
+
+            // Handle special logic for "All" tab when status is undefined and not overdueOnly
+            const isAllActive = item.value === undefined && !status && !overdueOnly;
+
+            return (
+              <Link
+                key={item.label}
+                href={
+                  item.value === "OVERDUE"
+                    ? "/invoices?overdueOnly=true"
+                    : item.value
+                      ? `/invoices?status=${item.value}`
+                      : "/invoices"
+                }
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all",
+                  isActive || isAllActive
+                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-200/50"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
       </div>
 
       <Suspense

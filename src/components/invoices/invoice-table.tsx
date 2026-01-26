@@ -9,7 +9,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Building2, Receipt } from "lucide-react";
+import { Eye, MoreHorizontal, Send, XCircle, DollarSign, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -98,20 +98,19 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
         width: "100%",
         transform: `translateY(${virtualStart}px)`,
       }}
-      className="data-table-row group flex h-[72px] items-center"
+      className="data-table-row group flex h-[60px] items-center hover:bg-slate-50/50 transition-colors border-b border-slate-100"
     >
       {/* Company Name (First) */}
       <div className="w-[200px] shrink-0 px-4 py-2">
         <Link
           href={`/customers/${invoice.customer.id}`}
-          className="hover:text-primary block truncate text-xs font-bold text-slate-900 transition-colors"
+          className="hover:text-primary block truncate text-xs font-bold text-slate-700 transition-colors"
         >
           {invoice.customer.companyName}
         </Link>
         <div className="mt-0.5 flex items-center gap-1.5">
-          <Building2 className="text-muted-foreground h-2.5 w-2.5" aria-hidden="true" />
-          <span className="text-muted-foreground text-[10px] font-bold tracking-tight">
-            {invoice.customer.taxCode || invoice.customer.code}
+          <span className="text-slate-400 text-[10px] font-bold tracking-tight bg-slate-100 px-1 rounded">
+            {invoice.customer.code}
           </span>
         </div>
       </div>
@@ -153,7 +152,7 @@ const InvoiceVirtualRow = React.memo(function InvoiceVirtualRow({
 
       {/* Total Amount */}
       <div className="w-[100px] shrink-0 px-4 py-2 text-right">
-        <span className="text-xs font-black text-slate-900">
+        <span className="text-sm font-black text-slate-900 tracking-tight">
           {formatCurrency(invoice.totalAmount)}
         </span>
       </div>
@@ -265,7 +264,7 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
   const virtualizer = useVirtualizer({
     count: invoices.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 72,
+    estimateSize: () => 60,
     overscan: 5,
   });
 
@@ -298,7 +297,7 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
             Số HĐ
           </div>
           <div className="text-muted-foreground w-[80px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
-            Ký hiệu
+            Serial
           </div>
           <div className="text-muted-foreground w-[100px] shrink-0 px-4 text-[10px] font-bold tracking-widest uppercase">
             Ngày xuất

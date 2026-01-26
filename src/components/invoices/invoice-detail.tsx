@@ -7,23 +7,21 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import {
   Receipt,
-  Building2,
   Phone,
-  Mail,
-  Calendar,
   DollarSign,
   Send,
   XCircle,
   FileText,
   CheckCircle,
   Loader2,
+  Printer,
+  Download,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -189,22 +187,35 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">
-              {invoice.invoiceNumber}/{format(new Date(invoice.issueDate), "d-MM")}
-            </h1>
-            <Badge variant={status.variant}>{status.label}</Badge>
-            {isOverdue && <Badge variant="destructive">Quá hạn</Badge>}
-          </div>
-          <p className="text-muted-foreground mt-1">Khách hàng: {invoice.customer.companyName}</p>
+      {/* Action Bar - Floating Top */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between sticky top-0 z-10 bg-slate-50/80 backdrop-blur-md p-4 -mx-4 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => router.back()}>
+            Quay lại
+          </Button>
+          <div className="h-4 w-px bg-slate-200" />
+          <Badge variant={status.variant} className="text-xs px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+            {status.label}
+          </Badge>
+          {isOverdue && (
+            <Badge variant="destructive" className="animate-pulse">Quá hạn</Badge>
+          )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" title="In hóa đơn">
+            <Printer className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title="Tải xuống PDF">
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title="Chia sẻ">
+            <Share2 className="h-4 w-4" />
+          </Button>
+          <div className="h-4 w-px bg-slate-200 mx-1" />
+
           {invoice.status === "DRAFT" && (
-            <Button onClick={handleSend} disabled={isPending}>
+            <Button onClick={handleSend} disabled={isPending} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200">
               {isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
@@ -214,13 +225,13 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
             </Button>
           )}
           {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) && (
-            <Button onClick={() => setShowPaymentDialog(true)}>
+            <Button onClick={() => setShowPaymentDialog(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-200">
               <DollarSign className="mr-2 h-4 w-4" aria-hidden="true" />
-              Ghi nhận thanh toán
+              Thanh toán
             </Button>
           )}
           {invoice.status !== "CANCELLED" && invoice.payments.length === 0 && (
-            <Button variant="destructive" onClick={handleCancel} disabled={isPending}>
+            <Button variant="outline" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200" onClick={handleCancel} disabled={isPending}>
               <XCircle className="mr-2 h-4 w-4" aria-hidden="true" />
               Hủy
             </Button>
@@ -228,216 +239,190 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         </div>
       </div>
 
-      {/* Contract link */}
-      {invoice.contract && (
-        <div className="bg-muted flex items-center gap-2 rounded-lg p-4">
-          <FileText className="h-4 w-4" aria-hidden="true" />
-          <span className="text-muted-foreground">Hợp đồng:</span>
-          <Link href={`/contracts/${invoice.contract.id}`} className="text-primary hover:underline">
-            {invoice.contract.contractNumber}
-          </Link>
-        </div>
-      )}
+      {/* Main Invoice Paper */}
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200 print:shadow-none print:border-none">
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Customer Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" aria-hidden="true" />
-              Thông tin khách hàng
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Link
-                href={`/customers/${invoice.customer.id}`}
-                className="text-lg font-semibold hover:underline"
-              >
-                {invoice.customer.companyName}
+        {/* Brand Header */}
+        <div className="bg-slate-900 text-white p-8 flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="bg-emerald-500 rounded-lg p-1.5">
+                <Receipt className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-black tracking-tight">LỘC XANH</span>
+            </div>
+            <p className="text-slate-400 text-sm max-w-[250px]">
+              Giải pháp cây xanh văn phòng chuyên nghiệp và tận tâm.
+            </p>
+          </div>
+          <div className="text-right">
+            <h1 className="text-2xl font-black tracking-widest uppercase text-white mb-1">
+              HÓA ĐƠN GTGT
+            </h1>
+            <p className="text-slate-400 font-mono text-sm">#{invoice.invoiceNumber}</p>
+            {invoice.contract && (
+              <Link href={`/contracts/${invoice.contract.id}`} className="text-xs text-emerald-400 hover:text-emerald-300 hover:underline flex items-center justify-end gap-1 mt-1">
+                <FileText className="h-3 w-3" /> HĐ: {invoice.contract.contractNumber}
               </Link>
-              <p className="text-muted-foreground text-sm">{invoice.customer.code}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="p-8 space-y-8">
+          {/* Grid: From / To */}
+          <div className="grid grid-cols-2 gap-12">
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nhà cung cấp</h3>
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">CÔNG TY TNHH LỘC XANH</p>
+                <p className="text-sm text-slate-600">123 Đường ABC, Quận XYZ</p>
+                <p className="text-sm text-slate-600">TP. Hồ Chí Minh, Việt Nam</p>
+                <p className="text-sm text-slate-600">MST: 0312345678</p>
+              </div>
             </div>
-            <p className="text-sm">{invoice.customer.address}</p>
-            {invoice.customer.taxCode && <p className="text-sm">MST: {invoice.customer.taxCode}</p>}
-            <div className="flex flex-wrap gap-4">
-              {invoice.customer.contactPhone && (
-                <div className="flex items-center gap-1 text-sm">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  {invoice.customer.contactPhone}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Khách hàng</h3>
+              <div className="space-y-1">
+                <Link href={`/customers/${invoice.customer.id}`} className="font-bold text-slate-900 hover:text-blue-600 transition-colors">
+                  {invoice.customer.companyName}
+                </Link>
+                <p className="text-sm text-slate-600">{invoice.customer.address}</p>
+                {invoice.customer.taxCode && <p className="text-sm text-slate-600">MST: {invoice.customer.taxCode}</p>}
+                <div className="flex gap-4 mt-2">
+                  {invoice.customer.contactPhone && (
+                    <span className="text-xs text-slate-500 flex items-center gap-1"><Phone className="h-3 w-3" /> {invoice.customer.contactPhone}</span>
+                  )}
                 </div>
-              )}
-              {invoice.customer.contactEmail && (
-                <div className="flex items-center gap-1 text-sm">
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                  {invoice.customer.contactEmail}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Invoice Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" aria-hidden="true" />
-              Thông tin hóa đơn
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-muted-foreground text-sm">Ngày phát hành</p>
-                <p className="flex items-center gap-1 font-medium">
-                  <Calendar className="h-4 w-4" aria-hidden="true" />
-                  {format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: vi })}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Hạn thanh toán</p>
-                <p
-                  className={`flex items-center gap-1 font-medium ${isOverdue ? "text-destructive" : ""}`}
-                >
-                  <Calendar className="h-4 w-4" aria-hidden="true" />
-                  {format(new Date(invoice.dueDate), "dd/MM/yyyy", { locale: vi })}
-                </p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-muted-foreground text-sm">Đã thanh toán</p>
-                <p className="text-lg font-bold text-green-600">
-                  {formatCurrency(invoice.paidAmount)}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground text-sm">Còn nợ</p>
-                <p
-                  className={`text-lg font-bold ${invoice.outstandingAmount > 0 ? "text-orange-600" : "text-green-600"}`}
-                >
-                  {formatCurrency(invoice.outstandingAmount)}
-                </p>
-              </div>
+          </div>
+
+          {/* Grid: Dates */}
+          <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ngày phát hành</p>
+              <p className="font-mono font-medium text-slate-700">{format(new Date(invoice.issueDate), "dd/MM/yyyy")}</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hạn thanh toán</p>
+              <p className={`font-mono font-medium ${isOverdue ? "text-rose-600" : "text-slate-700"}`}>
+                {format(new Date(invoice.dueDate), "dd/MM/yyyy")}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Trạng thái</p>
+              <p className="font-bold text-slate-700">{status.label}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng tiền</p>
+              <p className="font-black text-slate-900 text-lg">{formatCurrency(invoice.totalAmount)}</p>
+            </div>
+          </div>
 
-      {/* Invoice Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chi tiết hóa đơn</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50%]">Mô tả</TableHead>
-                <TableHead className="text-center">Số lượng</TableHead>
-                <TableHead className="text-right">Đơn giá</TableHead>
-                <TableHead className="text-right">Thành tiền</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.unitPrice)}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(item.totalPrice)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell colSpan={3} className="text-right font-semibold">
-                  Tạm tính:
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {formatCurrency(invoice.subtotal)}
-                </TableCell>
-              </TableRow>
-              {(invoice.taxAmount ?? invoice.vatAmount ?? 0) > 0 && (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-right font-semibold">
-                    Thuế:
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(invoice.taxAmount ?? invoice.vatAmount ?? 0)}
-                  </TableCell>
-                </TableRow>
-              )}
-              <TableRow>
-                <TableCell colSpan={3} className="text-right font-semibold">
-                  Tổng cộng:
-                </TableCell>
-                <TableCell className="text-primary text-right text-lg font-bold">
-                  {formatCurrency(invoice.totalAmount)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Payments */}
-      {invoice.payments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" aria-hidden="true" />
-              Lịch sử thanh toán
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          {/* Table Items */}
+          <div className="border rounded-lg overflow-hidden">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ngày</TableHead>
-                  <TableHead>Phương thức</TableHead>
-                  <TableHead>Mã tham chiếu</TableHead>
-                  <TableHead className="text-right">Số tiền</TableHead>
-                  <TableHead>Ghi chú</TableHead>
+              <TableHeader className="bg-slate-50">
+                <TableRow className="border-b-slate-200">
+                  <TableHead className="font-bold text-slate-900 w-[50%]">Mô tả</TableHead>
+                  <TableHead className="font-bold text-slate-900 text-center">SL</TableHead>
+                  <TableHead className="font-bold text-slate-900 text-right">Đơn giá</TableHead>
+                  <TableHead className="font-bold text-slate-900 text-right">Thành tiền</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoice.payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      {format(new Date(payment.paymentDate), "dd/MM/yyyy HH:mm", { locale: vi })}
-                    </TableCell>
-                    <TableCell>
-                      {paymentMethodLabels[
-                        (payment.method ?? payment.paymentMethod) as PaymentMethod
-                      ] ?? "-"}
-                    </TableCell>
-                    <TableCell>{payment.reference ?? payment.bankRef ?? "-"}</TableCell>
-                    <TableCell className="text-right font-medium text-green-600">
-                      {formatCurrency(payment.amount)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {payment.notes || "-"}
-                    </TableCell>
+                {invoice.items.map((item) => (
+                  <TableRow key={item.id} className="border-b-slate-50 last:border-0 hover:bg-slate-50/50">
+                    <TableCell className="text-slate-700 font-medium">{item.description}</TableCell>
+                    <TableCell className="text-center text-slate-600 font-mono">{item.quantity}</TableCell>
+                    <TableCell className="text-right text-slate-600 font-mono">{formatCurrency(item.unitPrice)}</TableCell>
+                    <TableCell className="text-right font-bold text-slate-900 font-mono">{formatCurrency(item.totalPrice)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {/* Notes */}
-      {invoice.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ghi chú</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap">{invoice.notes}</p>
-          </CardContent>
-        </Card>
-      )}
+          {/* Summary Footer */}
+          <div className="flex flex-col md:flex-row justify-between gap-8 border-t pt-8">
+            <div className="w-full md:w-1/2 space-y-6">
+              {invoice.notes && (
+                <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 text-amber-800 text-sm">
+                  <strong className="block mb-1 text-amber-900 uppercase text-xs tracking-wide">Ghi chú</strong>
+                  {invoice.notes}
+                </div>
+              )}
+
+              {invoice.payments.length > 0 && (
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-slate-900 mb-3">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    Lịch sử thanh toán
+                  </h4>
+                  <div className="rounded-lg border border-slate-200 overflow-hidden text-sm">
+                    {invoice.payments.map((p) => (
+                      <div key={p.id} className="flex justify-between p-3 border-b last:border-0 bg-slate-50/50">
+                        <div>
+                          <div className="font-medium text-slate-700">{format(new Date(p.paymentDate), "dd/MM/yyyy")}</div>
+                          <div className="text-xs text-slate-500">{paymentMethodLabels[(p.method ?? p.paymentMethod) as PaymentMethod]}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-emerald-600">+{formatCurrency(p.amount)}</div>
+                          <div className="text-xs text-slate-400">{p.reference || "-"}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="w-full md:w-5/12 space-y-3">
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>Tạm tính</span>
+                <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+              </div>
+              {(invoice.taxAmount ?? invoice.vatAmount ?? 0) > 0 && (
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Thuế GTGT</span>
+                  <span className="font-medium">{formatCurrency(invoice.taxAmount ?? invoice.vatAmount ?? 0)}</span>
+                </div>
+              )}
+              {invoice.discountAmount && invoice.discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-600">
+                  <span>Chiết khấu</span>
+                  <span className="font-medium">-{formatCurrency(invoice.discountAmount)}</span>
+                </div>
+              )}
+              <div className="h-px bg-slate-200 my-2" />
+              <div className="flex justify-between items-baseline">
+                <span className="font-bold text-slate-900">TỔNG CỘNG</span>
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{formatCurrency(invoice.totalAmount)}</span>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-dashed border-slate-300">
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600 font-medium">Đã thanh toán</span>
+                  <span className="font-bold text-emerald-600">{formatCurrency(invoice.paidAmount)}</span>
+                </div>
+                <div className="flex justify-between text-base mt-2">
+                  <span className={`${invoice.outstandingAmount > 0 ? "text-rose-600" : "text-slate-500"} font-bold`}>
+                    CÒN NỢ
+                  </span>
+                  <span className={`${invoice.outstandingAmount > 0 ? "text-rose-600" : "text-emerald-600"} font-black`}>
+                    {formatCurrency(invoice.outstandingAmount)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Branding */}
+        <div className="bg-slate-50 p-6 border-t border-slate-200 text-center text-xs text-slate-400">
+          <p>Cảm ơn quý khách đã sử dụng dịch vụ của Lộc Xanh.</p>
+        </div>
+      </div>
 
       {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
@@ -121,6 +121,10 @@ export function BangKeClient({
   const [isRollingOver, setIsRollingOver] = useState(false);
   const [rolloverResult, setRolloverResult] = useState<{ created: number; message: string } | null>(null);
 
+  // Track if this is the initial render to skip first load
+  const isInitialMount = useRef(true);
+  const previousYear = useRef(initialYear);
+
   // Deleted statements state
   const [deletedStatements, setDeletedStatements] = useState<DeletedStatement[]>([]);
   const [isDeletedModalOpen, setIsDeletedModalOpen] = useState(false);
@@ -143,10 +147,18 @@ export function BangKeClient({
 
   // ===== LOAD STATEMENTS WHEN YEAR CHANGES =====
   useEffect(() => {
-    // Skip initial load since we have initialStatements
-    if (selectedYear === initialYear && statements === initialStatements) {
+    // Skip initial mount - we already have initialStatements
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
       return;
     }
+
+    // Skip if year hasn't actually changed
+    if (selectedYear === previousYear.current) {
+      return;
+    }
+
+    previousYear.current = selectedYear;
 
     async function loadStatements() {
       try {
@@ -168,7 +180,7 @@ export function BangKeClient({
       }
     }
     loadStatements();
-  }, [selectedYear, initialYear, initialStatements, statements]);
+  }, [selectedYear]);
 
   // ===== AUTO-SELECT FROM URL =====
   useEffect(() => {
