@@ -1,6 +1,5 @@
 "use client";
 
-import { memo } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -272,4 +271,6 @@ export function ContractTable({ contracts, onActivate, onCancel, onRenew }: Cont
       </div>
     </div>
   );
-});
+}
+
+ContractTable.displayName = "ContractTable";

@@ -177,6 +177,17 @@ function daysSince(date: Date): number {
  * Returns health score and urgency recommendation
  */
 export function predictExchangeNeed(input: PlantHealthInput): ExchangeRecommendation {
+  // Validate required fields
+  if (!input.plantTypeId?.trim()) {
+    throw new Error("Plant type ID is required for exchange prediction");
+  }
+  if (!input.plantTypeName?.trim()) {
+    throw new Error("Plant type name is required for exchange prediction");
+  }
+  if (!input.installedAt) {
+    throw new Error("Installation date is required for exchange prediction");
+  }
+
   // Get base lifespan for plant type
   const baseLifespan = getPlantLifespan(input.plantTypeCode);
 

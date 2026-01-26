@@ -106,11 +106,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    jwt: ({ token, user }) => {
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: UserRole }).role ?? "STAFF";
       }
+
+      // Check if role has changed since token was issued
+      // This ensures users get updated permissions without re-login
+      if (token.id && token.iat) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { role: true, roleChangedAt: true, isActive: true },
+        });
+
+        if (dbUser) {
+          // If user is deactivated, invalidate token
+          if (!dbUser.isActive) {
+            return null as never; // Force sign out
+          }
+
+          // If role changed after token was issued, refresh it
+          const tokenIssuedAt = new Date(token.iat * 1000);
+          if (dbUser.roleChangedAt && dbUser.roleChangedAt > tokenIssuedAt) {
+            token.role = dbUser.role;
+          }
+        }
+      }
+
       return token;
     },
     session: ({ session, token }) => ({

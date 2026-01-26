@@ -178,9 +178,10 @@ model User {
   hireDate    DateTime?
   
   // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  lastLoginAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  roleChangedAt DateTime? // Tracks role updates for JWT invalidation
 
   // Relations
   accounts              Account[]
@@ -201,6 +202,7 @@ model User {
   preferredByCustomers  Customer[]          @relation("PreferredStaff")
   confirmedStatements   MonthlyStatement[]  @relation("StatementConfirmedBy")
   deletedStatements     MonthlyStatement[]  @relation("StatementDeletedBy")
+  createdExpenseInvoices ExpenseInvoice[]   @relation("ExpenseCreatedBy")
 
   @@index([email])
   @@index([role])

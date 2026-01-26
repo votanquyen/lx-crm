@@ -122,7 +122,10 @@
       "Bash(pnpm tsx:*)",
       "Bash(pnpm db:generate:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(npm run validate:*)",
+      "Bash(pnpm prisma migrate dev:*)",
+      "Bash(powershell.exe -Command:*)"
     ],
     "deny": [
       "Bash(dd if=/dev/zero of=/dev/sd:*)",

@@ -228,6 +228,14 @@ export const createInvoice = createAction(createInvoiceSchema, async (input) => 
   });
   if (!customer) throw new NotFoundError("Khách hàng");
 
+  // Check customer status
+  if (customer.status === "TERMINATED") {
+    throw new AppError(
+      "Không thể tạo hóa đơn cho khách hàng đã ngừng hoạt động",
+      "CUSTOMER_TERMINATED"
+    );
+  }
+
   // Verify contract if provided
   if (input.contractId) {
     const contract = await prisma.contract.findUnique({
@@ -246,6 +254,14 @@ export const createInvoice = createAction(createInvoiceSchema, async (input) => 
   );
   const taxAmount = toDecimal(0); // Tax can be added later
   const totalAmount = addDecimal(subtotal, taxAmount);
+
+  // Validate non-zero invoice amount
+  if (compareDecimal(totalAmount, toDecimal(0)) <= 0) {
+    throw new AppError(
+      "Hóa đơn phải có tổng tiền lớn hơn 0",
+      "INVALID_INVOICE_AMOUNT"
+    );
+  }
 
   // Generate invoice number
   const invoiceNumber = await generateInvoiceNumber();
@@ -312,6 +328,14 @@ export const generateContractInvoice = createSimpleAction(
     });
     if (!contract) throw new NotFoundError("Hợp đồng");
 
+    // Check customer status
+    if (contract.customer.status === "TERMINATED") {
+      throw new AppError(
+        "Không thể tạo hóa đơn cho khách hàng đã ngừng hoạt động",
+        "CUSTOMER_TERMINATED"
+      );
+    }
+
     if (contract.status !== "ACTIVE") {
       throw new AppError("Hợp đồng không đang hoạt động", "INVALID_STATUS");
     }
@@ -326,6 +350,14 @@ export const generateContractInvoice = createSimpleAction(
 
     const subtotal = items.reduce((sum, item) => addDecimal(sum, item.totalPrice), toDecimal(0));
     const totalAmount = subtotal;
+
+    // Validate non-zero invoice amount
+    if (compareDecimal(totalAmount, toDecimal(0)) <= 0) {
+      throw new AppError(
+        "Hóa đơn phải có tổng tiền lớn hơn 0",
+        "INVALID_INVOICE_AMOUNT"
+      );
+    }
 
     // Calculate due date (15 days from issue)
     const dueDate = new Date();

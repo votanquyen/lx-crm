@@ -4,7 +4,7 @@
  */
 "use client";
 
-import React, { memo } from "react";
+import React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -355,4 +355,6 @@ export function InvoiceTable({ invoices, onSend, onCancel, onRecordPayment }: In
       </div>
     </div>
   );
-});
+}
+
+InvoiceTable.displayName = "InvoiceTable";

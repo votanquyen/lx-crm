@@ -6,6 +6,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { CONNECTION_POOL } from "./constants";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 
@@ -16,8 +17,19 @@ function createPrismaClient(): PrismaClient {
     throw new Error("DATABASE_URL environment variable is not set");
   }
 
-  // Create a pg Pool for the adapter
-  const pool = new Pool({ connectionString });
+  // Create a pg Pool with connection limits and timeouts
+  const pool = new Pool({
+    connectionString,
+    min: CONNECTION_POOL.MIN_CONNECTIONS,
+    max: CONNECTION_POOL.MAX_CONNECTIONS,
+    idleTimeoutMillis: CONNECTION_POOL.IDLE_TIMEOUT_MS,
+    connectionTimeoutMillis: CONNECTION_POOL.CONNECTION_TIMEOUT_MS,
+  });
+
+  // Handle pool errors to prevent unhandled rejections
+  pool.on("error", (err) => {
+    console.error("[Prisma] Pool error:", err);
+  });
 
   // Create adapter
   const adapter = new PrismaPg(pool);

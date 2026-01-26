@@ -146,6 +146,11 @@ function isRetryableError(error: unknown): boolean {
  *   - multimodal: Image/PDF analysis
  */
 export async function callAI(prompt: string, taskType?: TaskType): Promise<string> {
+  // Validate input
+  if (!prompt?.trim()) {
+    throw new Error("AI prompt cannot be empty");
+  }
+
   const providers = getProviderChain(taskType);
   const errors: Array<{ provider: string; error: string }> = [];
 
@@ -324,12 +329,20 @@ async function callGemini(prompt: string, apiKey: string): Promise<string> {
  * Handles both direct JSON and markdown-wrapped JSON
  */
 export function extractJson<T>(text: string): T {
+  // Validate input
+  if (!text?.trim()) {
+    throw new Error("Empty AI response - cannot extract JSON");
+  }
+
+  // Clean BOM and whitespace
+  const cleaned = text.trim().replace(/^\uFEFF/, '');
+
   // Try direct parse first
   try {
-    return JSON.parse(text) as T;
+    return JSON.parse(cleaned) as T;
   } catch {
     // Extract from markdown code block or raw JSON
-    const match = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || text.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || cleaned.match(/\{[\s\S]*\}/);
     if (!match) {
       throw new Error("No JSON found in response");
     }
