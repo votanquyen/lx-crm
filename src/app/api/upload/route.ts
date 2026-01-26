@@ -66,11 +66,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Configure max file size (30MB for images)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "30mb",
-    },
-  },
-};

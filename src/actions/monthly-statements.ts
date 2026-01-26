@@ -627,7 +627,6 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       shortName: true,
       address: true,
       district: true,
-      address: true,
       contactName: true,
       accountingName: true, // For billing - prefer over contactName
     },

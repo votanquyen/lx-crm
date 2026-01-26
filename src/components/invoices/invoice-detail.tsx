@@ -51,7 +51,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { sendInvoice, cancelInvoice, recordPayment } from "@/actions/invoices";
-import { formatCurrency } from "@/lib/format";
 import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
 
 // Accept both Date and string for serialization compatibility

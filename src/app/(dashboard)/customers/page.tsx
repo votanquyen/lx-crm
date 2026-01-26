@@ -6,7 +6,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Plus, Users, CheckCircle2, Target, AlertCircle, Loader2 } from "lucide-react";
+import { Plus, Users, CheckCircle2, Target, AlertCircle } from "lucide-react";
 import { getCustomers, getCustomerStats, getDistricts } from "@/actions/customers";
 import {
   CustomerSearch,
@@ -14,12 +14,13 @@ import {
   CustomerFilters,
 } from "@/components/customers";
 import { CustomerSheetManager } from "@/components/customers/customer-sheet-manager";
+import { CustomerMapWrapper } from "@/components/customers/customer-map-wrapper";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { CustomerStatus } from "@prisma/client";
 
-// Loading skeletons for dynamic components
+// Loading skeleton for table component
 function TableSkeleton() {
   return (
     <div className="space-y-4 p-4">
@@ -31,30 +32,11 @@ function TableSkeleton() {
   );
 }
 
-function MapSkeleton() {
-  return (
-    <div className="bg-muted/10 flex h-[600px] w-full items-center justify-center">
-      <div className="space-y-2 text-center">
-        <Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-400" aria-hidden="true" />
-        <p className="text-muted-foreground text-sm">Đang tải bản đồ...</p>
-      </div>
-    </div>
-  );
-}
-
-// Dynamic imports for heavy table/map components - reduces initial bundle
+// Dynamic imports for heavy table component - reduces initial bundle
 const CustomerTable = dynamic(
   () => import("@/components/customers/customer-table").then((m) => m.CustomerTable),
   {
     loading: () => <TableSkeleton />,
-  }
-);
-
-const CustomerMapMapcn = dynamic(
-  () => import("@/components/customers/customer-map-mapcn").then((m) => m.CustomerMapMapcn),
-  {
-    loading: () => <MapSkeleton />,
-    ssr: false, // Map uses browser APIs
   }
 );
 
@@ -210,9 +192,7 @@ export default async function CustomersPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <div className="enterprise-card overflow-hidden rounded-xl border bg-white shadow-sm">
-            <Suspense fallback={<MapSkeleton />}>
-              <CustomerMapMapcn geojsonUrl={geojsonUrl} />
-            </Suspense>
+            <CustomerMapWrapper geojsonUrl={geojsonUrl} />
           </div>
         )}
       </div>
