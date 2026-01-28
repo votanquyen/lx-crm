@@ -22,11 +22,12 @@ import { CACHE_TTL, RATE_LIMITS } from "@/lib/constants";
 import { requireRateLimit } from "@/lib/rate-limit";
 import {
   createInvoiceSchema,
+  updateInvoiceSchema,
   invoiceSearchSchema,
-  paymentSchema,
   linkSmartvasSchema,
   updatePaymentDateSchema,
   type InvoiceSearchParams,
+  type UpdateInvoiceInput,
 } from "@/lib/validations/contract";
 
 /**
@@ -313,6 +314,102 @@ export const createInvoice = createAction(createInvoiceSchema, async (input) => 
 });
 
 /**
+ * Update an existing invoice (only if DRAFT)
+ */
+export const updateInvoice = createAction(updateInvoiceSchema, async (input) => {
+  const session = await requireAuth();
+
+  // Rate limit mutations
+  await requireRateLimit("invoice-update", {
+    max: RATE_LIMITS.MUTATION.limit,
+    windowMs: RATE_LIMITS.MUTATION.window * 1000,
+  });
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: input.id },
+    include: { payments: true },
+  });
+
+  if (!invoice) throw new NotFoundError("Hóa đơn");
+
+  if (invoice.status !== "DRAFT") {
+    throw new AppError(
+      "Chỉ có thể chỉnh sửa hóa đơn ở trạng thái Nháp",
+      "INVALID_STATUS_UPDATE"
+    );
+  }
+
+  // Calculate amounts
+  const subtotal = input.items.reduce(
+    (sum, item) => addDecimal(sum, multiplyDecimal(item.quantity, item.unitPrice)),
+    toDecimal(0)
+  );
+  const taxAmount = toDecimal(0);
+  const totalAmount = addDecimal(subtotal, taxAmount);
+
+  // Validate non-zero invoice amount
+  if (compareDecimal(totalAmount, toDecimal(0)) <= 0) {
+    throw new AppError(
+      "Hóa đơn phải có tổng tiền lớn hơn 0",
+      "INVALID_INVOICE_AMOUNT"
+    );
+  }
+
+  // Update invoice using transaction for items
+  const updatedInvoice = await prisma.$transaction(async (tx) => {
+    // Delete existing items
+    await tx.invoiceItem.deleteMany({
+      where: { invoiceId: input.id },
+    });
+
+    // Update invoice and create new items
+    return tx.invoice.update({
+      where: { id: input.id },
+      data: {
+        customerId: input.customerId,
+        contractId: input.contractId,
+        issueDate: input.issueDate ?? new Date(),
+        dueDate: input.dueDate,
+        subtotal: toNumber(subtotal),
+        vatAmount: toNumber(taxAmount),
+        totalAmount: toNumber(totalAmount),
+        outstandingAmount: toNumber(totalAmount), // Since it's DRAFT, paid is 0
+        notes: input.notes,
+        items: {
+          create: input.items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.quantity * item.unitPrice,
+          })),
+        },
+      },
+      include: {
+        customer: { select: { id: true, companyName: true } },
+        items: true,
+      },
+    });
+  });
+
+  // Log activity
+  await prisma.activityLog.create({
+    data: {
+      userId: session.user.id,
+      action: "UPDATE",
+      entityType: "Invoice",
+      entityId: updatedInvoice.id,
+      newValues: updatedInvoice as unknown as Prisma.JsonObject,
+    },
+  });
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${input.id}`);
+  revalidatePath(`/customers/${input.customerId}`);
+
+  return updatedInvoice;
+});
+
+/**
  * Generate invoices from active contract
  */
 export const generateContractInvoice = createSimpleAction(
@@ -488,85 +585,6 @@ export const cancelInvoice = createSimpleAction(async (id: string) => {
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/invoices");
   return updated;
-});
-
-/**
- * Record a payment
- * Uses transaction with fresh read to prevent concurrent payment race conditions
- */
-export const recordPayment = createAction(paymentSchema, async (input) => {
-  const session = await requireAuth();
-
-  // Only validate invoice exists and status outside transaction
-  const invoiceCheck = await prisma.invoice.findUnique({
-    where: { id: input.invoiceId },
-    select: { id: true, status: true, customerId: true },
-  });
-  if (!invoiceCheck) throw new NotFoundError("Hóa đơn");
-
-  if (!["SENT", "PARTIAL", "OVERDUE"].includes(invoiceCheck.status)) {
-    throw new AppError("Hóa đơn không thể nhận thanh toán", "INVALID_STATUS");
-  }
-
-  // Create payment and update invoice atomically
-  const result = await prisma.$transaction(async (tx) => {
-    // Re-fetch invoice inside transaction for accurate balance (prevents race condition)
-    const invoice = await tx.invoice.findUnique({
-      where: { id: input.invoiceId },
-    });
-    if (!invoice) throw new NotFoundError("Hóa đơn");
-
-    // Check balance INSIDE transaction to prevent concurrent overpayment
-    if (compareDecimal(toDecimal(input.amount), invoice.outstandingAmount) > 0) {
-      throw new AppError(
-        `Số tiền thanh toán vượt quá số tiền còn nợ (${toNumber(invoice.outstandingAmount).toLocaleString("vi-VN")} VND)`,
-        "AMOUNT_EXCEEDS_OUTSTANDING"
-      );
-    }
-
-    // Create payment
-    const payment = await tx.payment.create({
-      data: {
-        invoiceId: input.invoiceId,
-        amount: input.amount,
-        paymentDate: input.paymentDate ?? new Date(),
-        paymentMethod: input.method,
-        bankRef: input.reference,
-      },
-    });
-
-    // Update invoice amounts
-    const newPaidAmount = addDecimal(invoice.paidAmount, input.amount);
-    const newOutstanding = subtractDecimal(invoice.totalAmount, newPaidAmount);
-    const newStatus = compareDecimal(newOutstanding, 0) <= 0 ? "PAID" : "PARTIAL";
-
-    const updatedInvoice = await tx.invoice.update({
-      where: { id: input.invoiceId },
-      data: {
-        paidAmount: toNumber(newPaidAmount),
-        outstandingAmount: toNumber(newOutstanding),
-        status: newStatus,
-      },
-    });
-
-    return { payment, invoice: updatedInvoice };
-  });
-
-  // Log activity after transaction succeeds
-  await prisma.activityLog.create({
-    data: {
-      userId: session.user.id,
-      action: "RECORD_PAYMENT",
-      entityType: "Invoice",
-      entityId: input.invoiceId,
-      newValues: { paymentId: result.payment.id, amount: input.amount } as Prisma.JsonObject,
-    },
-  });
-
-  revalidatePath(`/invoices/${input.invoiceId}`);
-  revalidatePath("/invoices");
-  revalidatePath(`/customers/${invoiceCheck.customerId}`);
-  return result;
 });
 
 /**

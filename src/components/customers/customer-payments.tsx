@@ -38,10 +38,10 @@ interface CustomerPaymentsProps {
 const methodLabels: Record<PaymentMethod, string> = {
   BANK_TRANSFER: "Chuyển khoản",
   CASH: "Tiền mặt",
-  CARD: "Thẻ",
-  MOMO: "MoMo",
-  ZALOPAY: "ZaloPay",
-  VNPAY: "VNPay",
+  CARD: "Thẻ", // Legacy
+  MOMO: "MoMo", // Legacy
+  ZALOPAY: "ZaloPay", // Legacy
+  VNPAY: "VNPay", // Legacy
 };
 
 export function CustomerPayments({ invoices }: CustomerPaymentsProps) {

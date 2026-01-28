@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { CustomerStatus } from "@prisma/client";
 import { deleteCustomer } from "@/actions/customers";
 
@@ -111,9 +112,12 @@ export function CustomerBusinessCard({ customer, financials, stats }: CustomerBu
   const handleDelete = () => {
     startTransition(async () => {
       const result = await deleteCustomer(customer.id);
+      setShowDeleteDialog(false);
       if (result.success) {
-        setShowDeleteDialog(false);
+        toast.success("Đã xóa khách hàng thành công");
         router.push("/customers");
+      } else {
+        toast.error(result.error || "Không thể xóa khách hàng");
       }
     });
   };

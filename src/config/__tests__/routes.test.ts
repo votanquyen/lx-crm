@@ -93,7 +93,6 @@ describe("routes: Access Control by Role", () => {
 
     it("can access all financial routes", () => {
       expect(canAccessRoute("/invoices", "ADMIN")).toBe(true);
-      expect(canAccessRoute("/payments", "ADMIN")).toBe(true);
     });
 
     it("can access all operational routes", () => {
@@ -123,7 +122,6 @@ describe("routes: Access Control by Role", () => {
 
     it("can access financial routes", () => {
       expect(canAccessRoute("/invoices", "MANAGER")).toBe(true);
-      expect(canAccessRoute("/payments", "MANAGER")).toBe(true);
     });
 
     it("can access operational routes", () => {
@@ -149,7 +147,6 @@ describe("routes: Access Control by Role", () => {
 
     it("can access financial routes", () => {
       expect(canAccessRoute("/invoices", "ACCOUNTANT")).toBe(true);
-      expect(canAccessRoute("/payments", "ACCOUNTANT")).toBe(true);
     });
 
     it("cannot access operational routes", () => {
@@ -175,7 +172,6 @@ describe("routes: Access Control by Role", () => {
 
     it("cannot access financial routes", () => {
       expect(canAccessRoute("/invoices", "STAFF")).toBe(false);
-      expect(canAccessRoute("/payments", "STAFF")).toBe(false);
     });
 
     it("can access customer routes", () => {
@@ -296,7 +292,6 @@ describe("routes: Real-world Access Patterns", () => {
 
   it("accountant is focused on finances only", () => {
     expect(canAccessRoute("/invoices", "ACCOUNTANT")).toBe(true);
-    expect(canAccessRoute("/payments", "ACCOUNTANT")).toBe(true);
     expect(canAccessRoute("/contracts", "ACCOUNTANT")).toBe(false);
     expect(canAccessRoute("/care-schedules", "ACCOUNTANT")).toBe(false);
   });

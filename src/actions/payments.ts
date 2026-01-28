@@ -250,7 +250,7 @@ export async function createPayment(data: unknown) {
     return newPayment;
   });
 
-  revalidatePath("/payments");
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${validated.invoiceId}`);
 
   return payment;
@@ -336,8 +336,7 @@ export async function updatePayment(id: string, data: unknown) {
     });
   }
 
-  revalidatePath("/payments");
-  revalidatePath(`/payments/${id}`);
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${existing.invoiceId}`);
 
   return updatedPayment;
@@ -372,8 +371,8 @@ export async function verifyPayment(data: unknown) {
     },
   });
 
-  revalidatePath("/payments");
-  revalidatePath(`/payments/${validated.paymentId}`);
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${payment.invoiceId}`);
 
   return updatedPayment;
 }
@@ -441,7 +440,7 @@ export async function deletePayment(id: string) {
     });
   });
 
-  revalidatePath("/payments");
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${payment.invoiceId}`);
 
   return { success: true };

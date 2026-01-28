@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   ChevronRight,
   FileSpreadsheet,
-  CreditCard,
   ClipboardList,
   UserCog,
 } from "lucide-react";
@@ -47,7 +46,6 @@ const navItems: NavItem[] = [
   // 3. Occasional / Monitoring
   { title: "Hợp đồng", href: "/contracts", icon: FileText },
   { title: "Báo giá", href: "/quotations", icon: FileSpreadsheet },
-  { title: "Thanh toán", href: "/payments", icon: CreditCard },
 
   // 4. Admin / System
   { title: "Báo cáo", href: "/analytics", icon: BarChart3 },

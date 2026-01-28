@@ -137,3 +137,18 @@ export const updatePaymentDateSchema = z.object({
 
 export type LinkSmartvasInput = z.infer<typeof linkSmartvasSchema>;
 export type UpdatePaymentDateInput = z.infer<typeof updatePaymentDateSchema>;
+
+/**
+ * Update invoice schema
+ */
+export const updateInvoiceSchema = z.object({
+  id: z.string().cuid(),
+  customerId: z.string().cuid(),
+  contractId: z.string().cuid().optional(),
+  issueDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date(),
+  notes: z.string().max(2000).transform(val => sanitizeText(val)).optional(),
+  items: z.array(invoiceItemSchema).min(1, "Phải có ít nhất 1 mục"),
+});
+
+export type UpdateInvoiceInput = z.infer<typeof updateInvoiceSchema>;

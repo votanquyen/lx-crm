@@ -20,8 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createInvoice } from "@/actions/invoices";
-import { createInvoiceSchema, type CreateInvoiceInput } from "@/lib/validations/contract";
+import { createInvoice, updateInvoice } from "@/actions/invoices";
+import { createInvoiceSchema, updateInvoiceSchema, type CreateInvoiceInput, type UpdateInvoiceInput } from "@/lib/validations/contract";
 import { formatCurrency } from "@/lib/format";
 
 interface CustomerOption {
@@ -37,19 +37,33 @@ interface CustomerOption {
 
 interface InvoiceFormProps {
     customers: CustomerOption[];
+    initialData?: any; // Invoice details for editing
 }
 
-export function InvoiceForm({ customers }: InvoiceFormProps) {
+export function InvoiceForm({ customers, initialData }: InvoiceFormProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const defaultCustomerId = searchParams.get("customerId") || undefined;
+    const isEditing = !!initialData;
 
     const [isPending, startTransition] = useTransition();
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
 
-    const form = useForm<CreateInvoiceInput>({
-        resolver: zodResolver(createInvoiceSchema) as any,
-        defaultValues: {
+    const form = useForm<CreateInvoiceInput | UpdateInvoiceInput>({
+        resolver: zodResolver(isEditing ? updateInvoiceSchema : createInvoiceSchema) as any,
+        defaultValues: isEditing ? {
+            id: initialData.id,
+            customerId: initialData.customerId,
+            contractId: initialData.contractId,
+            issueDate: new Date(initialData.issueDate),
+            dueDate: new Date(initialData.dueDate),
+            items: initialData.items.map((item: any) => ({
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+            })),
+            notes: initialData.notes || "",
+        } : {
             customerId: defaultCustomerId,
             issueDate: new Date(),
             dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // Default 15 days
@@ -64,18 +78,18 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
 
     // Watch items to calculate totals
     const items = form.watch("items");
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice || 0), 0);
+    const subtotal = items?.reduce((sum, item) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0) || 0;
     const taxAmount = 0; // Tax logic can be added later
     const totalAmount = subtotal + taxAmount;
 
-    // Set initial selected customer if form has value (e.g. from query param in future)
+    // Set initial selected customer
     useEffect(() => {
         const customerId = form.getValues("customerId");
         if (customerId) {
             const customer = customers.find(c => c.id === customerId);
             if (customer) setSelectedCustomer(customer);
         }
-    }, [customers, form]);
+    }, [customers, form, initialData]);
 
     const onCustomerChange = (value: string) => {
         form.setValue("customerId", value);
@@ -83,18 +97,25 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
         setSelectedCustomer(customer || null);
     };
 
-    const onSubmit = (data: CreateInvoiceInput) => {
+    const onSubmit = (data: CreateInvoiceInput | UpdateInvoiceInput) => {
         startTransition(async () => {
             try {
-                const result = await createInvoice(data);
+                let result;
+                if (isEditing) {
+                    result = await updateInvoice(data as UpdateInvoiceInput);
+                } else {
+                    result = await createInvoice(data as CreateInvoiceInput);
+                }
+
                 if (result.success) {
                     router.push(`/invoices/${result.data.id}`);
+                    router.refresh();
                 } else {
                     alert(`Lỗi: ${result.error}`);
                 }
             } catch (error) {
-                console.error("Failed to create invoice:", error);
-                alert("Có lỗi xảy ra khi tạo hóa đơn.");
+                console.error("Failed to save invoice:", error);
+                alert("Có lỗi xảy ra khi lưu hóa đơn.");
             }
         });
     };
@@ -111,15 +132,17 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
                             <div className="bg-emerald-500 rounded-lg p-1.5">
                                 <Receipt className="h-6 w-6 text-white" />
                             </div>
-                            <span className="text-xl font-black tracking-tight">TẠO HÓA ĐƠN MỚI</span>
+                            <span className="text-xl font-black tracking-tight">
+                                {isEditing ? "CHỈNH SỬA HÓA ĐƠN" : "TẠO HÓA ĐƠN MỚI"}
+                            </span>
                         </div>
                         <p className="text-slate-400 text-sm">
-                            Nhập thông tin chi tiết để tạo hóa đơn GTGT.
+                            {isEditing ? "Cập nhật thông tin hóa đơn GTGT." : "Nhập thông tin chi tiết để tạo hóa đơn GTGT."}
                         </p>
                     </div>
                 </div>
 
-                <form onSubmit={form.handleSubmit(onSubmit)} className="p-8 space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit as any)} className="p-8 space-y-8">
 
                     {/* Customer Selection Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -193,7 +216,7 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
                                 id="issueDate"
                                 {...form.register("issueDate", { valueAsDate: true })}
                                 className="bg-white"
-                                defaultValue={format(new Date(), 'yyyy-MM-dd')}
+                                defaultValue={initialData ? format(new Date(initialData.issueDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')}
                             />
                             {form.formState.errors.issueDate && (
                                 <p className="text-xs text-rose-500">{form.formState.errors.issueDate.message}</p>
@@ -207,7 +230,7 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
                                 id="dueDate"
                                 {...form.register("dueDate", { valueAsDate: true })}
                                 className="bg-white"
-                                defaultValue={format(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')}
+                                defaultValue={initialData ? format(new Date(initialData.dueDate), 'yyyy-MM-dd') : format(new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')}
                             />
                             {form.formState.errors.dueDate && (
                                 <p className="text-xs text-rose-500">{form.formState.errors.dueDate.message}</p>
@@ -328,11 +351,11 @@ export function InvoiceForm({ customers }: InvoiceFormProps) {
                             <Button type="submit" disabled={isPending || !selectedCustomer} className="bg-blue-600 hover:bg-blue-700 min-w-[150px]">
                                 {isPending ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang tạo...
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditing ? "Đang lưu..." : "Đang tạo..."}
                                     </>
                                 ) : (
                                     <>
-                                        <Save className="mr-2 h-4 w-4" /> Tạo hóa đơn
+                                        <Save className="mr-2 h-4 w-4" /> {isEditing ? "Lưu thay đổi" : "Tạo hóa đơn"}
                                     </>
                                 )}
                             </Button>

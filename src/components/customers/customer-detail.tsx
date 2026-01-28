@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteList } from "@/components/notes";
 import { CustomerBusinessCard } from "./customer-business-card";
+import { CustomerNoteBanner } from "./customer-note-banner";
 import { CustomerPayments } from "./customer-payments";
 import { FinanceTab } from "./finance-tab";
 import { OperationsTab } from "./operations-tab";
@@ -205,6 +206,9 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
           careSchedules: customer._count.careSchedules,
         }}
       />
+
+      {/* Customer Notes Banner - Shows active reminders prominently */}
+      {customer.stickyNotes.length > 0 && <CustomerNoteBanner notes={customer.stickyNotes} />}
 
       {/* Tabs */}
       <Tabs defaultValue={defaultTab || "overview"} className="space-y-4">

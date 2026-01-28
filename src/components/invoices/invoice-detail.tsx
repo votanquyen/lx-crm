@@ -22,9 +22,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -33,23 +30,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { sendInvoice, cancelInvoice, recordPayment } from "@/actions/invoices";
+import { sendInvoice, cancelInvoice } from "@/actions/invoices";
 import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
+import { PaymentDialog } from "@/components/invoices/payment-dialog";
 
 // Accept both Date and string for serialization compatibility
 type DateOrString = Date | string;
@@ -131,12 +114,6 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentData, setPaymentData] = useState({
-    amount: invoice.outstandingAmount,
-    method: "BANK_TRANSFER" as PaymentMethod,
-    reference: "",
-    notes: "",
-  });
 
   const status = statusConfig[invoice.status];
   const isOverdue =
@@ -157,7 +134,6 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
       }
     });
   };
-
   const handleCancel = () => {
     if (confirm("Bạn có chắc chắn muốn hủy hóa đơn này?")) {
       startTransition(async () => {
@@ -167,22 +143,6 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
         }
       });
     }
-  };
-
-  const handleRecordPayment = () => {
-    startTransition(async () => {
-      const result = await recordPayment({
-        invoiceId: invoice.id,
-        amount: paymentData.amount,
-        method: paymentData.method,
-        reference: paymentData.reference || undefined,
-        notes: paymentData.notes || undefined,
-      });
-      if (result.success) {
-        setShowPaymentDialog(false);
-        router.refresh();
-      }
-    });
   };
 
   return (
@@ -215,14 +175,22 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
           <div className="h-4 w-px bg-slate-200 mx-1" />
 
           {invoice.status === "DRAFT" && (
-            <Button onClick={handleSend} disabled={isPending} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200">
-              {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" aria-hidden="true" />
-              )}
-              Gửi hóa đơn
-            </Button>
+            <>
+              <Button asChild variant="outline" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200">
+                <Link href={`/invoices/${invoice.id}/edit`}>
+                  <FileText className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Chỉnh sửa
+                </Link>
+              </Button>
+              <Button onClick={handleSend} disabled={isPending} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200">
+                {isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" aria-hidden="true" />
+                )}
+                Gửi hóa đơn
+              </Button>
+            </>
           )}
           {["SENT", "PARTIAL", "OVERDUE"].includes(invoice.status) && (
             <Button onClick={() => setShowPaymentDialog(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-200">
@@ -425,76 +393,12 @@ export function InvoiceDetail({ invoice }: InvoiceDetailProps) {
       </div>
 
       {/* Payment Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ghi nhận thanh toán</DialogTitle>
-            <DialogDescription>
-              Còn nợ: {formatCurrency(invoice.outstandingAmount)}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Số tiền *</Label>
-              <Input
-                id="amount"
-                type="number"
-                value={paymentData.amount}
-                onChange={(e) =>
-                  setPaymentData({ ...paymentData, amount: parseFloat(e.target.value) || 0 })
-                }
-                max={invoice.outstandingAmount}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="method">Phương thức</Label>
-              <Select
-                value={paymentData.method}
-                onValueChange={(value) =>
-                  setPaymentData({ ...paymentData, method: value as PaymentMethod })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="BANK_TRANSFER">Chuyển khoản</SelectItem>
-                  <SelectItem value="CASH">Tiền mặt</SelectItem>
-                  <SelectItem value="CARD">Thẻ</SelectItem>
-                  <SelectItem value="OTHER">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reference">Mã tham chiếu</Label>
-              <Input
-                id="reference"
-                value={paymentData.reference}
-                onChange={(e) => setPaymentData({ ...paymentData, reference: e.target.value })}
-                placeholder="Mã giao dịch, số biên lai..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Ghi chú</Label>
-              <Textarea
-                id="notes"
-                value={paymentData.notes}
-                onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                rows={2}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
-              Hủy
-            </Button>
-            <Button onClick={handleRecordPayment} disabled={isPending || paymentData.amount <= 0}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
-              Xác nhận
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Payment Dialog */}
+      <PaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        invoice={invoice}
+      />
     </div>
   );
 }

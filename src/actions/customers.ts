@@ -346,9 +346,28 @@ export async function getCustomerById(id: string) {
     ...customer,
     invoices: customer.invoices.map((inv) => ({
       ...inv,
+      subtotal: Number(inv.subtotal),
+      discountAmount: Number(inv.discountAmount),
+      vatRate: Number(inv.vatRate),
+      vatAmount: Number(inv.vatAmount),
       totalAmount: Number(inv.totalAmount),
       paidAmount: Number(inv.paidAmount),
       outstandingAmount: Number(inv.outstandingAmount),
+      payments: inv.payments.map((p) => ({
+        ...p,
+        amount: Number(p.amount),
+      })),
+    })),
+    monthlyStatements: customer.monthlyStatements.map((stmt) => ({
+      ...stmt,
+      subtotal: Number(stmt.subtotal),
+      vatRate: Number(stmt.vatRate),
+      vatAmount: Number(stmt.vatAmount),
+      total: Number(stmt.total),
+    })),
+    contracts: customer.contracts.map((c) => ({
+      ...c,
+      monthlyFee: Number(c.monthlyFee),
     })),
   };
 }
