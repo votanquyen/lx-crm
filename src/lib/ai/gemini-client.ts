@@ -50,6 +50,11 @@ async function withRetry<T>(
  * Call Gemini API with a prompt (with automatic retry on rate limit)
  */
 export async function callGemini(prompt: string): Promise<string> {
+  // Validate input
+  if (!prompt?.trim()) {
+    throw new Error("Gemini prompt cannot be empty");
+  }
+
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error("GOOGLE_AI_API_KEY not configured");

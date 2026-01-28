@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadCarePhoto, uploadExchangePhoto } from "@/lib/storage/s3-client";
+import { validateImageMagicBytes } from "@/lib/file-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,11 +24,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Only images are allowed" }, { status: 400 });
-    }
-
     // Validate file size (max 30MB)
     if (file.size > 30 * 1024 * 1024) {
       return NextResponse.json({ error: "File too large (max 30MB)" }, { status: 400 });
@@ -35,6 +31,20 @@ export async function POST(request: NextRequest) {
 
     // Convert file to buffer
     const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Validate file type by magic bytes (not MIME type)
+    const detectedType = validateImageMagicBytes(buffer);
+    if (!detectedType) {
+      return NextResponse.json(
+        { error: "Invalid image format. Supported: JPEG, PNG, GIF, WebP, BMP" },
+        { status: 400 }
+      );
+    }
+
+    // Log if MIME type doesn't match detected type (suspicious)
+    if (!file.type.startsWith("image/") || file.type !== detectedType) {
+      console.warn(`[Upload] MIME mismatch: claimed ${file.type}, detected ${detectedType}`);
+    }
 
     // Upload based on type
     let url: string;
@@ -56,11 +66,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Configure max file size (30MB for images)
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "30mb",
-    },
-  },
-};

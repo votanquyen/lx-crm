@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { CustomerStatus } from "@prisma/client";
+import { sanitizeText } from "@/lib/sanitize";
 
 /**
  * Vietnamese phone number regex: accepts 0xxxxxxxxx or +84xxxxxxxxx (9-10 digits after prefix)
@@ -63,14 +64,14 @@ export const customerSchema = z.object({
   // Building Details
   floorCount: z.number().int().positive().optional().nullable(),
   hasElevator: z.boolean().optional().nullable(),
-  parkingNote: z.string().max(500).optional().nullable(),
-  accessNote: z.string().max(500).optional().nullable(),
+  parkingNote: z.string().max(500).transform(val => sanitizeText(val)).optional().nullable(),
+  accessNote: z.string().max(500).transform(val => sanitizeText(val)).optional().nullable(),
 
   // Care Preferences
   careWeekday: z.number().int().min(0).max(6).optional().nullable(), // 0=Sunday, 6=Saturday
   careTimeSlot: z.string().max(50).optional().nullable(),
   preferredStaffId: z.string().cuid().optional().nullable(),
-  specialRequests: z.string().max(1000).optional().nullable(),
+  specialRequests: z.string().max(1000).transform(val => sanitizeText(val)).optional().nullable(),
 
   // Billing
   billingCycle: z.string().max(50).optional().nullable(),
@@ -81,7 +82,7 @@ export const customerSchema = z.object({
   longitude: z.number().optional().nullable(),
 
   // Notes
-  internalNotes: z.string().max(2000).optional().nullable(),
+  internalNotes: z.string().max(2000).transform(val => sanitizeText(val)).optional().nullable(),
 });
 
 /**

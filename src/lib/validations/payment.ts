@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { PaymentMethod } from "@prisma/client";
+import { sanitizeText } from "@/lib/sanitize";
 
 /**
  * Payment Method Schema
@@ -41,7 +42,7 @@ export const createPaymentSchema = z
     receiptNumber: z.string().max(50).optional().nullable(),
 
     // Additional info
-    notes: z.string().max(1000).optional().nullable(),
+    notes: z.string().max(1000).transform(val => sanitizeText(val)).optional().nullable(),
     receiptUrl: z.string().url("URL không hợp lệ").optional().nullable(),
   })
   .refine(
@@ -92,7 +93,7 @@ export const updatePaymentSchema = z
     receiptNumber: z.string().max(50).optional().nullable(),
 
     // Additional info
-    notes: z.string().max(1000).optional().nullable(),
+    notes: z.string().max(1000).transform(val => sanitizeText(val)).optional().nullable(),
     receiptUrl: z.string().url("URL không hợp lệ").optional().nullable(),
   })
   .partial();
@@ -103,7 +104,7 @@ export const updatePaymentSchema = z
  */
 export const verifyPaymentSchema = z.object({
   paymentId: z.string().cuid("ID thanh toán không hợp lệ"),
-  notes: z.string().max(500).optional().nullable(),
+  notes: z.string().max(500).transform(val => sanitizeText(val)).optional().nullable(),
 });
 
 /**

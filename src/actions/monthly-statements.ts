@@ -627,7 +627,6 @@ export const getCustomersForStatements = createSimpleAction(async () => {
       shortName: true,
       address: true,
       district: true,
-      address: true,
       contactName: true,
       accountingName: true, // For billing - prefer over contactName
     },
@@ -727,6 +726,7 @@ export const getDeletedMonthlyStatements = createAction(
     ]);
 
     // Calculate days since deletion and if restore is allowed
+    // Convert Decimal to number for frontend serialization
     const now = new Date();
     const itemsWithMeta = statements.map((stmt) => {
       const daysSinceDeleted = stmt.deletedAt
@@ -735,7 +735,30 @@ export const getDeletedMonthlyStatements = createAction(
       const canRestore = daysSinceDeleted <= 30;
 
       return {
-        ...stmt,
+        id: stmt.id,
+        customerId: stmt.customerId,
+        year: stmt.year,
+        month: stmt.month,
+        periodStart: stmt.periodStart,
+        periodEnd: stmt.periodEnd,
+        contactName: stmt.contactName,
+        plants: stmt.plants,
+        subtotal: Number(stmt.subtotal),
+        vatRate: Number(stmt.vatRate),
+        vatAmount: Number(stmt.vatAmount),
+        total: Number(stmt.total),
+        needsConfirmation: stmt.needsConfirmation,
+        confirmedAt: stmt.confirmedAt,
+        confirmedById: stmt.confirmedById,
+        copiedFromId: stmt.copiedFromId,
+        notes: stmt.notes,
+        internalNotes: stmt.internalNotes,
+        deletedAt: stmt.deletedAt,
+        deletedById: stmt.deletedById,
+        createdAt: stmt.createdAt,
+        updatedAt: stmt.updatedAt,
+        customer: stmt.customer,
+        deletedBy: stmt.deletedBy,
         daysSinceDeleted,
         canRestore,
       };

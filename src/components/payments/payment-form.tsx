@@ -101,7 +101,7 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
       if (payment) {
         await updatePayment(payment.id, data);
         toast.success("Cập nhật thanh toán thành công!");
-        router.push(`/payments/${payment.id}`);
+        router.push(`/invoices/${invoice.id}`);
       } else {
         await createPayment(data);
         toast.success("Ghi nhận thanh toán thành công!");
@@ -202,10 +202,6 @@ export function PaymentForm({ invoice, payment, remainingBalance }: PaymentFormP
             <SelectContent>
               <SelectItem value="BANK_TRANSFER">Chuyển khoản ngân hàng</SelectItem>
               <SelectItem value="CASH">Tiền mặt</SelectItem>
-              <SelectItem value="CARD">Thẻ</SelectItem>
-              <SelectItem value="MOMO">Ví MoMo</SelectItem>
-              <SelectItem value="ZALOPAY">ZaloPay</SelectItem>
-              <SelectItem value="VNPAY">VNPay</SelectItem>
             </SelectContent>
           </Select>
         </div>

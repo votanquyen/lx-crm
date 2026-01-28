@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, Calendar, X, ChevronRight } from "lucide-react";
-import { formatCurrencyDecimal } from "@/lib/db-utils";
+import { formatCurrency } from "@/lib/format";
 import type { QuickNoteAIResponse } from "./types";
 
 interface AIResponsePanelProps {
@@ -56,7 +56,7 @@ export function AIResponsePanel({ response, onDismiss }: AIResponsePanelProps) {
                   {customerContext.overdueInvoices > 0 && (
                     <li className="text-red-600">
                       • Hóa đơn quá hạn: {customerContext.overdueInvoices} (
-                      {formatCurrencyDecimal(customerContext.totalDebt)})
+                      {formatCurrency(customerContext.totalDebt)})
                     </li>
                   )}
                   {customerContext.recentNotes > 0 && (

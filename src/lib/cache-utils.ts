@@ -87,13 +87,13 @@ export function revalidateExchange() {
 }
 
 /**
- * Revalidate payment-related paths
+ * Revalidate payment-related paths (now under invoices)
  */
 export function revalidatePayment(invoiceId?: string, customerId?: string) {
-  revalidatePath("/payments");
   if (invoiceId) {
     revalidatePath(`/invoices/${invoiceId}`);
   }
+  revalidatePath("/invoices");
   if (customerId) {
     revalidateCustomer(customerId);
   }
@@ -118,6 +118,5 @@ export function revalidateAll() {
   revalidatePath("/quotations");
   revalidatePath("/care");
   revalidatePath("/exchanges");
-  revalidatePath("/payments");
   revalidatePath("/analytics");
 }

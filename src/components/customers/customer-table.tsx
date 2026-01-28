@@ -328,4 +328,6 @@ export function CustomerTable({ customers, pagination }: CustomerTableProps) {
       />
     </>
   );
-});
+}
+
+CustomerTable.displayName = "CustomerTable";

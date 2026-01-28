@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { ContractStatus, InvoiceStatus, PaymentMethod } from "@prisma/client";
+import { sanitizeText } from "@/lib/sanitize";
 
 /**
  * Contract item schema
@@ -12,7 +13,7 @@ export const contractItemSchema = z.object({
   plantTypeId: z.string().cuid("ID loại cây không hợp lệ"),
   quantity: z.number().int().positive("Số lượng phải lớn hơn 0"),
   unitPrice: z.number().nonnegative("Đơn giá không được âm"),
-  notes: z.string().max(500).optional(),
+  notes: z.string().max(500).transform(val => sanitizeText(val)).optional(),
 });
 
 /**
@@ -24,7 +25,7 @@ export const createContractSchema = z.object({
   endDate: z.coerce.date(),
   depositAmount: z.number().nonnegative().optional(),
   paymentTerms: z.string().max(500).optional(),
-  notes: z.string().max(2000).optional(),
+  notes: z.string().max(2000).transform(val => sanitizeText(val)).optional(),
   items: z.array(contractItemSchema).min(1, "Phải có ít nhất 1 loại cây"),
 });
 
@@ -37,7 +38,7 @@ export const updateContractSchema = z.object({
   endDate: z.coerce.date().optional(),
   depositAmount: z.number().nonnegative().optional(),
   paymentTerms: z.string().max(500).optional(),
-  notes: z.string().max(2000).optional(),
+  notes: z.string().max(2000).transform(val => sanitizeText(val)).optional(),
   items: z.array(contractItemSchema).min(1).optional(),
 });
 
@@ -70,7 +71,7 @@ export const createInvoiceSchema = z.object({
   contractId: z.string().cuid().optional(),
   issueDate: z.coerce.date().optional(),
   dueDate: z.coerce.date(),
-  notes: z.string().max(2000).optional(),
+  notes: z.string().max(2000).transform(val => sanitizeText(val)).optional(),
   items: z.array(invoiceItemSchema).min(1, "Phải có ít nhất 1 mục"),
 });
 
@@ -136,3 +137,18 @@ export const updatePaymentDateSchema = z.object({
 
 export type LinkSmartvasInput = z.infer<typeof linkSmartvasSchema>;
 export type UpdatePaymentDateInput = z.infer<typeof updatePaymentDateSchema>;
+
+/**
+ * Update invoice schema
+ */
+export const updateInvoiceSchema = z.object({
+  id: z.string().cuid(),
+  customerId: z.string().cuid(),
+  contractId: z.string().cuid().optional(),
+  issueDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date(),
+  notes: z.string().max(2000).transform(val => sanitizeText(val)).optional(),
+  items: z.array(invoiceItemSchema).min(1, "Phải có ít nhất 1 mục"),
+});
+
+export type UpdateInvoiceInput = z.infer<typeof updateInvoiceSchema>;

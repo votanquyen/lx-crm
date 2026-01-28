@@ -179,35 +179,35 @@ export async function createPayment(data: unknown) {
   const user = await requireAuth();
   const validated = createPaymentSchema.parse(data);
 
-  // Get invoice to validate
-  const invoice = await prisma.invoice.findUnique({
-    where: { id: validated.invoiceId },
-    select: {
-      id: true,
-      invoiceNumber: true,
-      totalAmount: true,
-      paidAmount: true,
-      status: true,
-    },
-  });
-
-  if (!invoice) {
-    throw new NotFoundError(`Không tìm thấy hóa đơn có ID: ${validated.invoiceId}`);
-  }
-
-  // Calculate remaining balance
-  const remainingBalance = subtractDecimal(invoice.totalAmount, invoice.paidAmount);
-
-  // Validate payment amount doesn't exceed remaining balance
-  if (compareDecimal(toDecimal(validated.amount), remainingBalance) > 0) {
-    throw new AppError(
-      `Số tiền thanh toán (${validated.amount.toLocaleString()}đ) vượt quá số tiền còn lại (${Number(remainingBalance).toLocaleString()}đ)`,
-      "PAYMENT_EXCEEDS_BALANCE"
-    );
-  }
-
-  // Create payment in a transaction
+  // Create payment in a transaction with atomic validation
   const payment = await prisma.$transaction(async (tx) => {
+    // CRITICAL: Re-fetch invoice INSIDE transaction for fresh data (prevents race condition)
+    const invoice = await tx.invoice.findUnique({
+      where: { id: validated.invoiceId },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        totalAmount: true,
+        paidAmount: true,
+        status: true,
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundError(`Không tìm thấy hóa đơn có ID: ${validated.invoiceId}`);
+    }
+
+    // Calculate remaining balance with fresh data
+    const remainingBalance = subtractDecimal(invoice.totalAmount, invoice.paidAmount);
+
+    // Validate payment amount doesn't exceed remaining balance (INSIDE transaction)
+    if (compareDecimal(toDecimal(validated.amount), remainingBalance) > 0) {
+      throw new AppError(
+        `Số tiền thanh toán (${validated.amount.toLocaleString("vi-VN")}đ) vượt quá số tiền còn lại (${Number(remainingBalance).toLocaleString("vi-VN")}đ)`,
+        "PAYMENT_EXCEEDS_BALANCE"
+      );
+    }
+
     // Create payment record
     const newPayment = await tx.payment.create({
       data: {
@@ -250,7 +250,7 @@ export async function createPayment(data: unknown) {
     return newPayment;
   });
 
-  revalidatePath("/payments");
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${validated.invoiceId}`);
 
   return payment;
@@ -336,8 +336,7 @@ export async function updatePayment(id: string, data: unknown) {
     });
   }
 
-  revalidatePath("/payments");
-  revalidatePath(`/payments/${id}`);
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${existing.invoiceId}`);
 
   return updatedPayment;
@@ -372,8 +371,8 @@ export async function verifyPayment(data: unknown) {
     },
   });
 
-  revalidatePath("/payments");
-  revalidatePath(`/payments/${validated.paymentId}`);
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${payment.invoiceId}`);
 
   return updatedPayment;
 }
@@ -441,7 +440,7 @@ export async function deletePayment(id: string) {
     });
   });
 
-  revalidatePath("/payments");
+  revalidatePath("/invoices");
   revalidatePath(`/invoices/${payment.invoiceId}`);
 
   return { success: true };

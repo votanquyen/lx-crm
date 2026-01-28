@@ -181,10 +181,13 @@ export const updateUserRole = createAction(updateUserRoleSchema, async (input) =
     throw new AppError("Người dùng không tồn tại", "NOT_FOUND", 404);
   }
 
-  // Update role
+  // Update role and set roleChangedAt timestamp
   const updatedUser = await prisma.user.update({
     where: { id: userId },
-    data: { role },
+    data: {
+      role,
+      roleChangedAt: new Date(), // Timestamp for JWT invalidation
+    },
   });
 
   // Log activity
@@ -199,10 +202,8 @@ export const updateUserRole = createAction(updateUserRoleSchema, async (input) =
     },
   });
 
-  // Invalidate user sessions to force re-login with new role
-  await prisma.session.deleteMany({
-    where: { userId },
-  });
+  // Note: Session deletion removed - JWT mode uses roleChangedAt timestamp instead
+  // The jwt() callback in auth.ts checks roleChangedAt on each request
 
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);

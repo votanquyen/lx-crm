@@ -35,6 +35,14 @@ export interface CustomerGeoJSONResponse {
 // Valid CustomerStatus values for validation
 const VALID_STATUSES: CustomerStatus[] = ["LEAD", "ACTIVE", "INACTIVE", "TERMINATED"];
 
+// Coordinate validation function
+function isValidCoordinate(lat: number | null, lon: number | null): boolean {
+  if (lat === null || lon === null) return false;
+  if (lat < -90 || lat > 90) return false;
+  if (lon < -180 || lon > 180) return false;
+  return true;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const statusParam = searchParams.get("status");
@@ -46,53 +54,61 @@ export async function GET(request: NextRequest) {
       ? (statusParam as CustomerStatus)
       : null;
 
-  const customers = await prisma.customer.findMany({
-    where: {
-      latitude: { not: null },
-      longitude: { not: null },
-      ...(status && { status }),
-      ...(district && { district }),
-    },
-    select: {
-      id: true,
-      code: true,
-      companyName: true,
-      address: true,
-      district: true,
-      latitude: true,
-      longitude: true,
-      contactPhone: true,
-      status: true,
-      _count: { select: { customerPlants: true } },
-    },
-  });
+  try {
+    const customers = await prisma.customer.findMany({
+      where: {
+        latitude: { not: null },
+        longitude: { not: null },
+        ...(status && { status }),
+        ...(district && { district }),
+      },
+      select: {
+        id: true,
+        code: true,
+        companyName: true,
+        address: true,
+        district: true,
+        latitude: true,
+        longitude: true,
+        contactPhone: true,
+        status: true,
+        _count: { select: { customerPlants: true } },
+      },
+    });
 
-  const geojson: CustomerGeoJSONResponse = {
-    type: "FeatureCollection",
-    features: customers
-      .filter((c) => c.longitude !== null && c.latitude !== null)
-      .map((c) => ({
-        type: "Feature" as const,
-        geometry: {
-          type: "Point" as const,
-          coordinates: [c.longitude ?? 0, c.latitude ?? 0] as [number, number],
-        },
-        properties: {
-          id: c.id,
-          code: c.code,
-          companyName: c.companyName,
-          address: c.address,
-          district: c.district ?? "",
-          contactPhone: c.contactPhone,
-          status: c.status,
-          plantCount: c._count.customerPlants,
-        },
-      })),
-  };
+    const geojson: CustomerGeoJSONResponse = {
+      type: "FeatureCollection",
+      features: customers
+        .filter((c) => isValidCoordinate(c.latitude, c.longitude))
+        .map((c) => ({
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [c.longitude!, c.latitude!] as [number, number],
+          },
+          properties: {
+            id: c.id,
+            code: c.code,
+            companyName: c.companyName,
+            address: c.address,
+            district: c.district ?? "",
+            contactPhone: c.contactPhone,
+            status: c.status,
+            plantCount: c._count.customerPlants,
+          },
+        })),
+    };
 
-  return NextResponse.json(geojson, {
-    headers: {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-    },
-  });
+    return NextResponse.json(geojson, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
+  } catch (error) {
+    console.error("[GeoJSON] Database error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch customer locations" },
+      { status: 500 }
+    );
+  }
 }

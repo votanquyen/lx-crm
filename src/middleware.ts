@@ -1,7 +1,12 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
 import { canAccessRoute, getRoutePermissions, PUBLIC_ROUTES } from "@/config/routes";
-import type { UserRole } from "@prisma/client";
+
+// UserRole type defined inline to avoid Prisma import in Edge Runtime
+type UserRole = "ADMIN" | "MANAGER" | "ACCOUNTANT" | "STAFF";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { nextUrl } = req;

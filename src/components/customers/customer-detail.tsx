@@ -6,11 +6,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoteList } from "@/components/notes";
 import { CustomerBusinessCard } from "./customer-business-card";
+import { CustomerNoteBanner } from "./customer-note-banner";
+import { CustomerPayments } from "./customer-payments";
 import { FinanceTab } from "./finance-tab";
 import { OperationsTab } from "./operations-tab";
 import { CustomerTimeline } from "./customer-timeline";
 import type { getCustomerNotes } from "@/actions/sticky-notes";
-import type { CustomerStatus, InvoiceStatus } from "@prisma/client";
+import type {
+  CustomerStatus,
+  InvoiceStatus,
+  PaymentMethod,
+  ContractStatus,
+  PlantCondition,
+  PlantStatus,
+  NoteCategory,
+  NoteStatus,
+} from "@prisma/client";
 
 /** Numeric type compatible with Prisma Decimal */
 type NumericValue = number | string | { toString(): string };
@@ -19,8 +30,8 @@ interface Payment {
   id: string;
   amount: NumericValue;
   paymentDate: Date;
-  method: PaymentMethod;
-  reference: string | null;
+  paymentMethod: PaymentMethod;
+  bankRef?: string | null;
   notes: string | null;
 }
 
@@ -64,14 +75,13 @@ interface CustomerPlant {
   lastExchanged: Date | null;
   plantType: {
     name: string;
-    scientificName: string | null;
   };
 }
 
 interface StickyNote {
   id: string;
-  title: string;
-  content: string;
+  title: string | null;
+  content: string | null;
   category: NoteCategory;
   status: NoteStatus;
   priority: number;
@@ -119,6 +129,7 @@ interface CustomerDetailProps {
       exchangeRequests: number;
       quotations: number;
     };
+    aiNotes?: string | null;
   };
   notes?: Awaited<ReturnType<typeof getCustomerNotes>>;
   defaultTab?: string;
@@ -195,6 +206,9 @@ export function CustomerDetail({ customer, notes = [], defaultTab }: CustomerDet
           careSchedules: customer._count.careSchedules,
         }}
       />
+
+      {/* Customer Notes Banner - Shows active reminders prominently */}
+      {customer.stickyNotes.length > 0 && <CustomerNoteBanner notes={customer.stickyNotes} />}
 
       {/* Tabs */}
       <Tabs defaultValue={defaultTab || "overview"} className="space-y-4">

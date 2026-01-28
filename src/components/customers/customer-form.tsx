@@ -30,6 +30,7 @@ import {
   type CreateCustomerInput,
   type UpdateCustomerInput,
 } from "@/lib/validations/customer";
+import { HCM_DISTRICTS } from "@/config/districts";
 import type { CustomerStatus } from "@prisma/client";
 
 interface CustomerFormProps {
@@ -49,33 +50,6 @@ interface CustomerFormProps {
   };
   onSuccess?: () => void;
 }
-
-const DISTRICTS = [
-  "Quận 1",
-  "Quận 2",
-  "Quận 3",
-  "Quận 4",
-  "Quận 5",
-  "Quận 6",
-  "Quận 7",
-  "Quận 8",
-  "Quận 9",
-  "Quận 10",
-  "Quận 11",
-  "Quận 12",
-  "Bình Thạnh",
-  "Gò Vấp",
-  "Phú Nhuận",
-  "Tân Bình",
-  "Tân Phú",
-  "Thủ Đức",
-  "Bình Tân",
-  "Nhà Bè",
-  "Hóc Môn",
-  "Củ Chi",
-  "Cần Giờ",
-  "Bình Chánh",
-];
 
 export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
   const router = useRouter();

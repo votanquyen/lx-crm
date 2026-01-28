@@ -20,8 +20,8 @@ interface Payment {
   id: string;
   amount: number | string | { toString(): string };
   paymentDate: Date;
-  method: PaymentMethod;
-  reference: string | null;
+  paymentMethod: PaymentMethod;
+  bankRef?: string | null;
   notes: string | null;
 }
 
@@ -38,10 +38,10 @@ interface CustomerPaymentsProps {
 const methodLabels: Record<PaymentMethod, string> = {
   BANK_TRANSFER: "Chuyển khoản",
   CASH: "Tiền mặt",
-  CARD: "Thẻ",
-  MOMO: "MoMo",
-  ZALOPAY: "ZaloPay",
-  VNPAY: "VNPay",
+  CARD: "Thẻ", // Legacy
+  MOMO: "MoMo", // Legacy
+  ZALOPAY: "ZaloPay", // Legacy
+  VNPAY: "VNPay", // Legacy
 };
 
 export function CustomerPayments({ invoices }: CustomerPaymentsProps) {
@@ -110,10 +110,10 @@ export function CustomerPayments({ invoices }: CustomerPaymentsProps) {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{methodLabels[payment.method]}</Badge>
+                    <Badge variant="outline">{methodLabels[payment.paymentMethod]}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {payment.reference || "-"}
+                    {payment.bankRef || "-"}
                   </TableCell>
                   <TableCell className="text-right font-medium text-green-600">
                     {formatCurrency(Number(payment.amount))}

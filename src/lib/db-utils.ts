@@ -3,10 +3,43 @@
  * These utilities use Prisma Decimal type and should ONLY be imported in server components
  */
 import { Prisma } from "@prisma/client";
+import { prisma } from "./prisma";
+import { TRANSACTION } from "./constants";
 
 // Re-export Decimal for convenience
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;
+
+// ============================================
+// TRANSACTION UTILITIES
+// ============================================
+
+/**
+ * Execute database operations within a transaction
+ * Automatically handles timeout and maxWait settings
+ *
+ * @param fn - Transaction callback function
+ * @param options - Transaction timeout/maxWait overrides
+ * @returns Result of the transaction
+ *
+ * @example
+ * ```typescript
+ * const result = await withTransaction(async (tx) => {
+ *   const invoice = await tx.invoice.create({ ... });
+ *   await tx.payment.create({ ... });
+ *   return invoice;
+ * });
+ * ```
+ */
+export async function withTransaction<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  options?: { timeout?: number; maxWait?: number }
+): Promise<T> {
+  return prisma.$transaction(fn, {
+    timeout: options?.timeout ?? TRANSACTION.DEFAULT_TIMEOUT_MS,
+    maxWait: options?.maxWait ?? TRANSACTION.MAX_WAIT_MS,
+  });
+}
 
 // ============================================
 // DECIMAL UTILITIES (for Prisma Decimal type)

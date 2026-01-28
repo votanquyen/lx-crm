@@ -103,8 +103,26 @@ export const RATE_LIMITS = {
 export const TRANSACTION = {
   /** Default timeout in milliseconds (10 seconds) */
   DEFAULT_TIMEOUT_MS: 10_000,
+  /** Long-running transaction timeout (30 seconds) */
+  LONG_TIMEOUT_MS: 30_000,
+  /** Maximum wait time for transaction to start */
+  MAX_WAIT_MS: 5_000,
   /** Maximum retries for transaction conflicts */
   MAX_RETRIES: 3,
+} as const;
+
+/**
+ * PostgreSQL connection pool settings
+ */
+export const CONNECTION_POOL = {
+  /** Minimum number of connections to maintain */
+  MIN_CONNECTIONS: 2,
+  /** Maximum number of connections allowed */
+  MAX_CONNECTIONS: 10,
+  /** Idle connection timeout in milliseconds (1 minute) */
+  IDLE_TIMEOUT_MS: 60_000,
+  /** Connection attempt timeout in milliseconds (5 seconds) */
+  CONNECTION_TIMEOUT_MS: 5_000,
 } as const;
 
 /**
