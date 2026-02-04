@@ -134,15 +134,17 @@ export default async function LoginPage({
         </button>
       </form>
 
-      {/* Development Credentials Info */}
-      <div className="rounded-lg bg-blue-50 p-4">
-        <p className="text-xs font-medium text-blue-800">Development Mode - Test Accounts:</p>
-        <ul className="mt-2 space-y-1 text-xs text-blue-700">
-          <li>• admin@locxanh.vn / admin123 (Admin)</li>
-          <li>• manager@locxanh.vn / manager123 (Manager)</li>
-          <li>• staff@locxanh.vn / staff123 (Staff)</li>
-        </ul>
-      </div>
+      {/* Development Credentials Info - Only shown in development */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="rounded-lg bg-blue-50 p-4">
+          <p className="text-xs font-medium text-blue-800">Development Mode - Test Accounts:</p>
+          <ul className="mt-2 space-y-1 text-xs text-blue-700">
+            <li>• admin@locxanh.vn / admin123 (Admin)</li>
+            <li>• manager@locxanh.vn / manager123 (Manager)</li>
+            <li>• staff@locxanh.vn / staff123 (Staff)</li>
+          </ul>
+        </div>
+      )}
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-500">
